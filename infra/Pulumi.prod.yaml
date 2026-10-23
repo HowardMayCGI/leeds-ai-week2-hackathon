@@ -1,0 +1,5 @@
+config:
+  aws:region: eu-west-2
+  aws:profile: st-prod
+  aws:allowedAccountIds:
+    - '322517362875'

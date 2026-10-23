@@ -1,0 +1,10 @@
+{
+  "name": "@hackathon/infra",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@pulumi/aws": "7.51.1",
+    "@pulumi/pulumi": "3.271.0",
+    "@pulumi/random": "4.21.4"
+  }
+}

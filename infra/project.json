@@ -1,0 +1,124 @@
+{
+  "name": "infra",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p infra/tsconfig.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": [
+            "web",
+            "api"
+          ]
+        }
+      ],
+      "options": {
+        "command": "node --import tsx --test infra/src/*.test.ts"
+      },
+      "configurations": {
+        "prod": {
+          "env": {
+            "TEST_STACK": "prod"
+          }
+        }
+      }
+    },
+    "bootstrap-state": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node --import tsx infra/src/cli.ts bootstrap-state"
+      }
+    },
+    "sso-configure": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "aws configure sso --profile st-prod --use-device-code --no-browser"
+      }
+    },
+    "login": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "aws sso login --profile st-prod --use-device-code --no-browser"
+      }
+    },
+    "identity": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "aws sts get-caller-identity --profile st-prod --no-cli-pager"
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": [
+            "web",
+            "api"
+          ]
+        }
+      ],
+      "options": {
+        "command": "node --import tsx infra/src/cli.ts preview"
+      },
+      "configurations": {
+        "staging": {
+          "command": "node --import tsx infra/src/cli.ts preview staging"
+        },
+        "prod": {
+          "command": "node --import tsx infra/src/cli.ts preview prod"
+        }
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": [
+            "web",
+            "api"
+          ]
+        }
+      ],
+      "options": {
+        "command": "node --import tsx infra/src/cli.ts deploy"
+      },
+      "configurations": {
+        "staging": {
+          "command": "node --import tsx infra/src/cli.ts deploy staging"
+        },
+        "prod": {
+          "command": "node --import tsx infra/src/cli.ts deploy prod"
+        }
+      }
+    },
+    "outputs": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node --import tsx infra/src/cli.ts outputs"
+      },
+      "configurations": {
+        "staging": {
+          "command": "node --import tsx infra/src/cli.ts outputs staging"
+        },
+        "prod": {
+          "command": "node --import tsx infra/src/cli.ts outputs prod"
+        }
+      }
+    }
+  }
+}
