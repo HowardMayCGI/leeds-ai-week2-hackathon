@@ -1,0 +1,9 @@
+name: leeds-ai-week2-hackathon
+description: Static Next.js site and random-number Lambda behind CloudFront
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+main: index.ts
+backend:
+  url: s3://leeds-ai-week2-hackathon-322517362875-pulumi-state?region=eu-west-2

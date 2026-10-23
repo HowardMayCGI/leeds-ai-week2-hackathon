@@ -1,0 +1,5 @@
+{
+  "name": "@hackathon/api",
+  "private": true,
+  "dependencies": { "@hackathon/api-contract": "workspace:*" }
+}

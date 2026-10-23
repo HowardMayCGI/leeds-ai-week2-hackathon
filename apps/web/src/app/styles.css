@@ -1,0 +1,31 @@
+body {
+  margin: 0;
+}
+
+.demo-header {
+  background: #005eb8;
+  color: #fff;
+  padding: 24px 0;
+}
+
+.demo-header__title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.result {
+  min-height: 100px;
+}
+
+.result__number {
+  display: block;
+  font-size: 64px;
+  line-height: 1.2;
+  margin-top: 16px;
+}
+
+.nhsuk-button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: wait;
+}

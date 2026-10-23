@@ -1,0 +1,14 @@
+node_modules/
+.nx/
+dist/
+**/.next/
+**/out/
+**/next-env.d.ts
+*.tsbuildinfo
+.env*
+!.env.example
+playwright-report/
+test-results/
+apps/web/public/assets/
+infra/.pulumi/
+

@@ -1,0 +1,8 @@
+@use 'nhsuk-frontend/dist/nhsuk/core' with (
+  $nhsuk-font-family: (Arial, sans-serif),
+  $nhsuk-font-weight-bold: 700
+);
+
+@use 'nhsuk-frontend/dist/nhsuk/components/button';
+@use 'nhsuk-frontend/dist/nhsuk/components/footer';
+@use 'nhsuk-frontend/dist/nhsuk/components/skip-link';

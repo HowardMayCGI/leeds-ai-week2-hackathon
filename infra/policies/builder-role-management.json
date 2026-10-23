@@ -1,0 +1,66 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CreateApplicationRolesWithBoundary",
+      "Effect": "Allow",
+      "Action": "iam:CreateRole",
+      "Resource": "arn:aws:iam::322517362875:role/leeds-ai-week2/*",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::aws:policy/PowerUserAccess"
+        }
+      }
+    },
+    {
+      "Sid": "ManageApplicationRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:DeleteRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRoleTags",
+        "iam:ListRolePolicies",
+        "iam:GetRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:ListInstanceProfilesForRole"
+      ],
+      "Resource": "arn:aws:iam::322517362875:role/leeds-ai-week2/*"
+    },
+    {
+      "Sid": "PassApplicationRolesToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::322517362875:role/leeds-ai-week2/*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "lambda.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "KeepApplicationRoleBoundary",
+      "Effect": "Deny",
+      "Action": "iam:DeleteRolePermissionsBoundary",
+      "Resource": "arn:aws:iam::322517362875:role/leeds-ai-week2/*"
+    },
+    {
+      "Sid": "PreventDifferentApplicationRoleBoundary",
+      "Effect": "Deny",
+      "Action": "iam:PutRolePermissionsBoundary",
+      "Resource": "arn:aws:iam::322517362875:role/leeds-ai-week2/*",
+      "Condition": {
+        "ArnNotEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::aws:policy/PowerUserAccess"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+config:
+  aws:region: eu-west-2
+  aws:profile: st-prod
+  aws:allowedAccountIds:
+    - '322517362875'
+encryptionsalt: v1:znqPZ+LVhkQ=:v1:vH3L7tZIhrvONB9d:KDF8hRbxNDTETLfFAAw0WxroMuU4tA==

@@ -1,0 +1,14 @@
+{
+  "name": "@hackathon/web",
+  "private": true,
+  "dependencies": {
+    "@hackathon/api-contract": "workspace:*",
+    "next": "16.4.2",
+    "nhsuk-frontend": "10.6.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "sass": "1.106.1"
+  }
+}
