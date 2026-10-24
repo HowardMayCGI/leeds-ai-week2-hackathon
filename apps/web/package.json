@@ -2,8 +2,11 @@
   "name": "@hackathon/web",
   "private": true,
   "dependencies": {
+    "@fontsource/noto-naskh-arabic": "5.3.0",
     "@hackathon/api-contract": "workspace:*",
+    "@hackathon/medicines": "workspace:*",
     "next": "16.4.2",
+    "nhsapp-frontend": "5.3.0",
     "nhsuk-frontend": "10.6.1",
     "react": "19.3.1",
     "react-dom": "19.3.1"

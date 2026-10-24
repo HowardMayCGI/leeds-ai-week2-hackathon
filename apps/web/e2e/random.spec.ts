@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('generates through the local API and has no automated accessibility violations', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/random/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Random number generator');
   const responsePromise = page.waitForResponse('/api/random');
   await page.getByRole('button', { name: 'Generate number' }).click();
@@ -22,7 +22,7 @@ test('reports API errors and allows keyboard retry', async ({ page }) => {
     if (requests === 1) await route.fulfill({ status: 503, body: '{}' });
     else await route.fulfill({ status: 200, contentType: 'application/json', body: '{"number":100}' });
   });
-  await page.goto('/');
+  await page.goto('/random/');
   const button = page.getByRole('button', { name: 'Generate number' });
   await button.focus();
   await page.keyboard.press('Enter');
@@ -42,7 +42,7 @@ test('announces a pending request and ignores repeated clicks', async ({ page })
     await gate;
     await route.fulfill({ contentType: 'application/json', body: '{"number":1}' });
   });
-  await page.goto('/');
+  await page.goto('/random/');
   const button = page.getByRole('button', { name: 'Generate number' });
   await button.click();
   await expect(page.getByRole('status')).toContainText('Generating your number');

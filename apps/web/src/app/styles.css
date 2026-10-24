@@ -19,6 +19,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* The web page: an introduction and view options beside the app on a phone */
 .showcase {
   display: flex;
   min-height: 100svh;
@@ -27,7 +28,7 @@ body {
   justify-content: space-between;
   gap: 72px;
   margin: 0 auto;
-  padding: 48px;
+  padding: 32px 48px;
 }
 
 .showcase-intro {
@@ -36,18 +37,13 @@ body {
 }
 
 .showcase-intro__eyebrow {
-  margin: 0 0 36px;
+  margin: 0 0 28px;
   color: var(--app-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.1px;
   line-height: 1.7;
   text-transform: uppercase;
-}
-
-.showcase-intro__eyebrow span {
-  margin: 0 8px;
-  color: #768692;
 }
 
 .showcase-intro__title {
@@ -65,38 +61,143 @@ body {
 .showcase-intro__rule {
   width: 40px;
   height: 4px;
-  margin: 28px 0;
+  margin: 24px 0;
   background: var(--app-blue);
 }
 
 .showcase-intro__description {
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   font-size: 22px;
   line-height: 1.5;
 }
 
 .showcase-intro__detail {
-  max-width: 320px;
+  max-width: 360px;
   margin: 0;
   color: var(--app-muted);
   font-size: 16px;
   line-height: 1.65;
 }
 
-.showcase-intro__note {
+.showcase-controls {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 48px 0 0;
-  color: var(--app-muted);
-  font-size: 13px;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 340px;
+  margin-top: 36px;
+  padding: 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
 }
 
-.showcase-intro__note span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--app-blue);
+.showcase-controls__title {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+
+.showcase-control {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.showcase-control__label {
+  display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.showcase-control__status:empty {
+  display: none;
+}
+
+.showcase-control__status {
+  margin: 8px 0 0;
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.showcase-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 32px 6px 10px;
+  border: 2px solid var(--app-ink);
+  border-radius: 4px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23212b32' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--app-ink);
+  font: inherit;
+  font-size: 16px;
+  appearance: none;
+}
+
+.showcase-segmented__options {
+  display: flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--app-background);
+}
+
+.showcase-segmented__option {
+  position: relative;
+  flex: 1;
+}
+
+.showcase-segmented__option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.showcase-segmented__option span {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: var(--app-muted);
+  font-size: 15px;
+  text-align: center;
+}
+
+.showcase-segmented__option input:checked + span {
+  background: #fff;
+  box-shadow: 0 1px 3px #212b3233;
+  color: var(--app-ink);
+  font-weight: 700;
+}
+
+.showcase-button {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 2px solid var(--app-blue);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--app-blue);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.showcase-button:hover {
+  background: #e8f1fa;
+}
+
+.showcase-select:focus,
+.showcase-button:focus,
+.showcase-segmented__option input:focus-visible + span {
+  outline: 4px solid #ffeb3b;
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px #212b32 inset;
 }
 
 .phone-frame {
@@ -133,7 +234,7 @@ body {
   display: flex;
   min-height: 788px;
   flex-direction: column;
-  overflow: clip;
+  overflow: hidden;
   border-radius: 42px;
   background: var(--app-background);
 }
@@ -159,12 +260,12 @@ body {
 
 .app-header {
   display: flex;
-  min-height: 82px;
+  min-height: 66px;
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--app-border);
   background: #fff;
 }
@@ -195,12 +296,6 @@ body {
   color: var(--app-blue);
   font-size: 26px;
   line-height: 1;
-}
-
-.app-header__tag {
-  color: var(--app-muted);
-  font-size: 12px;
-  line-height: 1.4;
 }
 
 .app-main {
@@ -344,25 +439,9 @@ body {
   line-height: 1.5;
 }
 
-.app-footer {
-  padding: 20px 24px 12px;
-  text-align: center;
-}
-
-.app-footer p {
-  margin: 0;
-  color: var(--app-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.app-footer .app-footer__detail {
-  margin-top: 2px;
-  font-size: 11px;
-}
-
 .phone-home-indicator {
   display: flex;
+  background: #fff;
   height: 28px;
   flex-shrink: 0;
   align-items: center;
@@ -374,6 +453,27 @@ body {
   height: 5px;
   border-radius: 4px;
   background: var(--app-ink);
+}
+
+/* Fixed height: the phone screen stays one size and only the app content scrolls */
+.app-root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.showcase--fixed .phone-screen {
+  height: min(844px, calc(100svh - 64px));
+  min-height: 600px;
+}
+
+.showcase--fixed .app-root {
+  min-height: 0;
+}
+
+.showcase--fixed .app-main {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 @media (max-width: 900px) and (min-width: 701px) {
@@ -390,24 +490,35 @@ body {
   .showcase-intro__eyebrow {
     margin-bottom: 20px;
   }
-
-  .showcase-intro__note {
-    margin-top: 20px;
-  }
 }
 
+/* On a phone, the web page shrinks to a bar of view options above the app */
 @media (max-width: 700px), (max-width: 1000px) and (pointer: coarse) {
   body {
     background: var(--app-background);
   }
 
   .showcase {
-    display: block;
+    display: flex;
     min-height: 100svh;
+    flex-direction: column;
+    gap: 0;
     padding: 0;
   }
 
-  .showcase-intro,
+  .showcase--fixed {
+    height: 100svh;
+  }
+
+  .showcase-intro {
+    flex: none;
+    max-width: none;
+    background: var(--app-ink);
+    color: #fff;
+  }
+
+  .showcase-intro__text,
+  .showcase-controls__title,
   .phone-status,
   .phone-home-indicator,
   .phone-frame::before,
@@ -415,7 +526,58 @@ body {
     display: none;
   }
 
+  .showcase-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 12px;
+    max-width: none;
+    margin: 0;
+    padding: max(8px, env(safe-area-inset-top)) 16px 10px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .showcase-control {
+    flex: 1 1 140px;
+  }
+
+  .showcase-control__label {
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .showcase-select,
+  .showcase-button {
+    min-height: 36px;
+    font-size: 14px;
+  }
+
+  .showcase-button {
+    border-color: #fff;
+    background: none;
+    color: #fff;
+  }
+
+  .showcase-segmented__options {
+    background: #ffffff26;
+  }
+
+  .showcase-segmented__option span {
+    padding: 6px 8px;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .showcase-segmented__option input:checked + span {
+    color: var(--app-ink);
+  }
+
   .phone-frame {
+    display: flex;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     padding: 0;
     border: 0;
@@ -424,13 +586,15 @@ body {
     box-shadow: none;
   }
 
-  .phone-screen {
-    min-height: 100svh;
+  .phone-screen,
+  .showcase--fixed .phone-screen {
+    flex: 1;
+    height: auto;
+    min-height: 0;
     border-radius: 0;
   }
 
   .app-header {
-    padding-top: max(20px, env(safe-area-inset-top));
     padding-right: max(24px, env(safe-area-inset-right));
     padding-left: max(24px, env(safe-area-inset-left));
   }
@@ -440,7 +604,8 @@ body {
     padding-left: max(24px, env(safe-area-inset-left));
   }
 
-  .app-footer {
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  .app-nav {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
+

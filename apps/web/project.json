@@ -1,11 +1,12 @@
 {
   "name": "web",
-  "implicitDependencies": ["api-contract"],
+  "implicitDependencies": ["api-contract", "medicines"],
   "targets": {
     "prepare-assets": { "executor": "nx:run-commands", "cache": true, "outputs": ["{projectRoot}/public/assets"], "options": { "command": "node --import tsx apps/web/prepare-assets.ts" } },
     "dev": { "executor": "nx:run-commands", "dependsOn": ["prepare-assets"], "continuous": true, "options": { "cwd": "apps/web", "command": "next dev --hostname 127.0.0.1 --port 3000", "env": { "NEXT_TELEMETRY_DISABLED": "1" } } },
     "build": { "executor": "nx:run-commands", "dependsOn": ["prepare-assets"], "outputs": ["{projectRoot}/out"], "options": { "cwd": "apps/web", "command": "next build", "env": { "NEXT_TELEMETRY_DISABLED": "1" } } },
     "typecheck": { "executor": "nx:run-commands", "options": { "command": "tsc -p apps/web/tsconfig.json" } },
+    "test": { "executor": "nx:run-commands", "options": { "command": "node --import tsx --test 'apps/web/src/**/*.test.ts'" } },
     "e2e": { "executor": "nx:run-commands", "cache": false, "options": { "command": "playwright test --config apps/web/playwright.config.ts" } },
     "install-browser": { "executor": "nx:run-commands", "cache": false, "options": { "command": "playwright install chromium" } }
   }

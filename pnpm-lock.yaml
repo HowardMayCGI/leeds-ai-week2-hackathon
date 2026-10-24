@@ -50,12 +50,21 @@ importers:
 
   apps/web:
     dependencies:
+      '@fontsource/noto-naskh-arabic':
+        specifier: 5.3.0
+        version: 5.3.0
       '@hackathon/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@hackathon/medicines':
+        specifier: workspace:*
+        version: link:../../packages/medicines
       next:
         specifier: 16.4.2
         version: 16.4.2(@opentelemetry/api@1.9.0)(@playwright/test@1.64.1)(@types/node@24.10.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.106.1)
+      nhsapp-frontend:
+        specifier: 5.3.0
+        version: 5.3.0(nhsuk-frontend@10.6.1)
       nhsuk-frontend:
         specifier: 10.6.1
         version: 10.6.1
@@ -83,6 +92,8 @@ importers:
         version: 4.21.4(typescript@5.9.3)
 
   packages/api-contract: {}
+
+  packages/medicines: {}
 
 packages:
 
@@ -267,6 +278,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/noto-naskh-arabic@5.3.0':
+    resolution: {integrity: sha512-S/GDgQ6mh/PKo4mz5+eXNYbEarvpI7yh6eCdOz8tTVbeM7+OUiacIEscaYEibr/+egDtGbO2ZB00sjy1bJC1kQ==}
 
   '@gar/promise-retry@1.0.3':
     resolution: {integrity: sha512-GmzA9ckNokPypTg10pgpeHNQe7ph+iIKKmhKu3Ob9ANkswreCx7R3cKmY781K8QK3AqVL3xVh9A42JvIAbkkSA==}
@@ -1428,6 +1442,12 @@ packages:
       sass:
         optional: true
 
+  nhsapp-frontend@5.3.0:
+    resolution: {integrity: sha512-X7cujseNNIPoxY9AYpYwegjlDbG5NHFvsIeIqJTKolTPHMoYbC/QGq2qjKGKTNVcaujUh7+HKcrm4++cGss61A==}
+    engines: {node: ^24.11.0, npm: ^11.6.1 <11.6.3 || ^11.6.4}
+    peerDependencies:
+      nhsuk-frontend: ^10.0.0
+
   nhsuk-frontend@10.6.1:
     resolution: {integrity: sha512-PZorqQZjZx/A26yJoskCL9z0ib6AtkAyF0o4K/RHr8zRrJyXrUOCnMbjy0VNXsGO4tfTNMwqlkwATKs4a0xayw==}
     engines: {node: ^20.9.0 || ^22.11.0 || >= 24.11.0}
@@ -1999,6 +2019,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@fontsource/noto-naskh-arabic@5.3.0': {}
 
   '@gar/promise-retry@1.0.3': {}
 
@@ -3091,6 +3113,10 @@ snapshots:
       - '@babel/core'
       - '@types/node'
       - babel-plugin-macros
+
+  nhsapp-frontend@5.3.0(nhsuk-frontend@10.6.1):
+    dependencies:
+      nhsuk-frontend: 10.6.1
 
   nhsuk-frontend@10.6.1: {}
 
