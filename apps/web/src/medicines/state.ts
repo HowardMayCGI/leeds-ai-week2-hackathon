@@ -1,11 +1,11 @@
 import {
-  createProposal, initialAnswers, PATIENT_RECORD, toRoutine,
-  type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse,
+  createProposal, initialAnswers, needsDetails, toRoutine,
+  type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse, type RecordDetails, type RecordMedicine,
 } from '@hackathon/medicines';
 import { isLanguage, type Language } from './i18n';
 
 export type Screen =
-  | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'additions' | 'addition-form'
+  | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'record-details' | 'additions' | 'addition-form' | 'addition-timing'
   | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation'
   | 'messages' | 'profile';
 
@@ -15,13 +15,15 @@ export interface Draft {
   selected: string[];
   /** The patient chose "None of these" for their record medicines. */
   noneSelected: boolean;
+  /** How the patient takes record medicines whose record has no dose or frequency, by record id. */
+  recordDetails: Record<string, RecordDetails>;
   additions: PatientAddition[];
 }
 
 export type Permission = 'not-requested' | 'granted' | 'denied';
 
 export interface SavedSchedule {
-  version: 2;
+  version: 3;
   savedAt: string;
   draft: Draft;
   response: QuestionnaireResponse;
@@ -45,30 +47,40 @@ export interface State {
   proposal?: Proposal;
   changeFlow?: ChangeFlow;
   editingAdditionId?: string;
+  /** The record medicine whose details the patient is giving. */
+  editingRecordId?: string;
   saved?: SavedSchedule;
 }
 
 export function emptyDraft(): Draft {
-  return { answers: initialAnswers(), selected: [], noneSelected: false, additions: [] };
+  return { answers: initialAnswers(), selected: [], noneSelected: false, recordDetails: {}, additions: [] };
 }
 
 export function initialState(): State {
   return { screen: 'prescriptions', draft: emptyDraft(), updating: false };
 }
 
-export function proposalFor(draft: Draft): Proposal | undefined {
+export function proposalFor(draft: Draft, record: RecordMedicine[]): Proposal | undefined {
   const routine = toRoutine(draft.answers);
   if (!routine) return undefined;
-  return createProposal({ routine, record: PATIENT_RECORD, selectedRecordIds: draft.selected, additions: draft.additions });
+  return createProposal({ routine, record, selectedRecordIds: draft.selected, additions: draft.additions, recordDetails: draft.recordDetails });
+}
+
+/** The next selected record medicine the patient still needs to tell us about, in record order. */
+export function nextPendingDetails(draft: Draft, record: RecordMedicine[], after?: string): string | undefined {
+  const start = after ? record.findIndex(medicine => medicine.id === after) + 1 : 0;
+  return record.slice(start).find(medicine => draft.selected.includes(medicine.id) && needsDetails(medicine) && !draft.recordDetails[medicine.id])?.id;
 }
 
 // ---------------------------------------------------------------------------
-// Device storage. The language preference is a per-device convenience. The
-// saved schedule is kept on the device until API persistence is added.
+// Device storage. The language and patient choices are per-device
+// conveniences. Each patient's saved schedule is kept on the device until API
+// persistence is added.
 // ---------------------------------------------------------------------------
 
 const LANGUAGE_KEY = 'lai-app:language';
-const SAVED_KEY = 'lai-app:medicines:saved-schedule';
+const PATIENT_KEY = 'lai-app:patient';
+const savedKey = (patient: string) => `lai-app:medicines:saved-schedule:${patient}`;
 
 function storage(): Storage | undefined {
   try {
@@ -91,23 +103,35 @@ export function storeLanguage(language: Language) {
   try { storage()?.setItem(LANGUAGE_KEY, language); } catch { /* preference is optional */ }
 }
 
-export function loadSaved(): SavedSchedule | undefined {
+export function loadPatient(): string | undefined {
   try {
-    const value = JSON.parse(storage()?.getItem(SAVED_KEY) ?? 'null') as SavedSchedule | null;
-    return value?.version === 2 && value.proposal?.status === 'ok' ? value : undefined;
+    return storage()?.getItem(PATIENT_KEY) ?? undefined;
   } catch {
     return undefined;
   }
 }
 
-export function storeSaved(saved: SavedSchedule | undefined) {
+export function storePatient(patient: string) {
+  try { storage()?.setItem(PATIENT_KEY, patient); } catch { /* preference is optional */ }
+}
+
+export function loadSaved(patient: string): SavedSchedule | undefined {
   try {
-    if (saved) storage()?.setItem(SAVED_KEY, JSON.stringify(saved));
-    else storage()?.removeItem(SAVED_KEY);
+    const value = JSON.parse(storage()?.getItem(savedKey(patient)) ?? 'null') as SavedSchedule | null;
+    return value?.version === 3 && value.proposal?.status === 'ok' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function storeSaved(patient: string, saved: SavedSchedule | undefined) {
+  try {
+    if (saved) storage()?.setItem(savedKey(patient), JSON.stringify(saved));
+    else storage()?.removeItem(savedKey(patient));
   } catch { /* the schedule still works for this visit */ }
 }
 
 /** Forgets everything this device remembers about the patient, as for a new user. */
-export function clearDevice() {
-  storeSaved(undefined);
+export function clearDevice(patient: string) {
+  storeSaved(patient, undefined);
 }
