@@ -4,7 +4,7 @@
  * instructions, so these come from NHS medicines guidance (linked in `source`).
  * They are a starting point for pharmacist review, not a clinical knowledge base.
  */
-export const RULES_VERSION = 'rules-2026-10-24c';
+export const RULES_VERSION = 'rules-2026-10-24d';
 
 /** A subset of FHIR R4 `Timing.repeat.when` codes. */
 export type TimingWhen = 'ACM' | 'ACD' | 'ACV' | 'C' | 'CM' | 'CD' | 'CV' | 'MORN' | 'EVE' | 'HS' | 'WAKE';
@@ -41,6 +41,9 @@ export const ADMINISTRATION_RULES: Record<string, AdministrationRule> = {
   // Rapid-acting insulin is injected at mealtimes.
   insulin: { food: 'with-food', source: 'https://www.nhs.uk/conditions/type-1-diabetes/insulin/' },
   simvastatin: { when: ['EVE'], source: 'https://www.nhs.uk/medicines/simvastatin/' },
+  warfarin: { when: ['EVE'], source: 'https://www.nhs.uk/medicines/warfarin/how-and-when-to-take-warfarin/' },
+  // A thiazide diuretic is taken in the morning so it does not wake the patient at night to pee.
+  hydrochlorothiazide: { when: ['MORN'], source: 'https://www.nhs.uk/medicines/bendroflumethiazide/' },
   ferrous: {
     separateFrom: [{ ingredients: ['calcium', 'omeprazole', 'lansoprazole'], hours: 2 }],
     source: 'https://www.nhs.uk/medicines/ferrous-sulfate/',
