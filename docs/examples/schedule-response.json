@@ -1,0 +1,179 @@
+{
+  "demoOnly": true,
+  "clinicallyValidated": false,
+  "versions": {
+    "scheduler": "daily-api-2026-10-24-v1",
+    "administration": "demo-administration-2026-10-24-v1+rules-2026-10-24",
+    "interactions": "demo-interactions-2026-10-24-v1",
+    "catalogue": "poc-2026-10-24"
+  },
+  "warnings": [
+    {
+      "code": "limited_demo_data",
+      "medicineIds": [],
+      "message": "Demonstration proposal only, not for clinical use. Medicine knowledge is incomplete; no interaction match does not establish safety. Confirm prescriptions, quantities and instructions before using a plan.",
+      "blocking": false,
+      "action": "confirm_instructions",
+      "severity": "warning"
+    },
+    {
+      "code": "administration_guidance",
+      "medicineIds": ["record-levo"],
+      "message": "Take on an empty stomach 30 to 60 minutes before the first meal, caffeine or other medicines. Confirm the prescription instructions. Longer interaction-specific gaps still apply.",
+      "blocking": false,
+      "action": "information",
+      "severity": "info"
+    },
+    {
+      "code": "administration_guidance",
+      "medicineIds": ["record-metformin"],
+      "message": "Demo administration rule: take with food.",
+      "blocking": false,
+      "action": "information",
+      "severity": "info"
+    },
+    {
+      "code": "dose_interval_unconfirmed",
+      "medicineIds": ["record-metformin"],
+      "message": "Dose times are spread through the waking day. No minimum between doses was supplied; confirm any prescribed interval.",
+      "blocking": false,
+      "action": "confirm_instructions",
+      "severity": "warning"
+    },
+    {
+      "code": "administration_not_defined",
+      "medicineIds": ["user-iron"],
+      "message": "No product administration rule is defined in this demo. Confirm food, timing and special instructions; absence of a rule does not mean unrestricted use.",
+      "blocking": false,
+      "action": "confirm_instructions",
+      "severity": "warning"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "levothyroxine--ferrous-sulfate:record-levo:user-iron",
+      "ingredients": ["levothyroxine", "ferrous-sulfate"],
+      "severity": "moderate",
+      "mechanism": "pharmacokinetic",
+      "effect": "Iron reduces absorption of levothyroxine.",
+      "patientGuidance": "Keep these doses at least 4 hours apart. Ask your pharmacist to confirm the timing and any thyroid blood tests needed.",
+      "management": {
+        "action": "separate_doses",
+        "minimumGapMinutes": 240,
+        "direction": "either_order",
+        "guidance": "Apply the gap to every dose, including across midnight. Spacing may not eliminate the interaction; thyroid monitoring may still be needed."
+      },
+      "sourceIds": ["levothyroxine-label"],
+      "ruleId": "levothyroxine--ferrous-sulfate",
+      "medications": [
+        {
+          "id": "record-levo",
+          "name": "Levothyroxine sodium 75microgram tablets",
+          "code": "39698911000001100",
+          "system": "http://snomed.info/sct",
+          "dose": {
+            "value": 1,
+            "unit": "tablet"
+          },
+          "asNeeded": false,
+          "instructions": []
+        },
+        {
+          "id": "user-iron",
+          "name": "Ferrous sulfate 325mg modified-release tablets",
+          "code": "39107411000001105",
+          "system": "http://snomed.info/sct",
+          "dose": {
+            "value": 1,
+            "unit": "tablet"
+          },
+          "asNeeded": false,
+          "instructions": []
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "admin-levothyroxine",
+      "title": "NHS: levothyroxine, how to take it",
+      "url": "https://www.nhs.uk/medicines/levothyroxine/",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "levothyroxine-label",
+      "title": "DailyMed: Euthyrox prescribing information, drug interactions",
+      "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=bc3c6830-ba68-4ba3-9896-a12d0ad0b275",
+      "accessedOn": "2026-10-24"
+    }
+  ],
+  "status": "proposed",
+  "schedule": {
+    "routine": {
+      "wake": "07:00",
+      "sleep": "22:30",
+      "meals": {
+        "breakfast": "08:00",
+        "lunch": "13:00",
+        "dinner": "18:30"
+      }
+    },
+    "doses": [
+      {
+        "medicineId": "record-levo",
+        "name": "Levothyroxine sodium 75microgram tablets",
+        "source": "record",
+        "dose": {
+          "quantity": 1,
+          "unit": "tablet"
+        },
+        "time": "07:00",
+        "dayOffset": 0,
+        "minute": 420,
+        "instructions": [
+          "Take on an empty stomach 30 to 60 minutes before the first meal, caffeine or other medicines. Confirm the prescription instructions. Longer interaction-specific gaps still apply."
+        ]
+      },
+      {
+        "medicineId": "record-metformin",
+        "name": "Metformin 500mg",
+        "source": "record",
+        "dose": {
+          "quantity": 1,
+          "unit": "tablet"
+        },
+        "time": "08:00",
+        "dayOffset": 0,
+        "minute": 480,
+        "instructions": ["Demo administration rule: take with food."]
+      },
+      {
+        "medicineId": "user-iron",
+        "name": "Ferrous sulfate 325mg modified-release tablets",
+        "source": "user",
+        "dose": {
+          "quantity": 1,
+          "unit": "tablet"
+        },
+        "time": "13:00",
+        "dayOffset": 0,
+        "minute": 780,
+        "instructions": []
+      },
+      {
+        "medicineId": "record-metformin",
+        "name": "Metformin 500mg",
+        "source": "record",
+        "dose": {
+          "quantity": 1,
+          "unit": "tablet"
+        },
+        "time": "18:30",
+        "dayOffset": 0,
+        "minute": 1110,
+        "instructions": ["Demo administration rule: take with food."]
+      }
+    ],
+    "asNeeded": []
+  }
+}

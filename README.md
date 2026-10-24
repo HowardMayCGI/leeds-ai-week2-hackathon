@@ -1,4 +1,5 @@
 # leeds-ai-week2-hackathon
+
 Leeds AI Week2 Hackathon repository
 
 ## Schedule my medicines (proof of concept)
@@ -9,12 +10,12 @@ The page has two parts. The **web page** introduces the app and holds the view o
 
 **Prescriptions → Introduction → Routine (2 screens) → Select medicines → How do you take it? (only for record medicines with no dose or frequency) → Add anything missing (with a timing check) → Check answers → Proposed schedule → Save → Reminders.** Returning users go straight to their saved schedule, where they can view dose details, change their routine or medicines (creating a new proposal that only replaces the saved one when saved), manage the single reminder switch and request a pharmacist review.
 
-| Where | What |
-| --- | --- |
-| `packages/medicines` | Framework-free domain code with unit tests: the versioned FHIR R4 routine `Questionnaire` (static JSON with FHIR translation extensions), a small renderer model (`enableWhen`, validation, `QuestionnaireResponse`), medicine options and fuzzy search built from the patient records, structured doses, reading record medicines, administration rules from NHS guidance, the deterministic scheduler, an independent checker and the day timeline. |
-| `apps/web/src/medicines` | The web page and client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. It reads `/api/patients`, `/api/patients/{nhsNumber}/medications` and `/api/medicines`. |
-| `apps/api` | Reads `test_data/`. `/api/medicines` lists every distinct medicine across all patients, which search suggests from. |
-| `apps/web/e2e/medicines.spec.ts` | Browser walkthrough of the design doc's checks, with axe accessibility scans in English and Urdu. |
+| Where                            | What                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/medicines`             | Framework-free domain code with unit tests: the versioned FHIR R4 routine `Questionnaire` (static JSON with FHIR translation extensions), a small renderer model (`enableWhen`, validation, `QuestionnaireResponse`), medicine options and fuzzy search built from the patient records, structured doses, reading record medicines, administration rules from NHS guidance, the deterministic scheduler, an independent checker and the day timeline. |
+| `apps/web/src/medicines`         | The web page and client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. It reads `/api/patients`, `/api/patients/{nhsNumber}/medications` and `/api/medicines`.                                                                                                                                                                                                                                                     |
+| `apps/api`                       | Reads `test_data/`. `/api/medicines` lists every distinct medicine across all patients, which search suggests from.                                                                                                                                                                                                                                                                                                                                   |
+| `apps/web/e2e/medicines.spec.ts` | Browser walkthrough of the design doc's checks, with axe accessibility scans in English and Urdu.                                                                                                                                                                                                                                                                                                                                                     |
 
 Behaviour worth knowing:
 
@@ -29,9 +30,15 @@ Behaviour worth knowing:
 - The scheduler never relaxes a rule. If no valid schedule exists (for example, naproxen with food twice a day when only one meal is eaten) the page explains why and offers no save. Every proposal is re-verified by the independent checker before it is shown.
 - Reminders default to ON, and notification permission is a separate state asked for with a device-style prompt.
 - The saved schedule is kept in this browser's local storage, separately for each patient, until API persistence is added. **Start again as a new user** on the web page clears the selected patient's schedule. The patient, language and height preferences are also remembered on the device.
-- Everything runs in the static UI, so no infrastructure changed. Moving schedule generation behind the API would need `POST` allowed on the CloudFront `/api/*` behaviour, which requires approval.
+- The current journey generates its proposals in the static UI. A separate `POST /api/schedules` service now accepts selected record/user medicines, doses and a routine, and returns a JSON proposal and warnings. The CloudFront API configuration permits POST; deploy that change before calling the hosted endpoint. No new AWS resources are added.
 
 The original random number generator is now at `/random/`.
+
+The API also exposes `GET /api/patients/:nhsNumber/interactions`: potential interactions from the patient's current medicines, with spacing constraints and separate prescriber/dose-review guidance. It uses a labelled, incomplete hackathon dataset mapping all 36 supplied products, with 10 sourced example rules. See [the interaction model, JSON examples, API contract and demo patients](docs/drug-interactions.md). This endpoint is not yet connected to the web scheduler and is not for clinical use.
+
+For combined scheduling inputs, use `GET /api/patients/:nhsNumber/schedule-inputs`. It adds original prescription instructions, structured timing and administration requirements, interaction assessments and explicit confirmation/review issues. Four sourced demo administration rules cover six products; missing coverage is flagged. See [the scheduler contract, production data sources and frontend integration steps](docs/scheduler-inputs.md). The patient routine and current medicine use still require confirmation.
+
+For a computed proposal, use `POST /api/schedules` with the complete selected medicine list and routine. The service checks user additions alongside record medicines, applies meal/timing and interaction requirements, verifies gaps across successive days, and returns `proposed` or `blocked` with structured warnings. See [the API contract and runnable examples](docs/scheduler-api.md). The UI has not yet switched to this endpoint.
 
 ## Random number website
 
@@ -45,12 +52,12 @@ Browser → CloudFront (*.cloudfront.net)
 
 Each environment has its own resources and CloudFront URL. Both use AWS account `322517362875`, region `eu-west-2` and SSO profile `st-prod`. No domain or custom certificate is provisioned.
 
-| Directory | Purpose |
-| --- | --- |
-| `apps/web` | Next.js App Router UI and browser tests |
-| `apps/api` | Lambda handler, local HTTP adapter and API tests |
-| `packages/api-contract` | Shared response type and runtime response validation |
-| `infra` | TypeScript Pulumi project, `staging` and `prod` stacks, deployment commands |
+| Directory               | Purpose                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `apps/web`              | Next.js App Router UI and browser tests                                     |
+| `apps/api`              | Lambda handler, local HTTP adapter and API tests                            |
+| `packages/api-contract` | Shared response type and runtime response validation                        |
+| `infra`                 | TypeScript Pulumi project, `staging` and `prod` stacks, deployment commands |
 
 ### Install and run locally
 
@@ -161,17 +168,17 @@ pnpm nx run infra:sso-configure
 
 Use these values when prompted (press Enter to accept a matching default):
 
-| Setting | Value |
-| --- | --- |
-| SSO session name | `st-prod` |
-| SSO start URL | `https://ssoins-7535ba8fae31f511.portal.eu-west-2.app.aws` |
-| SSO region | `eu-west-2` |
-| SSO registration scopes | `sso:account:access` |
-| AWS account | `322517362875` |
-| Role | `HackathonBuilders` |
-| Default client Region | `eu-west-2` |
-| CLI default output format | `json` |
-| Profile name | `st-prod` |
+| Setting                   | Value                                                      |
+| ------------------------- | ---------------------------------------------------------- |
+| SSO session name          | `st-prod`                                                  |
+| SSO start URL             | `https://ssoins-7535ba8fae31f511.portal.eu-west-2.app.aws` |
+| SSO region                | `eu-west-2`                                                |
+| SSO registration scopes   | `sso:account:access`                                       |
+| AWS account               | `322517362875`                                             |
+| Role                      | `HackathonBuilders`                                        |
+| Default client Region     | `eu-west-2`                                                |
+| CLI default output format | `json`                                                     |
+| Profile name              | `st-prod`                                                  |
 
 This Nx target runs the AWS SSO wizard for profile `st-prod` with device authorization and automatic browser opening disabled. Open the printed URL in a browser, on another device if needed, and enter the current code. This avoids the `gio: ... Operation not supported` browser-opening error. Complete authorization, then return to the terminal and finish the wizard. The profile name is already supplied by the command. If only one account or role is available, it is selected automatically. If asked whether to configure AWS skills and the AWS MCP server, choose `n` for this setup.
 

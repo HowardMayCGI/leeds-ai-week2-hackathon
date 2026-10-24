@@ -1,0 +1,578 @@
+{
+  "version": "demo-interactions-2026-10-24-v1",
+  "demoOnly": true,
+  "clinicallyValidated": false,
+  "compiledOn": "2026-10-24",
+  "ingredients": [
+    {
+      "id": "aspirin",
+      "name": "aspirin"
+    },
+    {
+      "id": "atenolol",
+      "name": "atenolol"
+    },
+    {
+      "id": "atorvastatin",
+      "name": "atorvastatin"
+    },
+    {
+      "id": "amlodipine",
+      "name": "amlodipine"
+    },
+    {
+      "id": "prasugrel",
+      "name": "prasugrel"
+    },
+    {
+      "id": "clopidogrel",
+      "name": "clopidogrel"
+    },
+    {
+      "id": "simvastatin",
+      "name": "simvastatin"
+    },
+    {
+      "id": "metoprolol",
+      "name": "metoprolol"
+    },
+    {
+      "id": "glyceryl-trinitrate",
+      "name": "glyceryl trinitrate"
+    },
+    {
+      "id": "paracetamol",
+      "name": "paracetamol"
+    },
+    {
+      "id": "codeine",
+      "name": "codeine"
+    },
+    {
+      "id": "lisinopril",
+      "name": "lisinopril"
+    },
+    {
+      "id": "hydrochlorothiazide",
+      "name": "hydrochlorothiazide"
+    },
+    {
+      "id": "pethidine",
+      "name": "pethidine"
+    },
+    {
+      "id": "tacrolimus",
+      "name": "tacrolimus"
+    },
+    {
+      "id": "alendronic-acid",
+      "name": "alendronic acid"
+    },
+    {
+      "id": "insulin-lispro",
+      "name": "insulin lispro"
+    },
+    {
+      "id": "naproxen",
+      "name": "naproxen"
+    },
+    {
+      "id": "levothyroxine",
+      "name": "levothyroxine"
+    },
+    {
+      "id": "oxycodone",
+      "name": "oxycodone"
+    },
+    {
+      "id": "fentanyl",
+      "name": "fentanyl"
+    },
+    {
+      "id": "salbutamol",
+      "name": "salbutamol"
+    },
+    {
+      "id": "fluticasone-propionate",
+      "name": "fluticasone propionate"
+    },
+    {
+      "id": "salmeterol",
+      "name": "salmeterol"
+    },
+    {
+      "id": "ferrous-sulfate",
+      "name": "ferrous sulfate"
+    },
+    {
+      "id": "diphenhydramine",
+      "name": "diphenhydramine"
+    },
+    {
+      "id": "verapamil",
+      "name": "verapamil"
+    },
+    {
+      "id": "warfarin",
+      "name": "warfarin"
+    },
+    {
+      "id": "digoxin",
+      "name": "digoxin"
+    },
+    {
+      "id": "morphine",
+      "name": "morphine"
+    },
+    {
+      "id": "budesonide",
+      "name": "budesonide"
+    },
+    {
+      "id": "tramadol",
+      "name": "tramadol"
+    }
+  ],
+  "products": [
+    {
+      "code": "1217387008",
+      "system": "http://snomed.info/sct",
+      "name": "Naproxen 250mg tablets",
+      "ingredientIds": ["naproxen"],
+      "route": "oral"
+    },
+    {
+      "code": "1255204003",
+      "system": "http://snomed.info/sct",
+      "name": "Budesonide 250micrograms/ml nebuliser suspension",
+      "ingredientIds": ["budesonide"],
+      "route": "inhaled"
+    },
+    {
+      "code": "18358011000001101",
+      "system": "http://snomed.info/sct",
+      "name": "Glyceryl trinitrate 400micrograms/dose pump sublingual spray",
+      "ingredientIds": ["glyceryl-trinitrate"],
+      "route": "sublingual"
+    },
+    {
+      "code": "28808811000001101",
+      "system": "http://snomed.info/sct",
+      "name": "Tacrolimus 1mg modified-release tablets",
+      "ingredientIds": ["tacrolimus"],
+      "route": "oral"
+    },
+    {
+      "code": "2891711000001108",
+      "system": "http://snomed.info/sct",
+      "name": "OxyContin 10mg modified-release tablets (Napp Pharmaceuticals Ltd)",
+      "ingredientIds": ["oxycodone"],
+      "route": "oral"
+    },
+    {
+      "code": "318474009",
+      "system": "http://snomed.info/sct",
+      "name": "Metoprolol tartrate 100mg tablets",
+      "ingredientIds": ["metoprolol"],
+      "route": "oral"
+    },
+    {
+      "code": "319781007",
+      "system": "http://snomed.info/sct",
+      "name": "Aspirin 75mg gastro-resistant tablets",
+      "ingredientIds": ["aspirin"],
+      "route": "oral"
+    },
+    {
+      "code": "322236009",
+      "system": "http://snomed.info/sct",
+      "name": "Paracetamol 500mg tablets",
+      "ingredientIds": ["paracetamol"],
+      "route": "oral"
+    },
+    {
+      "code": "322341003",
+      "system": "http://snomed.info/sct",
+      "name": "Paracetamol 500mg / Codeine phosphate 30mg tablets",
+      "ingredientIds": ["paracetamol", "codeine"],
+      "route": "oral"
+    },
+    {
+      "code": "322623000",
+      "system": "http://snomed.info/sct",
+      "name": "Tramadol 50mg capsules",
+      "ingredientIds": ["tramadol"],
+      "route": "oral"
+    },
+    {
+      "code": "322692000",
+      "system": "http://snomed.info/sct",
+      "name": "Oxycodone 10mg capsules",
+      "ingredientIds": ["oxycodone"],
+      "route": "oral"
+    },
+    {
+      "code": "3280111000001104",
+      "system": "http://snomed.info/sct",
+      "name": "Insulin Lispro 100 UNT/ML Injectable Solution [Humalog]",
+      "ingredientIds": ["insulin-lispro"],
+      "route": "injection"
+    },
+    {
+      "code": "36120011000001101",
+      "system": "http://snomed.info/sct",
+      "name": "Fentanyl 25micrograms/hour transdermal patches",
+      "ingredientIds": ["fentanyl"],
+      "route": "transdermal"
+    },
+    {
+      "code": "38897511000001104",
+      "system": "http://snomed.info/sct",
+      "name": "Fluticasone propionate 250micrograms/dose / Salmeterol 50micrograms/dose dry powder inhaler",
+      "ingredientIds": ["fluticasone-propionate", "salmeterol"],
+      "route": "inhaled"
+    },
+    {
+      "code": "39107411000001105",
+      "system": "http://snomed.info/sct",
+      "name": "Ferrous sulfate 325mg modified-release tablets",
+      "ingredientIds": ["ferrous-sulfate"],
+      "route": "oral"
+    },
+    {
+      "code": "39689111000001106",
+      "system": "http://snomed.info/sct",
+      "name": "Clopidogrel 75mg tablets",
+      "ingredientIds": ["clopidogrel"],
+      "route": "oral"
+    },
+    {
+      "code": "39695411000001103",
+      "system": "http://snomed.info/sct",
+      "name": "atorvastatin 10 MG Oral Tablet",
+      "ingredientIds": ["atorvastatin"],
+      "route": "oral"
+    },
+    {
+      "code": "39698911000001100",
+      "system": "http://snomed.info/sct",
+      "name": "Levothyroxine sodium 75microgram tablets",
+      "ingredientIds": ["levothyroxine"],
+      "route": "oral"
+    },
+    {
+      "code": "39702511000001101",
+      "system": "http://snomed.info/sct",
+      "name": "Pethidine Hydrochloride 50 MG Oral Tablet",
+      "ingredientIds": ["pethidine"],
+      "route": "oral"
+    },
+    {
+      "code": "39702811000001103",
+      "system": "http://snomed.info/sct",
+      "name": "Prasugrel 10mg tablets",
+      "ingredientIds": ["prasugrel"],
+      "route": "oral"
+    },
+    {
+      "code": "39709511000001105",
+      "system": "http://snomed.info/sct",
+      "name": "Salbutamol 5mg/ml nebuliser liquid",
+      "ingredientIds": ["salbutamol"],
+      "route": "inhaled"
+    },
+    {
+      "code": "39728011000001102",
+      "system": "http://snomed.info/sct",
+      "name": "Alendronic acid 10mg tablets",
+      "ingredientIds": ["alendronic-acid"],
+      "route": "oral"
+    },
+    {
+      "code": "42107811000001100",
+      "system": "http://snomed.info/sct",
+      "name": "Naproxen 500mg tablets",
+      "ingredientIds": ["naproxen"],
+      "route": "oral"
+    },
+    {
+      "code": "42188011000001108",
+      "system": "http://snomed.info/sct",
+      "name": "diphenhydrAMINE Hydrochloride 25 MG Oral Tablet",
+      "ingredientIds": ["diphenhydramine"],
+      "route": "oral"
+    },
+    {
+      "code": "42206211000001100",
+      "system": "http://snomed.info/sct",
+      "name": "amLODIPine 2.5 MG Oral Tablet",
+      "ingredientIds": ["amlodipine"],
+      "route": "oral"
+    },
+    {
+      "code": "42208511000001101",
+      "system": "http://snomed.info/sct",
+      "name": "Digoxin 125microgram tablets",
+      "ingredientIds": ["digoxin"],
+      "route": "oral"
+    },
+    {
+      "code": "42211611000001108",
+      "system": "http://snomed.info/sct",
+      "name": "Hydrochlorothiazide 25 MG Oral Tablet",
+      "ingredientIds": ["hydrochlorothiazide"],
+      "route": "oral"
+    },
+    {
+      "code": "42217411000001102",
+      "system": "http://snomed.info/sct",
+      "name": "Verapamil 80mg tablets",
+      "ingredientIds": ["verapamil"],
+      "route": "oral"
+    },
+    {
+      "code": "42217911000001105",
+      "system": "http://snomed.info/sct",
+      "name": "Warfarin 5mg tablets",
+      "ingredientIds": ["warfarin"],
+      "route": "oral"
+    },
+    {
+      "code": "42370411000001101",
+      "system": "http://snomed.info/sct",
+      "name": "atenolol 100 MG Oral Tablet",
+      "ingredientIds": ["atenolol"],
+      "route": "oral"
+    },
+    {
+      "code": "42376111000001109",
+      "system": "http://snomed.info/sct",
+      "name": "lisinopril 10 MG Oral Tablet",
+      "ingredientIds": ["lisinopril"],
+      "route": "oral"
+    },
+    {
+      "code": "42381911000001105",
+      "system": "http://snomed.info/sct",
+      "name": "Simvastatin 10mg tablets",
+      "ingredientIds": ["simvastatin"],
+      "route": "oral"
+    },
+    {
+      "code": "42382111000001102",
+      "system": "http://snomed.info/sct",
+      "name": "Simvastatin 20mg tablets",
+      "ingredientIds": ["simvastatin"],
+      "route": "oral"
+    },
+    {
+      "code": "765955001",
+      "system": "http://snomed.info/sct",
+      "name": "Morphine sulfate 10mg modified-release capsules",
+      "ingredientIds": ["morphine"],
+      "route": "oral"
+    },
+    {
+      "code": "770300007",
+      "system": "http://snomed.info/sct",
+      "name": "Salbutamol 100micrograms/dose inhaler CFC free",
+      "ingredientIds": ["salbutamol"],
+      "route": "inhaled"
+    },
+    {
+      "code": "783048008",
+      "system": "http://snomed.info/sct",
+      "name": "Amlodipine 10mg tablets",
+      "ingredientIds": ["amlodipine"],
+      "route": "oral"
+    }
+  ],
+  "sources": [
+    {
+      "id": "levothyroxine-label",
+      "title": "DailyMed: Euthyrox prescribing information, drug interactions",
+      "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=bc3c6830-ba68-4ba3-9896-a12d0ad0b275",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "warfarin-cuh",
+      "title": "Cambridge University Hospitals: oral anticoagulant therapy",
+      "url": "https://www.cuh.nhs.uk/patient-information/oral-anticoagulant-therapy-with-warfarin-phenindione-or-acencoumarol/",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "naproxen-leaflet",
+      "title": "Naproxen patient leaflet, interactions",
+      "url": "https://www.medicines.org.uk/emc/files/pil.2099.pdf?filename=PIL.2099.pdf",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "verapamil-label",
+      "title": "DailyMed: verapamil tablets, beta-blockers and digitalis",
+      "url": "https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "simvastatin-mhra",
+      "title": "MHRA: simvastatin dose limitations with amlodipine",
+      "url": "https://www.gov.uk/drug-safety-update/simvastatin-dose-limitations-with-concomitant-amlodipine-or-diltiazem",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "simvastatin-label",
+      "title": "Simvastatin 20mg SmPC, interactions",
+      "url": "https://www.medicines.org.uk/emc/product/10666/smpc",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "tacrolimus-ema",
+      "title": "EMA: Envarsus product information, CYP3A4 inhibitors",
+      "url": "https://www.ema.europa.eu/en/documents/product-information/envarsus-epar-product-information_en.pdf",
+      "accessedOn": "2026-10-24"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "levothyroxine--ferrous-sulfate",
+      "ingredients": ["levothyroxine", "ferrous-sulfate"],
+      "severity": "moderate",
+      "mechanism": "pharmacokinetic",
+      "effect": "Iron reduces absorption of levothyroxine.",
+      "patientGuidance": "Keep these doses at least 4 hours apart. Ask your pharmacist to confirm the timing and any thyroid blood tests needed.",
+      "management": {
+        "action": "separate_doses",
+        "minimumGapMinutes": 240,
+        "direction": "either_order",
+        "guidance": "Apply the gap to every dose, including across midnight. Spacing may not eliminate the interaction; thyroid monitoring may still be needed."
+      },
+      "sourceIds": ["levothyroxine-label"]
+    },
+    {
+      "id": "warfarin--naproxen",
+      "ingredients": ["warfarin", "naproxen"],
+      "severity": "major",
+      "mechanism": "pharmacodynamic",
+      "effect": "Increased bleeding risk, including gastrointestinal bleeding.",
+      "patientGuidance": "Contact your GP or anticoagulation team promptly to check this combination. Taking the medicines at different times does not remove the risk.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Avoid NSAID use where possible; prescriber to assess alternatives and bleeding risk. Do not automatically stop prescribed anticoagulation."
+      },
+      "sourceIds": ["warfarin-cuh"]
+    },
+    {
+      "id": "warfarin--aspirin",
+      "ingredients": ["warfarin", "aspirin"],
+      "severity": "major",
+      "mechanism": "pharmacodynamic",
+      "effect": "Combined anticoagulant and antiplatelet effects increase bleeding risk.",
+      "patientGuidance": "Ask your GP or anticoagulation team to confirm that both medicines are intended. Do not stop either prescribed medicine on your own.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "May be intentionally prescribed for selected indications; confirm indication and monitoring. Dose separation does not resolve bleeding risk."
+      },
+      "sourceIds": ["warfarin-cuh"]
+    },
+    {
+      "id": "clopidogrel--naproxen",
+      "ingredients": ["clopidogrel", "naproxen"],
+      "severity": "major",
+      "mechanism": "pharmacodynamic",
+      "effect": "Increased risk of gastrointestinal bleeding.",
+      "patientGuidance": "Ask your GP or pharmacist to review this combination. Spacing the doses does not remove the bleeding risk.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Assess alternative analgesia, gastrointestinal protection and bleeding risk."
+      },
+      "sourceIds": ["naproxen-leaflet"]
+    },
+    {
+      "id": "verapamil--atenolol",
+      "ingredients": ["verapamil", "atenolol"],
+      "severity": "major",
+      "mechanism": "pharmacodynamic",
+      "effect": "Additive slowing of heart rate and atrioventricular conduction; possible heart block.",
+      "patientGuidance": "Ask your GP to review this combination and any monitoring needed. Changing the dose times does not remove the risk.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Assess heart rate, conduction and cardiac function; specialist supervision may be needed."
+      },
+      "sourceIds": ["verapamil-label"]
+    },
+    {
+      "id": "verapamil--metoprolol",
+      "ingredients": ["verapamil", "metoprolol"],
+      "severity": "major",
+      "mechanism": "pharmacodynamic",
+      "effect": "Additive slowing of heart rate and atrioventricular conduction; possible heart block.",
+      "patientGuidance": "Ask your GP to review this combination and any monitoring needed. Changing the dose times does not remove the risk.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Assess heart rate, conduction and cardiac function; specialist supervision may be needed."
+      },
+      "sourceIds": ["verapamil-label"]
+    },
+    {
+      "id": "verapamil--digoxin",
+      "ingredients": ["verapamil", "digoxin"],
+      "severity": "major",
+      "mechanism": "pharmacokinetic",
+      "effect": "Verapamil can increase digoxin concentrations and toxicity risk.",
+      "patientGuidance": "Ask your prescriber to check the doses and monitoring. Spacing the doses does not prevent raised digoxin levels.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Review digoxin dose, renal function, levels and heart rate."
+      },
+      "sourceIds": ["verapamil-label"]
+    },
+    {
+      "id": "verapamil--tacrolimus",
+      "ingredients": ["verapamil", "tacrolimus"],
+      "severity": "major",
+      "mechanism": "pharmacokinetic",
+      "effect": "Verapamil can increase tacrolimus exposure.",
+      "patientGuidance": "Contact your transplant or specialist team to check this combination and any blood tests needed.",
+      "management": {
+        "action": "prescriber_review",
+        "guidance": "Specialist to assess tacrolimus levels and dose. Dose separation is insufficient."
+      },
+      "sourceIds": ["tacrolimus-ema"]
+    },
+    {
+      "id": "simvastatin--amlodipine",
+      "ingredients": ["simvastatin", "amlodipine"],
+      "severity": "moderate",
+      "mechanism": "pharmacokinetic",
+      "effect": "Increased simvastatin exposure and muscle toxicity risk; dose-dependent.",
+      "patientGuidance": "Ask your pharmacist or prescriber to confirm your total daily simvastatin dose. This alert does not mean your prescribed dose exceeds the limit.",
+      "management": {
+        "action": "dose_review",
+        "ingredientId": "simvastatin",
+        "maximumDailyDose": {
+          "value": 20,
+          "unit": "mg"
+        },
+        "guidance": "Confirm total daily simvastatin is no more than 20mg. Product strength alone is not the daily dose; timing changes do not replace dose assessment."
+      },
+      "sourceIds": ["simvastatin-mhra"]
+    },
+    {
+      "id": "simvastatin--verapamil",
+      "ingredients": ["simvastatin", "verapamil"],
+      "severity": "moderate",
+      "mechanism": "pharmacokinetic",
+      "effect": "Increased simvastatin exposure and muscle toxicity risk; dose-dependent.",
+      "patientGuidance": "Ask your pharmacist or prescriber to confirm your total daily simvastatin dose. This alert does not mean your prescribed dose exceeds the limit.",
+      "management": {
+        "action": "dose_review",
+        "ingredientId": "simvastatin",
+        "maximumDailyDose": {
+          "value": 20,
+          "unit": "mg"
+        },
+        "guidance": "Confirm total daily simvastatin is no more than 20mg. Product strength alone is not the daily dose; timing changes do not replace dose assessment."
+      },
+      "sourceIds": ["simvastatin-label"]
+    }
+  ]
+}

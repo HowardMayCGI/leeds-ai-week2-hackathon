@@ -1,0 +1,100 @@
+{
+  "version": "demo-administration-2026-10-24-v1",
+  "demoOnly": true,
+  "clinicallyValidated": false,
+  "sources": [
+    {
+      "id": "admin-naproxen",
+      "title": "NHS: naproxen, how to take it",
+      "url": "https://www.nhs.uk/medicines/naproxen/",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "admin-levothyroxine",
+      "title": "NHS: levothyroxine, how to take it",
+      "url": "https://www.nhs.uk/medicines/levothyroxine/",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "admin-alendronic-acid",
+      "title": "NHS: how and when to take alendronic acid",
+      "url": "https://www.nhs.uk/medicines/alendronic-acid/how-and-when-to-take-alendronic-acid/",
+      "accessedOn": "2026-10-24"
+    },
+    {
+      "id": "admin-simvastatin",
+      "title": "NHS: simvastatin, how to take it",
+      "url": "https://www.nhs.uk/medicines/simvastatin/",
+      "accessedOn": "2026-10-24"
+    }
+  ],
+  "rules": [
+    {
+      "id": "naproxen-food",
+      "productCodes": ["1217387008", "42107811000001100"],
+      "system": "http://snomed.info/sct",
+      "constraints": [{ "type": "food", "relationship": "with_food", "strength": "preference" }],
+      "instructions": [
+        "Ideally take with or after food. The demo scheduler can prefer a meal time; food does not remove interaction-related bleeding risk."
+      ],
+      "sourceIds": ["admin-naproxen"]
+    },
+    {
+      "id": "levothyroxine-before-food",
+      "productCodes": ["39698911000001100"],
+      "system": "http://snomed.info/sct",
+      "constraints": [
+        {
+          "type": "food",
+          "relationship": "before_first_food",
+          "minimumGapMinutes": 30,
+          "strength": "requirement"
+        },
+        {
+          "type": "before_other_oral_medicines",
+          "minimumGapMinutes": 30,
+          "strength": "requirement"
+        }
+      ],
+      "instructions": [
+        "Take on an empty stomach 30 to 60 minutes before the first meal, caffeine or other medicines. Confirm the prescription instructions. Longer interaction-specific gaps still apply."
+      ],
+      "sourceIds": ["admin-levothyroxine"]
+    },
+    {
+      "id": "alendronic-acid-first",
+      "productCodes": ["39728011000001102"],
+      "system": "http://snomed.info/sct",
+      "constraints": [
+        { "type": "time_of_day", "value": "on_waking", "strength": "requirement" },
+        {
+          "type": "food",
+          "relationship": "before_first_food",
+          "minimumGapMinutes": 30,
+          "strength": "requirement"
+        },
+        {
+          "type": "before_other_oral_medicines",
+          "minimumGapMinutes": 30,
+          "strength": "requirement"
+        },
+        { "type": "remain_upright", "durationMinutes": 30, "strength": "requirement" },
+        { "type": "plain_water_only", "strength": "requirement" }
+      ],
+      "instructions": [
+        "Take before food, other drinks or swallowed medicines with plain tap water. Stay sitting or standing for at least 30 minutes. Do not take at bedtime. Confirm that these instructions are suitable for you."
+      ],
+      "sourceIds": ["admin-alendronic-acid"]
+    },
+    {
+      "id": "simvastatin-evening",
+      "productCodes": ["42381911000001105", "42382111000001102"],
+      "system": "http://snomed.info/sct",
+      "constraints": [{ "type": "time_of_day", "value": "evening", "strength": "preference" }],
+      "instructions": [
+        "Usually take at the same time each evening, with or without food. Follow any specific prescribed timing."
+      ],
+      "sourceIds": ["admin-simvastatin"]
+    }
+  ]
+}

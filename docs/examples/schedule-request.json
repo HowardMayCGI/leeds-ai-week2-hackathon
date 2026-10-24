@@ -1,0 +1,39 @@
+{
+  "routine": {
+    "wake": "07:00",
+    "sleep": "22:30",
+    "meals": {
+      "breakfast": "08:00",
+      "lunch": "13:00",
+      "dinner": "18:30"
+    }
+  },
+  "medicines": [
+    {
+      "id": "record-levo",
+      "source": "record",
+      "name": "Levothyroxine sodium 75microgram tablets",
+      "code": "39698911000001100",
+      "system": "http://snomed.info/sct",
+      "dose": { "quantity": 1, "unit": "tablet" },
+      "regimen": { "kind": "daily", "dosesPerDay": 1 }
+    },
+    {
+      "id": "record-metformin",
+      "source": "record",
+      "name": "Metformin",
+      "productId": "metformin-500mg-tablet",
+      "dose": { "quantity": 1, "unit": "tablet" },
+      "regimen": { "kind": "daily", "dosesPerDay": 2 }
+    },
+    {
+      "id": "user-iron",
+      "source": "user",
+      "name": "Ferrous sulfate 325mg modified-release tablets",
+      "code": "39107411000001105",
+      "system": "http://snomed.info/sct",
+      "dose": { "quantity": 1, "unit": "tablet" },
+      "regimen": { "kind": "daily", "dosesPerDay": 1 }
+    }
+  ]
+}
