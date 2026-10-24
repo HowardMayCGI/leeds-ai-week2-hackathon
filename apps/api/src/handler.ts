@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from '
 import { NHS_NUMBER_PATTERN, type RandomNumberResponse } from '@hackathon/api-contract';
 import { createFilePatientRepository, defaultDataDirectory, type PatientRepository } from './patient-data';
 import { checkInteractions } from './interactions';
+import { buildScheduleInputs } from './schedule-inputs';
 
 export const ORIGIN_HEADER = 'x-hackathon-origin';
 
@@ -39,7 +40,7 @@ function methodNotAllowed() {
   return response;
 }
 
-const PATIENT_ROUTE = /^\/api\/patients\/([^/]+)\/(demographics|medications|interactions)$/;
+const PATIENT_ROUTE = /^\/api\/patients\/([^/]+)\/(demographics|medications|interactions|schedule-inputs)$/;
 
 export async function handleRequest(request: ApiRequest, options: HandlerOptions): Promise<APIGatewayProxyStructuredResultV2> {
   // Fail closed if deployment configuration is missing, too.
@@ -69,6 +70,7 @@ export async function handleRequest(request: ApiRequest, options: HandlerOptions
     // Interactions use the same current, de-duplicated record as medications.
     const result = await patients.getMedications(nhsNumber);
     if (!result) return json(404, { message: 'Patient not found' });
+    if (resource === 'schedule-inputs') return json(200, buildScheduleInputs(result));
     return json(200, resource === 'interactions' ? checkInteractions(result) : result);
   } catch (error) {
     console.error('Patient data error', error);

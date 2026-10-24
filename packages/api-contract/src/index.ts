@@ -53,6 +53,8 @@ export interface Medication {
   prescribedOn?: string;
   prescriber?: string;
   organisation?: string;
+  /** Original FHIR dosage instructions, including text and fields not normalised by this demo. */
+  dosageInstructions?: Record<string, unknown>[];
 }
 
 export interface MedicationsResponse {
@@ -139,5 +141,76 @@ export interface InteractionsResponse {
     status: 'review_required' | 'spacing_constraints' | 'no_rules_matched';
     reviewInteractionIds: string[];
     constraints: { interactionId: string; medicationIds: [string, string]; minimumGapMinutes: number; direction: 'either_order'; appliesAcrossMidnight: true }[];
+  };
+}
+
+export type AdministrationConstraint =
+  | { type: 'food'; relationship: 'with_food' | 'before_first_food'; minimumGapMinutes?: number; strength: 'requirement' | 'preference' }
+  | { type: 'time_of_day'; value: 'on_waking' | 'evening'; strength: 'requirement' | 'preference' }
+  | { type: 'before_other_oral_medicines'; minimumGapMinutes: number; strength: 'requirement' }
+  | { type: 'remain_upright'; durationMinutes: number; strength: 'requirement' }
+  | { type: 'plain_water_only'; strength: 'requirement' };
+
+export interface AdministrationDataset {
+  version: string;
+  demoOnly: true;
+  clinicallyValidated: false;
+  sources: InteractionDataset['sources'];
+  rules: {
+    id: string;
+    productCodes: string[];
+    system: string;
+    constraints: AdministrationConstraint[];
+    instructions: string[];
+    sourceIds: string[];
+  }[];
+}
+
+export interface ScheduleInputMedicine {
+  medication: Medication;
+  /** An absent PRN flag is unconfirmed, not evidence of regular treatment. */
+  use: 'regular' | 'as_needed' | 'unconfirmed';
+  prescriptionTiming: {
+    frequency?: MedicationFrequency;
+    timeOfDay: string[];
+    when: string[];
+    minimumDoseIntervalMinutes?: number;
+    /** Needed for every-N-days, weekly, or fixed-interval courses. Never assume today is a dose day. */
+    requiresAnchor: boolean;
+  };
+  administration: {
+    coverage: 'demo_rule' | 'not_defined';
+    ruleIds: string[];
+    constraints: AdministrationConstraint[];
+    instructions: string[];
+    sourceIds: string[];
+  };
+  issues: { code: string; message: string; resolution: 'confirm_prescription' | 'professional_review' }[];
+}
+
+export interface ScheduleInputsResponse {
+  nhsNumber: string;
+  demoOnly: true;
+  clinicallyValidated: false;
+  versions: { administration: string; interactions: string };
+  notice: string;
+  medicines: ScheduleInputMedicine[];
+  interactions: InteractionsResponse;
+  sources: InteractionDataset['sources'];
+  /** These supplement, rather than replace, the interaction spacing constraints. */
+  administrationSeparations: {
+    medicationId: string;
+    beforeMedicationId: string;
+    minimumGapMinutes: number;
+    ruleId: string;
+    appliesAcrossMidnight: true;
+  }[];
+  readiness: {
+    status: 'review_required' | 'confirmation_required';
+    requiresCurrentMedicineConfirmation: true;
+    requiresRoutine: true;
+    routineFields: ['wake', 'sleep', 'meals.breakfast', 'meals.lunch', 'meals.dinner'];
+    requiresSpecialInstructionAcknowledgement: boolean;
+    medicinesWithIssues: string[];
   };
 }

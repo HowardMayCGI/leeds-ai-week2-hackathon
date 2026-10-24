@@ -121,3 +121,25 @@ test('interactions endpoint preserves validation, origin protection and GET-only
   assert.equal(post.headers?.allow, 'GET');
   assert.equal((await handleRequest({ ...request, path }, { ...options, patients })).headers?.['cache-control'], 'no-store');
 });
+
+test('schedule-inputs endpoint combines original prescriptions, administration and interactions', async () => {
+  const nhsNumber = '9991789243';
+  const { status, body } = await get(`/api/patients/${nhsNumber}/schedule-inputs`);
+  assert.equal(status, 200);
+  assert.equal(body.nhsNumber, nhsNumber);
+  assert.equal(body.demoOnly, true);
+  assert.equal(body.clinicallyValidated, false);
+  assert.equal(body.readiness.status, 'review_required');
+  assert.equal(body.interactions.interactions.length, 3);
+  assert.equal(body.medicines.length, (await patients.getMedications(nhsNumber))!.medications.length);
+  assert.ok(body.medicines.every((m: { medication: { dosageInstructions: unknown[] } }) => m.medication.dosageInstructions));
+});
+
+test('schedule-inputs endpoint retains validation, origin protection, GET-only and no-store behaviour', async () => {
+  assert.equal((await get('/api/patients/abc/schedule-inputs')).status, 400);
+  assert.equal((await get('/api/patients/1234567890/schedule-inputs')).status, 404);
+  const path = `/api/patients/${MITCH}/schedule-inputs`;
+  assert.equal((await handleRequest({ ...request, path, headers: {} }, options)).statusCode, 403);
+  assert.equal((await handleRequest({ ...request, path, method: 'POST' }, options)).statusCode, 405);
+  assert.equal((await handleRequest({ ...request, path }, { ...options, patients })).headers?.['cache-control'], 'no-store');
+});

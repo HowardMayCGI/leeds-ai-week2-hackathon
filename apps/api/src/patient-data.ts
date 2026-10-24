@@ -51,6 +51,7 @@ export function toMedication(request: Resource): Medication {
     prescribedOn: request.authoredOn,
     prescriber: request.requester?.agent?.display ?? request.requester?.display,
     organisation: request.requester?.onBehalfOf?.display,
+    dosageInstructions: request.dosageInstruction ?? [],
   };
 }
 

@@ -35,6 +35,8 @@ The original random number generator is now at `/random/`.
 
 The API also exposes `GET /api/patients/:nhsNumber/interactions`: potential interactions from the patient's current medicines, with spacing constraints and separate prescriber/dose-review guidance. It uses a labelled, incomplete hackathon dataset mapping all 36 supplied products, with 10 sourced example rules. See [the interaction model, JSON examples, API contract and demo patients](docs/drug-interactions.md). This endpoint is not yet connected to the web scheduler and is not for clinical use.
 
+For combined scheduling inputs, use `GET /api/patients/:nhsNumber/schedule-inputs`. It adds original prescription instructions, structured timing and administration requirements, interaction assessments and explicit confirmation/review issues. Four sourced demo administration rules cover six products; missing coverage is flagged. See [the scheduler contract, production data sources and frontend integration steps](docs/scheduler-inputs.md). The patient routine and current medicine use still require confirmation.
+
 ## Random number website
 
 A minimal TypeScript application. The Next.js UI exports static pages and requests an integer from **1 to 100 inclusive** from a Lambda API when you select **Generate number**. Repeated numbers are possible.
