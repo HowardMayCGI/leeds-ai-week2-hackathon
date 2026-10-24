@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { Medication, MedicationsResponse, PatientDemographics, PatientListResponse } from '@hackathon/api-contract';
+import type { Medication, MedicationsResponse, MedicineListResponse, PatientDemographics, PatientListResponse } from '@hackathon/api-contract';
 
 const NHS_NUMBER_SYSTEM = 'https://fhir.nhs.uk/Id/nhs-number';
 const INDEX_FILE = 'patients.json';
@@ -9,6 +9,8 @@ export interface PatientRepository {
   listPatients(): Promise<PatientListResponse>;
   getDemographics(nhsNumber: string): Promise<PatientDemographics | undefined>;
   getMedications(nhsNumber: string): Promise<MedicationsResponse | undefined>;
+  /** Every distinct current medicine across all patients, for search suggestions. */
+  listMedicines(): Promise<MedicineListResponse>;
 }
 
 type Resource = Record<string, any>;
@@ -71,7 +73,7 @@ export function createFilePatientRepository(dataDirectory: string): PatientRepos
 
   const patientOf = (all: Resource[]) => all.find((r) => r.resourceType === 'Patient')!;
 
-  return {
+  const repository: PatientRepository = {
     async listPatients() {
       const index = await readIndex();
       const patients = await Promise.all(
@@ -97,7 +99,19 @@ export function createFilePatientRepository(dataDirectory: string): PatientRepos
       const medications = [...latest.values()].sort((a, b) => a.name.localeCompare(b.name));
       return { nhsNumber, medications };
     },
+    async listMedicines() {
+      const index = await readIndex();
+      const byKey = new Map<string, MedicineListResponse['medicines'][number]>();
+      for (const nhsNumber of Object.keys(index)) {
+        for (const { name, code, system } of (await repository.getMedications(nhsNumber))?.medications ?? []) {
+          const key = code ?? name.toLowerCase();
+          if (!byKey.has(key)) byKey.set(key, { name, code, system });
+        }
+      }
+      return { medicines: [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })) };
+    },
   };
+  return repository;
 }
 
 /** PATIENT_DATA_DIR overrides the default of `test_data` beside the working directory (the Lambda bundle root). */
