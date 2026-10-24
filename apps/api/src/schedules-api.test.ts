@@ -37,7 +37,7 @@ test("POST schedules returns a JSON proposal without consulting the patient repo
   };
   const result = await handleRequest(request, {
     ...options,
-    patients: { listPatients: fail, getDemographics: fail, getMedications: fail },
+    patients: { listPatients: fail, getDemographics: fail, getMedications: fail, listMedicines: fail },
   });
   assert.equal(result.statusCode, 200);
   assert.equal(result.headers?.["content-type"], "application/json");
