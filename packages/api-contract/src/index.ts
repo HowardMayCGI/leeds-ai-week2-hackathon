@@ -79,19 +79,43 @@ export interface MedicineListResponse {
 }
 
 export function isPatientListResponse(value: unknown): value is PatientListResponse {
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as PatientListResponse).patients)) return false;
-  return (value as PatientListResponse).patients.every(patient => typeof patient?.nhsNumber === 'string' && typeof patient.name === 'string');
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !Array.isArray((value as PatientListResponse).patients)
+  )
+    return false;
+  return (value as PatientListResponse).patients.every(
+    (patient) => typeof patient?.nhsNumber === "string" && typeof patient.name === "string",
+  );
 }
 
 export function isMedicationsResponse(value: unknown): value is MedicationsResponse {
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as MedicationsResponse).medications)) return false;
-  return (value as MedicationsResponse).medications.every(medication => typeof medication?.id === 'string' && typeof medication.name === 'string'
-    && typeof medication.asNeeded === 'boolean' && Array.isArray(medication.instructions));
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !Array.isArray((value as MedicationsResponse).medications)
+  )
+    return false;
+  return (value as MedicationsResponse).medications.every(
+    (medication) =>
+      typeof medication?.id === "string" &&
+      typeof medication.name === "string" &&
+      typeof medication.asNeeded === "boolean" &&
+      Array.isArray(medication.instructions),
+  );
 }
 
 export function isMedicineListResponse(value: unknown): value is MedicineListResponse {
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as MedicineListResponse).medicines)) return false;
-  return (value as MedicineListResponse).medicines.every(medicine => typeof medicine?.name === 'string');
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !Array.isArray((value as MedicineListResponse).medicines)
+  )
+    return false;
+  return (value as MedicineListResponse).medicines.every(
+    (medicine) => typeof medicine?.name === "string",
+  );
 }
 
 export const NHS_NUMBER_PATTERN = /^\d{10}$/;

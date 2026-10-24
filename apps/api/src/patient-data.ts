@@ -3,7 +3,8 @@ import { join } from "node:path";
 import type {
   Medication,
   MedicationsResponse,
- MedicineListResponse, PatientDemographics,
+  MedicineListResponse,
+  PatientDemographics,
   PatientListResponse,
 } from "@hackathon/api-contract";
 
@@ -138,14 +139,19 @@ export function createFilePatientRepository(dataDirectory: string): PatientRepos
     },
     async listMedicines() {
       const index = await readIndex();
-      const byKey = new Map<string, MedicineListResponse['medicines'][number]>();
+      const byKey = new Map<string, MedicineListResponse["medicines"][number]>();
       for (const nhsNumber of Object.keys(index)) {
-        for (const { name, code, system } of (await repository.getMedications(nhsNumber))?.medications ?? []) {
+        for (const { name, code, system } of (await repository.getMedications(nhsNumber))
+          ?.medications ?? []) {
           const key = code ?? name.toLowerCase();
           if (!byKey.has(key)) byKey.set(key, { name, code, system });
         }
       }
-      return { medicines: [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })) };
+      return {
+        medicines: [...byKey.values()].sort((a, b) =>
+          a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+        ),
+      };
     },
   };
   return repository;
