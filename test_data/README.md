@@ -35,18 +35,16 @@ A prescription can appear in several columns.
 As-needed counts use structured flags. Free-text instructions can contain additional information.
 Missing counts refer to structured fields, even when free text exists.
 
-| Patient | Active products | As-needed | Repeated daily doses | Non-daily intervals | Missing dose | Missing frequency | Missing dose unit |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Mitch XXTESTPATIENT-Trantow | 13 | 2 | 2 | 1 | 8 | 8 | 5 |
-| Stanley Ned XXTESTPATIENT-Schneider | 16 | 4 | 3 | 0 | 12 | 12 | 4 |
-| Raylene Loriann XXTESTPATIENT-Ledner | 15 | 3 | 2 | 0 | 11 | 11 | 4 |
-| Yong Guillermo XXTESTPATIENT-Harvey | 17 | 7 | 0 | 0 | 15 | 15 | 2 |
-| Genevive Despina XXTESTPATIENT-Ernser | 12 | 1 | 2 | 2 | 6 | 6 | 6 |
-| Lilliana Kimbra XXTESTPATIENT-Lockman | 13 | 0 | 2 | 1 | 7 | 7 | 6 |
-| Jean Louis XXTESTPATIENT-Steuber | 16 | 3 | 0 | 0 | 13 | 13 | 3 |
-| Burl XXTESTPATIENT-Predovic | 13 | 3 | 3 | 0 | 8 | 8 | 5 |
-| Carri Dianna XXTESTPATIENT-Cartwright | 13 | 3 | 1 | 0 | 9 | 9 | 4 |
-| Gene Orval XXTESTPATIENT-Witting | 12 | 2 | 1 | 0 | 8 | 8 | 4 |
+| Patient                               | Active products | As-needed | Repeated daily doses | Non-daily intervals | Missing dose | Missing frequency | Missing dose unit |
+| ------------------------------------- | --------------: | --------: | -------------------: | ------------------: | -----------: | ----------------: | ----------------: |
+| Mitch XXTESTPATIENT-Trantow           |              13 |         2 |                    2 |                   1 |            8 |                 8 |                 5 |
+| Stanley Ned XXTESTPATIENT-Schneider   |              16 |         4 |                    3 |                   0 |           12 |                12 |                 4 |
+| Raylene Loriann XXTESTPATIENT-Ledner  |              15 |         3 |                    2 |                   0 |           11 |                11 |                 4 |
+| Genevive Despina XXTESTPATIENT-Ernser |              12 |         1 |                    2 |                   2 |            6 |                 6 |                 6 |
+| Lilliana Kimbra XXTESTPATIENT-Lockman |              13 |         0 |                    2 |                   1 |            7 |                 7 |                 6 |
+| Jean Louis XXTESTPATIENT-Steuber      |              16 |         3 |                    0 |                   0 |           13 |                13 |                 3 |
+| Carri Dianna XXTESTPATIENT-Cartwright |              13 |         3 |                    1 |                   0 |            9 |                 9 |                 4 |
+| Gene Orval XXTESTPATIENT-Witting      |              12 |         2 |                    1 |                   0 |            8 |                 8 |                 4 |
 
 ## Rationale for each patient
 

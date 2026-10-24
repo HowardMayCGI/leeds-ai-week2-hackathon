@@ -1,0 +1,14 @@
+{
+  "name": "test-data",
+  "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": { "command": "oxfmt --config .oxfmtrc.json test_data" }
+    },
+    "format-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": { "command": "oxfmt --config .oxfmtrc.json --check test_data" }
+    }
+  }
+}
