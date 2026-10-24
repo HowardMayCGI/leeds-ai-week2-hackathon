@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { routinePages } from '@hackathon/medicines';
+import type { PatientSummary } from '@hackathon/api-contract';
+import { routinePages, type MedicineOption, type RecordMedicine } from '@hackathon/medicines';
 import { AppChrome } from '../app/app-chrome';
 import { CheckAnswers } from './components/CheckAnswers';
-import { AdditionForm, Additions, SelectMedicines } from './components/MedicineScreens';
+import { AdditionForm, Additions, AdditionTiming, RecordDetailsScreen, SelectMedicines } from './components/MedicineScreens';
 import { RoutineScreen } from './components/RoutineScreen';
 import { ProposalScreen, RemindersScreen, ReviewConfirmation, SavedConfirmation, SavedScheduleScreen } from './components/ScheduleScreens';
 import { Intro, Prescriptions } from './components/StartScreens';
@@ -18,27 +19,30 @@ const [wakingSleeping, mealTimes] = routinePages();
 /** Screens that only make sense with something to show; anything else falls back to the start. */
 function canShow(screen: Screen, state: State): boolean {
   if (screen === 'proposal') return Boolean(state.proposal);
+  if (screen === 'record-details') return Boolean(state.editingRecordId);
+  if (screen === 'addition-timing') return state.draft.additions.some(addition => addition.id === state.editingAdditionId);
   if (['saved-confirmation', 'schedule', 'reminders', 'review-confirmation'].includes(screen)) return Boolean(state.saved);
   return true;
 }
 
-export function MedicinesApp({ lang }: { lang: Language }) {
-  const [state, setStateRaw] = useState<State>(initialState);
-  const loaded = useRef(false);
+export function MedicinesApp({ lang, patient, record, options }: {
+  lang: Language;
+  patient: PatientSummary;
+  record: RecordMedicine[];
+  options: MedicineOption[];
+}) {
+  // The app renders only in the browser, once the record has loaded, so the saved schedule can be read straight away.
+  const [state, setStateRaw] = useState<State>(() => ({ ...initialState(), saved: loadSaved(patient.nhsNumber) }));
   const firstScreen = useRef(true);
   const popping = useRef(false);
 
-  // Restore the saved schedule after hydration.
   useEffect(() => {
-    const saved = loadSaved();
-    if (saved) setStateRaw(current => ({ ...current, saved }));
-    loaded.current = true;
     window.history.replaceState({ screen: 'prescriptions' }, '');
   }, []);
 
   useEffect(() => {
-    if (loaded.current) storeSaved(state.saved);
-  }, [state.saved]);
+    storeSaved(patient.nhsNumber, state.saved);
+  }, [state.saved, patient.nhsNumber]);
 
   // Move focus to the new page heading, as a full page load would, but not on first load or language change.
   useEffect(() => {
@@ -49,7 +53,7 @@ export function MedicinesApp({ lang }: { lang: Language }) {
     document.querySelector('.phone-screen')?.scrollTo?.({ top: 0 });
     window.scrollTo({ top: 0 });
     document.getElementById('page-heading')?.focus({ preventScroll: true });
-  }, [state.screen, state.editingAdditionId]);
+  }, [state.screen, state.editingAdditionId, state.editingRecordId]);
 
   useEffect(() => {
     const heading = document.getElementById('page-heading')?.textContent?.trim();
@@ -80,6 +84,9 @@ export function MedicinesApp({ lang }: { lang: Language }) {
     return {
       state,
       lang,
+      patient,
+      record,
+      options,
       t: (key, params) => translate(lang, key, params).text,
       tr: (key, params) => translate(lang, key, params),
       time: value => formatTime(value, lang),
@@ -94,7 +101,7 @@ export function MedicinesApp({ lang }: { lang: Language }) {
       back: (from, previous) => (state.changeFlow?.start === from ? state.changeFlow.origin : previous),
       startChange: flow => go(flow.start, { changeFlow: flow }),
     };
-  }, [state, lang, setState]);
+  }, [state, lang, patient, record, options, setState]);
 
   const screens: Record<Screen, () => ReactNode> = {
     prescriptions: () => <Prescriptions />,
@@ -102,8 +109,10 @@ export function MedicinesApp({ lang }: { lang: Language }) {
     'waking-sleeping': () => <RoutineScreen key="waking-sleeping" group={wakingSleeping} previous="intro" nextScreen="meal-times" />,
     'meal-times': () => <RoutineScreen key="meal-times" group={mealTimes} previous="waking-sleeping" nextScreen="medicines" />,
     medicines: () => <SelectMedicines />,
+    'record-details': () => <RecordDetailsScreen key={state.editingRecordId} />,
     additions: () => <Additions />,
     'addition-form': () => <AdditionForm key={state.editingAdditionId ?? 'new'} />,
+    'addition-timing': () => <AdditionTiming key={state.editingAdditionId} />,
     check: () => <CheckAnswers />,
     proposal: () => <ProposalScreen />,
     'saved-confirmation': () => <SavedConfirmation />,

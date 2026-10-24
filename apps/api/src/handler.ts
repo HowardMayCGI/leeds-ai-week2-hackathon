@@ -46,7 +46,7 @@ export async function handleRequest(request: ApiRequest, options: HandlerOptions
     return json(403, { message: 'Forbidden' });
   }
   const route = PATIENT_ROUTE.exec(request.path);
-  const known = request.path === '/api/random' || request.path === '/api/patients' || route;
+  const known = request.path === '/api/random' || request.path === '/api/patients' || request.path === '/api/medicines' || route;
   if (!known) return json(404, { message: 'Not found' });
   if (request.method !== 'GET') return methodNotAllowed();
 
@@ -58,6 +58,7 @@ export async function handleRequest(request: ApiRequest, options: HandlerOptions
   const patients = options.patients ?? defaultRepository();
   try {
     if (request.path === '/api/patients') return json(200, await patients.listPatients());
+    if (request.path === '/api/medicines') return json(200, await patients.listMedicines());
     const [, nhsNumber, resource] = route!;
     if (!NHS_NUMBER_PATTERN.test(nhsNumber)) return json(400, { message: 'NHS number must be 10 digits' });
     const result = resource === 'demographics' ? await patients.getDemographics(nhsNumber) : await patients.getMedications(nhsNumber);

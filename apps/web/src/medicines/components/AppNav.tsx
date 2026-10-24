@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react';
 import { useJourney } from '../context';
 import type { Screen } from '../state';
-import { NavLink, PageHeading, T } from './ui';
+import { displayName } from '../patient-data';
+import { Latin, NavLink, PageHeading, T } from './ui';
 
 // Icons from the NHS App design system (nhsapp-frontend), outlined and filled.
 const ICONS = {
@@ -83,10 +84,20 @@ export function MessagesScreen() {
 }
 
 export function ProfileScreen() {
-  const { state, go } = useJourney();
+  const { state, go, patient } = useJourney();
   return (
     <>
       <PageHeading><T k="profile.title" /></PageHeading>
+      <dl className="nhsuk-summary-list">
+        <div className="nhsuk-summary-list__row">
+          <dt className="nhsuk-summary-list__key"><T k="profile.name" /></dt>
+          <dd className="nhsuk-summary-list__value"><Latin>{displayName(patient.name)}</Latin></dd>
+        </div>
+        <div className="nhsuk-summary-list__row">
+          <dt className="nhsuk-summary-list__key"><T k="profile.nhsNumber" /></dt>
+          <dd className="nhsuk-summary-list__value"><bdi dir="ltr">{patient.nhsNumber.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3')}</bdi></dd>
+        </div>
+      </dl>
       <p className="nhsuk-body"><T k="profile.lede" /></p>
       {state.saved ? (
         <ul className="nhsapp-cards nhsapp-cards--stacked">

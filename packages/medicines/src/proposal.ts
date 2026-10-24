@@ -1,6 +1,5 @@
-import { CATALOGUE_VERSION } from './catalogue';
 import { checkAssignment, type Check } from './checker';
-import { buildConstraints, classify, type Constraint, type ItemSnapshot, type PatientAddition } from './items';
+import { buildConstraints, classify, type Constraint, type ItemSnapshot, type PatientAddition, type RecordDetails } from './items';
 import type { RecordMedicine } from './record';
 import { MEALS, toDay, type Day, type Meal, type Routine } from './routine';
 import { RULES_VERSION } from './rules';
@@ -14,7 +13,9 @@ export type DoseNote =
   | { code: 'empty-stomach' }
   | { code: 'on-waking' }
   | { code: 'at-bedtime' }
-  | { code: 'apart-from'; key: string; hours: number };
+  | { code: 'in-evening' }
+  | { code: 'apart-from'; key: string; hours: number }
+  | { code: 'before-others'; minutes: number };
 
 export interface ScheduledDose {
   time: ClockTime;
@@ -29,8 +30,9 @@ interface ProposalBase {
   items: ItemSnapshot[];
   /** Items taken only when needed, which have no set times. */
   whenNeeded: string[];
+  /** Items taken less often than every day, which have no daily times. */
+  notDaily: string[];
   rulesVersion: string;
-  catalogueVersion: string;
 }
 
 export type Proposal =
@@ -42,6 +44,8 @@ export interface ProposalInputs {
   record: RecordMedicine[];
   selectedRecordIds: string[];
   additions: PatientAddition[];
+  /** Dose and frequency the patient gave for record medicines whose record does not say. */
+  recordDetails?: Record<string, RecordDetails>;
 }
 
 function notesFor(minute: number, constraint: Constraint, day: Day, times: Record<string, number[]>): DoseNote[] {
@@ -55,15 +59,18 @@ function notesFor(minute: number, constraint: Constraint, day: Day, times: Recor
   } else if (mealAt) notes.push({ code: 'at-meal-time', meal: mealAt });
   if (minute === day.wake && !notes.some(note => note.code === 'before-meal' || note.code === 'with-meal')) notes.unshift({ code: 'on-waking' });
   if (minute === day.sleep) notes.push({ code: 'at-bedtime' });
-  for (const { key, hours } of constraint.separations) if (times[key]) notes.push({ code: 'apart-from', key, hours });
+  else if (constraint.evening) notes.push({ code: 'in-evening' });
+  if (constraint.beforeOthersMinutes) notes.push({ code: 'before-others', minutes: constraint.beforeOthersMinutes });
+  for (const { key, hours, order } of constraint.separations) if (times[key] && !order) notes.push({ code: 'apart-from', key, hours });
   return notes;
 }
 
 /** Builds a proposal from confirmed inputs. A blocked proposal explains why and is never saveable. */
 export function createProposal(inputs: ProposalInputs): Proposal {
   const day = toDay(inputs.routine);
-  const { items, timed, whenNeeded } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions);
-  const base: ProposalBase = { routine: inputs.routine, items, whenNeeded, rulesVersion: RULES_VERSION, catalogueVersion: CATALOGUE_VERSION };
+  const { items, timed, whenNeeded, notDaily, missingDetails } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions, inputs.recordDetails);
+  const base: ProposalBase = { routine: inputs.routine, items, whenNeeded, notDaily, rulesVersion: RULES_VERSION };
+  if (missingDetails.length) return { ...base, status: 'blocked', problems: missingDetails.map(key => ({ code: 'missing-details', key })) };
   const constraints = buildConstraints(timed, day);
   const result = schedule(constraints, day);
   if (result.status === 'blocked') return { ...base, status: 'blocked', problems: result.problems };

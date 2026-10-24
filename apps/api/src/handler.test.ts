@@ -85,3 +85,13 @@ test('rejects malformed and unknown NHS numbers', async () => {
   assert.equal((await get('/api/patients/1234567890/medications')).status, 404);
   assert.equal((await get('/api/patients/1234567890/other')).status, 404);
 });
+
+test('lists every distinct current medicine across all patients', async () => {
+  const { status, body } = await get('/api/medicines');
+  assert.equal(status, 200);
+  const keys = body.medicines.map((m: { code?: string; name: string }) => m.code ?? m.name);
+  assert.equal(new Set(keys).size, keys.length);
+  assert.equal(body.medicines.length, 36);
+  assert.ok(body.medicines.some((m: { name: string }) => m.name === 'Naproxen 250mg tablets'));
+  assert.ok(body.medicines.every((m: Record<string, unknown>) => Object.keys(m).every(key => ['name', 'code', 'system'].includes(key))));
+});

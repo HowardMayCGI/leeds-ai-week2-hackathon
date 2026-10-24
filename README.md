@@ -3,29 +3,32 @@ Leeds AI Week2 Hackathon repository
 
 ## Schedule my medicines (proof of concept)
 
-The home page (`/`) is the **Schedule my medicines** journey agreed in the 24 October design session, in the style of the NHS App. It uses NHS.UK frontend and NHS App frontend (`nhsapp-frontend`) components, a synthetic patient record and proof-of-concept timing rules; it is not for clinical use.
+The home page (`/`) is the **Schedule my medicines** journey agreed in the 24 October design session, in the style of the NHS App. It uses NHS.UK frontend and NHS App frontend (`nhsapp-frontend`) components, the test patient records in `test_data/` (served by the API) and proof-of-concept timing rules; it is not for clinical use.
 
-The page has two parts. The **web page** introduces the app and holds the view options: the app language (English, Polish or Urdu), the app height (a fixed phone screen where only the content scrolls, with NHS App bottom navigation, or full length) and **Start again as a new user**. The **app** is everything inside the phone.
+The page has two parts. The **web page** introduces the app and holds the view options: the patient whose record the app shows, the app language (English, Polish or Urdu), the app height (a fixed phone screen where only the content scrolls, with NHS App bottom navigation, or full length) and **Start again as a new user**. The **app** is everything inside the phone.
 
-**Prescriptions → Introduction → Routine (2 screens) → Select medicines → Add anything missing → Check answers → Proposed schedule → Save → Reminders.** Returning users go straight to their saved schedule, where they can view dose details, change their routine or medicines (creating a new proposal that only replaces the saved one when saved), manage the single reminder switch and request a pharmacist review.
+**Prescriptions → Introduction → Routine (2 screens) → Select medicines → How do you take it? (only for record medicines with no dose or frequency) → Add anything missing (with a timing check) → Check answers → Proposed schedule → Save → Reminders.** Returning users go straight to their saved schedule, where they can view dose details, change their routine or medicines (creating a new proposal that only replaces the saved one when saved), manage the single reminder switch and request a pharmacist review.
 
 | Where | What |
 | --- | --- |
-| `packages/medicines` | Framework-free domain code with unit tests: the versioned FHIR R4 routine `Questionnaire` (static JSON with FHIR translation extensions), a small renderer model (`enableWhen`, validation, `QuestionnaireResponse`), the replaceable catalogue and fuzzy search, structured doses, the synthetic record, administration rules, the deterministic scheduler, an independent checker and the day timeline. |
-| `apps/web/src/medicines` | The web page and client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. |
+| `packages/medicines` | Framework-free domain code with unit tests: the versioned FHIR R4 routine `Questionnaire` (static JSON with FHIR translation extensions), a small renderer model (`enableWhen`, validation, `QuestionnaireResponse`), medicine options and fuzzy search built from the patient records, structured doses, reading record medicines, administration rules from NHS guidance, the deterministic scheduler, an independent checker and the day timeline. |
+| `apps/web/src/medicines` | The web page and client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. It reads `/api/patients`, `/api/patients/{nhsNumber}/medications` and `/api/medicines`. |
+| `apps/api` | Reads `test_data/`. `/api/medicines` lists every distinct medicine across all patients, which search suggests from. |
 | `apps/web/e2e/medicines.spec.ts` | Browser walkthrough of the design doc's checks, with axe accessibility scans in English and Urdu. |
 
 Behaviour worth knowing:
 
 - Routine questions, hints and translations come from the Questionnaire. Times are entered as hour, minutes and am or pm, and stored as FHIR `time` values. A skipped meal is recorded as a boolean and its stale time is dropped; sleeping after midnight is supported.
-- Record medicines are NHS checkboxes that start unchecked, with an exclusive **None of these** option. Each shows its dose with the size of each tablet, for example "1 or 2 tablets (500mg each)". Recorded wording is read-only, untranslated and labelled as such in Polish and Urdu.
-- Added items are searched by partial, misspelt, generic or brand name and must be explicitly selected. Unmatched items can be entered manually with their strength, amount and form; they are scheduled by how often they are taken, with a note that they were not checked against the list.
-- Every daily medicine gets times. Medicines taken only when needed are listed separately under **Only when needed**.
+- Record medicines are NHS checkboxes that start unchecked, with an exclusive **None of these** option. Each shows its dose with the size of each tablet, for example "1 tablet (10mg)", how often, and any recorded instructions. Recorded wording is read-only, untranslated and labelled as such in Polish and Urdu. If the record has no dose or frequency for a checked medicine, the app asks how the patient takes it.
+- Added items are searched by partial, misspelt, generic or brand name and must be explicitly selected. Suggestions come only from medicines in the patient records; anything else, such as a supplement, can be typed in. If an added medicine shares an active ingredient with one on the record, the form says so.
+- The patient also says when they take an added medicine (before food, with food, does not matter, not sure). If that goes against the guidance, such as naproxen before food, a check page recommends the usual timing. The patient can keep their own timing; it is then flagged in the schedule for a pharmacist to check.
+- Food and timing rules are in `packages/medicines/src/rules.ts`, each linked to its NHS source: for example alendronic acid first thing, at least 30 minutes before other tablets; levothyroxine before breakfast and 4 hours from iron; naproxen, metformin and insulin with food; simvastatin in the evening. Unmatched items can be entered manually with their strength, amount and form; they are scheduled by how often they are taken, with a note that they were not checked against the list.
+- Every daily medicine gets times, using as few separate times as possible. Medicines taken only when needed, or less often than daily (such as a 3-day patch), are listed separately.
 - The schedule is an NHS App timeline of the patient's day: waking, meals and going to sleep, with each time's medicines.
 - Every answer on Check your answers has its own Change link that returns straight there.
-- The scheduler never relaxes a rule. If no valid schedule exists (for example, metformin with food twice a day when only one meal is eaten) the page explains why and offers no save. Every proposal is re-verified by the independent checker before it is shown.
+- The scheduler never relaxes a rule. If no valid schedule exists (for example, naproxen with food twice a day when only one meal is eaten) the page explains why and offers no save. Every proposal is re-verified by the independent checker before it is shown.
 - Reminders default to ON, and notification permission is a separate state asked for with a device-style prompt.
-- The saved schedule is kept in this browser's local storage until API persistence is added. **Start again as a new user** on the web page clears it. The language and height preferences are also remembered on the device.
+- The saved schedule is kept in this browser's local storage, separately for each patient, until API persistence is added. **Start again as a new user** on the web page clears the selected patient's schedule. The patient, language and height preferences are also remembered on the device.
 - Everything runs in the static UI, so no infrastructure changed. Moving schedule generation behind the API would need `POST` allowed on the CloudFront `/api/*` behaviour, which requires approval.
 
 The original random number generator is now at `/random/`.

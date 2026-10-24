@@ -1,89 +1,174 @@
 /**
- * A small, replaceable proof-of-concept catalogue. Identifiers are local and
- * language independent. They are NOT verified mappings to dm+d or to any
- * interaction database; `mappings` stays empty until a provider is chosen.
+ * Medicine options built from the medicines in patient records, so search
+ * only suggests medicines that appear in the data. Each option keeps the
+ * record's code (SNOMED CT or dm+d) and its product description, and adds a
+ * patient-friendly name, strength and form parsed from that description.
  */
-export const CATALOGUE_SYSTEM = 'https://lai-app.example/fhir/CodeSystem/poc-medicines';
-export const CATALOGUE_VERSION = 'poc-2026-10-24';
+export type Form = 'tablet' | 'capsule' | 'inhaler' | 'spray' | 'patch' | 'nebuliser' | 'injection' | 'oral-liquid';
 
-export type Form = 'tablet' | 'capsule' | 'chewable-tablet' | 'soluble-tablet' | 'oral-liquid' | 'softgel';
-export type ProductKind = 'medicine' | 'supplement';
-
-export interface Strength {
-  value: number;
-  unit: 'mg' | 'microgram' | 'g' | 'unit' | 'mg/5ml';
-}
-
-export interface Ingredient {
-  code: string;
-  strength: Strength;
-}
-
-export interface CatalogueProduct {
-  id: string;
+export interface Alias {
   name: string;
-  kind: ProductKind;
-  form: Form;
-  ingredients: Ingredient[];
-  /** Generic and brand names that patients might search for. */
-  aliases: { name: string; type: 'brand' | 'generic' }[];
-  mappings: { system: string; code: string; verified: boolean }[];
+  type: 'brand' | 'generic';
 }
 
-const product = (
-  id: string, name: string, kind: ProductKind, form: Form, ingredients: [string, number, Strength['unit']][],
-  aliases: [string, 'brand' | 'generic'][] = [],
-): CatalogueProduct => ({
-  id, name, kind, form,
-  ingredients: ingredients.map(([code, value, unit]) => ({ code, strength: { value, unit } })),
-  aliases: aliases.map(([alias, type]) => ({ name: alias, type })),
-  mappings: [],
-});
+export interface MedicineOption {
+  /** The record's code when it has one, so the same product is one option. */
+  id: string;
+  code?: string;
+  system?: string;
+  /** A short name such as "Naproxen" or "Paracetamol and codeine phosphate". */
+  name: string;
+  /** The size of one tablet, capsule or measure, such as "250mg". */
+  strength?: string;
+  form: Form;
+  /** Lower-case first word of each active ingredient, used to look up administration rules. */
+  ingredients: string[];
+  /** The product description as recorded, such as "Naproxen 250mg tablets". */
+  recordName: string;
+  /** Other names patients may search for. Search helpers only, not verified mappings. */
+  aliases: Alias[];
+}
 
-export const CATALOGUE: CatalogueProduct[] = [
-  product('levothyroxine-25mcg-tablet', 'Levothyroxine', 'medicine', 'tablet', [['levothyroxine', 25, 'microgram']], [['Eltroxin', 'brand'], ['Thyroxine', 'generic']]),
-  product('levothyroxine-50mcg-tablet', 'Levothyroxine', 'medicine', 'tablet', [['levothyroxine', 50, 'microgram']], [['Eltroxin', 'brand'], ['Thyroxine', 'generic']]),
-  product('levothyroxine-100mcg-tablet', 'Levothyroxine', 'medicine', 'tablet', [['levothyroxine', 100, 'microgram']], [['Eltroxin', 'brand'], ['Thyroxine', 'generic']]),
-  product('metformin-500mg-tablet', 'Metformin', 'medicine', 'tablet', [['metformin', 500, 'mg']], [['Glucophage', 'brand']]),
-  product('metformin-850mg-tablet', 'Metformin', 'medicine', 'tablet', [['metformin', 850, 'mg']], [['Glucophage', 'brand']]),
-  product('amlodipine-5mg-tablet', 'Amlodipine', 'medicine', 'tablet', [['amlodipine', 5, 'mg']], [['Istin', 'brand']]),
-  product('amlodipine-10mg-tablet', 'Amlodipine', 'medicine', 'tablet', [['amlodipine', 10, 'mg']], [['Istin', 'brand']]),
-  product('atorvastatin-20mg-tablet', 'Atorvastatin', 'medicine', 'tablet', [['atorvastatin', 20, 'mg']], [['Lipitor', 'brand']]),
-  product('atorvastatin-40mg-tablet', 'Atorvastatin', 'medicine', 'tablet', [['atorvastatin', 40, 'mg']], [['Lipitor', 'brand']]),
-  product('simvastatin-40mg-tablet', 'Simvastatin', 'medicine', 'tablet', [['simvastatin', 40, 'mg']], [['Zocor', 'brand']]),
-  product('omeprazole-20mg-capsule', 'Omeprazole', 'medicine', 'capsule', [['omeprazole', 20, 'mg']], [['Losec', 'brand']]),
-  product('lansoprazole-30mg-capsule', 'Lansoprazole', 'medicine', 'capsule', [['lansoprazole', 30, 'mg']], [['Zoton', 'brand']]),
-  product('ramipril-5mg-capsule', 'Ramipril', 'medicine', 'capsule', [['ramipril', 5, 'mg']], [['Tritace', 'brand']]),
-  product('paracetamol-500mg-tablet', 'Paracetamol', 'medicine', 'tablet', [['paracetamol', 500, 'mg']], [['Panadol', 'brand'], ['Acetaminophen', 'generic']]),
-  product('paracetamol-120mg5ml-liquid', 'Paracetamol', 'medicine', 'oral-liquid', [['paracetamol', 120, 'mg/5ml']], [['Calpol', 'brand']]),
-  product('ibuprofen-200mg-tablet', 'Ibuprofen', 'medicine', 'tablet', [['ibuprofen', 200, 'mg']], [['Nurofen', 'brand']]),
-  product('ibuprofen-400mg-tablet', 'Ibuprofen', 'medicine', 'tablet', [['ibuprofen', 400, 'mg']], [['Nurofen', 'brand']]),
-  product('ferrous-sulfate-200mg-tablet', 'Ferrous sulfate', 'supplement', 'tablet', [['ferrous-sulfate', 200, 'mg']], [['Iron tablets', 'generic'], ['Ferrous sulphate', 'generic']]),
-  product('ferrous-fumarate-210mg-tablet', 'Ferrous fumarate', 'supplement', 'tablet', [['ferrous-fumarate', 210, 'mg']], [['Iron tablets', 'generic'], ['Galfer', 'brand']]),
-  product('calcium-vitd-chewable', 'Calcium carbonate and colecalciferol', 'supplement', 'chewable-tablet', [['calcium-carbonate', 1.5, 'g'], ['colecalciferol', 400, 'unit']], [['Adcal-D3', 'brand'], ['Calcium and vitamin D', 'generic']]),
-  product('colecalciferol-1000unit-tablet', 'Colecalciferol', 'supplement', 'tablet', [['colecalciferol', 1000, 'unit']], [['Vitamin D3', 'generic'], ['Vitamin D', 'generic'], ['Cholecalciferol', 'generic']]),
-  product('folic-acid-400mcg-tablet', 'Folic acid', 'supplement', 'tablet', [['folic-acid', 400, 'microgram']], [['Folate', 'generic']]),
-  product('cod-liver-oil-softgel', 'Cod liver oil', 'supplement', 'softgel', [['cod-liver-oil', 1000, 'mg']], [['Seven Seas', 'brand'], ['Omega-3', 'generic']]),
-  product('multivitamin-tablet', 'Multivitamins', 'supplement', 'tablet', [['multivitamin', 1, 'unit']], [['Centrum', 'brand'], ['A to Z multivitamin', 'generic']]),
-  product('magnesium-375mg-tablet', 'Magnesium', 'supplement', 'tablet', [['magnesium', 375, 'mg']], [['Magnesium citrate', 'generic']]),
+/** The parts of a recorded medicine that options are built from. */
+export interface SourceMedicine {
+  id?: string;
+  code?: string;
+  system?: string;
+  name: string;
+}
+
+// Other names patients use, keyed by the option's ingredients joined with "+".
+const ALIASES: Record<string, [string, Alias['type']][]> = {
+  'paracetamol+codeine': [['Co-codamol', 'generic']],
+  paracetamol: [['Panadol', 'brand'], ['Acetaminophen', 'generic']],
+  'fluticasone+salmeterol': [['Seretide', 'brand']],
+  alendronic: [['Fosamax', 'brand'], ['Alendronate', 'generic']],
+  amlodipine: [['Istin', 'brand']],
+  atenolol: [['Tenormin', 'brand']],
+  atorvastatin: [['Lipitor', 'brand']],
+  budesonide: [['Pulmicort', 'brand']],
+  clopidogrel: [['Plavix', 'brand']],
+  digoxin: [['Lanoxin', 'brand']],
+  diphenhydramine: [['Nytol', 'brand']],
+  fentanyl: [['Durogesic', 'brand']],
+  ferrous: [['Iron tablets', 'generic'], ['Ferrous sulphate', 'generic']],
+  glyceryl: [['GTN spray', 'generic'], ['Nitroglycerin', 'generic']],
+  levothyroxine: [['Thyroxine', 'generic']],
+  lisinopril: [['Zestril', 'brand']],
+  metoprolol: [['Lopresor', 'brand']],
+  morphine: [['Zomorph', 'brand']],
+  naproxen: [['Naprosyn', 'brand']],
+  oxycodone: [['OxyNorm', 'brand']],
+  oxycontin: [['Oxycodone', 'generic']],
+  pethidine: [['Meperidine', 'generic']],
+  prasugrel: [['Efient', 'brand']],
+  salbutamol: [['Ventolin', 'brand'], ['Albuterol', 'generic']],
+  simvastatin: [['Zocor', 'brand']],
+  tramadol: [['Zydol', 'brand']],
+};
+
+const STRENGTH = /(\d+(?:[.,]\d+)?)\s*(mg|micrograms?|mcg|g|units?|unt|ml)\b(?:\s*\/\s*(dose|ml|hour|hr|h)\b)?/i;
+
+const FORMS: [RegExp, Form][] = [
+  [/inhaler/, 'inhaler'], [/spray/, 'spray'], [/patch/, 'patch'], [/nebuli[sz]er/, 'nebuliser'], [/inject/, 'injection'],
+  [/capsule/, 'capsule'], [/tablet/, 'tablet'], [/liquid|solution|suspension|syrup/, 'oral-liquid'],
 ];
 
-export function findProduct(id: string | undefined): CatalogueProduct | undefined {
-  return CATALOGUE.find(item => item.id === id);
+function formatComponentStrength(match: RegExpExecArray): string {
+  const value = Number(match[1].replace(',', '.'));
+  const unit = match[2].toLowerCase();
+  const per = match[3]?.toLowerCase();
+  const amount = unit === 'mg' || unit === 'g' || unit === 'ml' ? `${value}${unit}`
+    : unit.startsWith('microgram') || unit === 'mcg' ? `${value} microgram${value === 1 ? '' : 's'}`
+      : `${value} unit${value === 1 ? '' : 's'}`;
+  if (!per) return amount;
+  if (per === 'dose') return `${amount} per dose`;
+  if (per === 'ml') return `${amount}/ml`;
+  return `${amount} an hour`;
 }
 
-export function ingredientCodes(item: CatalogueProduct): string[] {
-  return item.ingredients.map(ingredient => ingredient.code);
+/** "amLODIPine" and "Insulin Lispro" become "Amlodipine" and "Insulin lispro"; a brand such as "OxyContin" stays as it is. */
+function tidyName(text: string, first: boolean): string {
+  return text.split(/\s+/).filter(Boolean).map((word, index) => {
+    if (index > 0 || !first) return word.toLowerCase();
+    return /^[a-z]/.test(word) || word === word.toUpperCase() ? word[0].toUpperCase() + word.slice(1).toLowerCase() : word;
+  }).join(' ');
 }
 
-/** Display text such as "50 micrograms" or "1.5g + 400 units". */
-export function formatStrength(item: CatalogueProduct): string {
-  if (item.ingredients[0]?.code === 'multivitamin') return '';
-  return item.ingredients.map(({ strength: { value, unit } }) => {
-    if (unit === 'microgram') return `${value} microgram${value === 1 ? '' : 's'}`;
-    if (unit === 'unit') return `${value.toLocaleString('en-GB')} unit${value === 1 ? '' : 's'}`;
-    return `${value}${unit}`;
-  }).join(' + ');
+const ingredientCode = (name: string) => name.toLowerCase().split(/[\s-]+/)[0];
+
+export interface ParsedName {
+  name: string;
+  strength?: string;
+  /** Each number in the strength, used to narrow a search such as "naproxen 500". */
+  strengthValues: number[];
+  form: Form;
+  ingredients: string[];
+  brand?: string;
+}
+
+/** Reads a short name, strength and form from a product description such as "Naproxen 250mg tablets". */
+export function parseMedicineName(description: string): ParsedName {
+  const brand = /\[([^\]]+)\]/.exec(description)?.[1]?.trim();
+  const text = description.replace(/\[[^\]]*\]/g, ' ').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ').trim();
+  const lower = text.toLowerCase();
+  const form = FORMS.find(([pattern]) => pattern.test(lower))?.[1] ?? 'tablet';
+
+  // Combination products separate their ingredients with a spaced slash.
+  const parts = text.split(/\s+\/\s+/);
+  const names: string[] = [];
+  const strengths: string[] = [];
+  const strengthValues: number[] = [];
+  for (const part of parts) {
+    const match = STRENGTH.exec(part);
+    const name = (match ? part.slice(0, match.index) : part.replace(/\b(oral|tablets?|capsules?)\b.*$/i, '')).trim();
+    if (name) names.push(name);
+    if (match) {
+      strengths.push(formatComponentStrength(match));
+      strengthValues.push(Number(match[1].replace(',', '.')));
+    }
+  }
+  if (!names.length) names.push(text);
+  const name = names.map((part, index) => tidyName(part, index === 0)).join(' and ');
+  return {
+    name: brand ? `${name} (${brand})` : name,
+    strength: strengths.length ? strengths.join(' + ') : undefined,
+    strengthValues,
+    form,
+    ingredients: names.map(ingredientCode),
+    brand,
+  };
+}
+
+export function toMedicineOption(source: SourceMedicine): MedicineOption {
+  const parsed = parseMedicineName(source.name);
+  const aliases: Alias[] = (ALIASES[parsed.ingredients.join('+')] ?? []).map(([name, type]) => ({ name, type }));
+  if (parsed.brand && !aliases.some(alias => alias.name === parsed.brand)) aliases.unshift({ name: parsed.brand, type: 'brand' });
+  return {
+    id: source.code ?? `name:${source.name.toLowerCase()}`,
+    code: source.code,
+    system: source.system,
+    name: parsed.name,
+    strength: parsed.strength,
+    form: parsed.form,
+    ingredients: parsed.ingredients,
+    recordName: source.name,
+    aliases,
+  };
+}
+
+/** One option per product, in name order. */
+export function medicineOptions(sources: SourceMedicine[]): MedicineOption[] {
+  const byId = new Map<string, MedicineOption>();
+  for (const source of sources) {
+    const option = toMedicineOption(source);
+    if (!byId.has(option.id)) byId.set(option.id, option);
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name) || strengthOf(a) - strengthOf(b));
+}
+
+function strengthOf(option: MedicineOption): number {
+  return parseMedicineName(option.recordName).strengthValues[0] ?? 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,9 +176,9 @@ export function formatStrength(item: CatalogueProduct): string {
 // ---------------------------------------------------------------------------
 
 export interface SearchResult {
-  product: CatalogueProduct;
-  /** The alias that matched, when it was not the product name. */
-  matchedAlias?: { name: string; type: 'brand' | 'generic' };
+  option: MedicineOption;
+  /** The alias that matched, when it was not the option's name. */
+  matchedAlias?: Alias;
   score: number;
 }
 
@@ -147,29 +232,31 @@ function nameScore(words: string[], name: string): number {
 }
 
 /**
- * Suggests products for a partial, misspelt, generic or brand name. Numbers in
+ * Suggests options for a partial, misspelt, generic or brand name. Numbers in
  * the query narrow results to a matching strength. Results never carry a dose
  * or instructions; the patient supplies those.
  */
-export function searchCatalogue(query: string, limit = 6): SearchResult[] {
-  const words = normalise(query).split(' ').filter(Boolean);
-  const numbers = words.filter(word => /^\d/.test(word)).map(word => parseFloat(word));
-  const text = words.filter(word => !/^\d/.test(word));
+export function searchMedicines(options: MedicineOption[], query: string, limit = 6): SearchResult[] {
+  const numbers = [...query.matchAll(/\d+(?:[.,]\d+)?/g)].map(match => Number(match[0].replace(',', '.')));
+  const text = normalise(query.replace(/\d+(?:[.,]\d+)?\s*(mg|mcg|micrograms?|g|ml|units?)?/gi, ' ')).split(' ').filter(Boolean);
   if (!text.length || text.join('').length < 2) return [];
 
   const results: SearchResult[] = [];
-  for (const item of CATALOGUE) {
-    if (numbers.length && !numbers.every(number => item.ingredients.some(({ strength }) => strength.value === number))) continue;
+  for (const option of options) {
+    if (numbers.length) {
+      const values = parseMedicineName(option.recordName).strengthValues;
+      if (!numbers.every(number => values.includes(number))) continue;
+    }
     let best: SearchResult | undefined;
-    const names = [{ name: item.name, alias: undefined }, ...item.aliases.map(alias => ({ name: alias.name, alias }))];
+    const names = [{ name: option.name, alias: undefined }, ...option.aliases.map(alias => ({ name: alias.name, alias }))];
     for (const { name, alias } of names) {
-      // Prefer the product's own name when it matches as well as an alias.
+      // Prefer the option's own name when it matches as well as an alias.
       const score = nameScore(text, name) - (alias ? 0.5 : 0);
-      if (score > 0 && (!best || score > best.score)) best = { product: item, matchedAlias: alias, score };
+      if (score > 0 && (!best || score > best.score)) best = { option, matchedAlias: alias, score };
     }
     if (best) results.push(best);
   }
   return results
-    .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name) || a.product.ingredients[0].strength.value - b.product.ingredients[0].strength.value)
+    .sort((a, b) => b.score - a.score || a.option.name.localeCompare(b.option.name) || strengthOf(a.option) - strengthOf(b.option))
     .slice(0, limit);
 }

@@ -6,7 +6,7 @@ import { useJourney } from '../context';
 import type { MessageKey } from '../i18n';
 import type { SavedSchedule } from '../state';
 import { RemindersPanel, ReminderSummary } from './Reminders';
-import { BackLink, Button, Caption, DoseAmount, Entered, InsetText, Latin, NavLink, PageHeading, RecordText, T, Tag, Time } from './ui';
+import { BackLink, Button, Caption, DoseAmount, Entered, InsetText, Latin, NavLink, PageHeading, RecordText, T, Tag, Time, TName } from './ui';
 
 type OkProposal = Extract<Proposal, { status: 'ok' }>;
 
@@ -15,7 +15,12 @@ function ItemName({ item }: { item: ItemSnapshot }) {
 }
 
 function ItemDose({ item }: { item: ItemSnapshot }) {
-  return <DoseAmount dose={item.dose} strength={item.strength} entered={!item.matched} />;
+  return item.dose ? <DoseAmount dose={item.dose} strength={item.strength} entered={!item.matched} /> : <T k="record.doseMissing" />;
+}
+
+function ItemFrequency({ item }: { item: ItemSnapshot }) {
+  if (item.everyDays) return <T k="record.everyDays" params={{ count: item.everyDays }} />;
+  return item.frequency ? <T k={`frequencies.${item.frequency}`} /> : <T k="record.frequencyMissing" />;
 }
 
 /** Item-supplied text: record wording as recorded, patient wording as entered. */
@@ -31,6 +36,8 @@ function Note({ note, items }: { note: DoseNote; items: ItemSnapshot[] }) {
     case 'empty-stomach': return <T k="notes.emptyStomach" />;
     case 'on-waking': return <T k="notes.onWaking" />;
     case 'at-bedtime': return <T k="notes.atBedtime" />;
+    case 'in-evening': return <T k="notes.inEvening" />;
+    case 'before-others': return <T k="notes.beforeOthers" params={{ minutes: note.minutes }} />;
     case 'apart-from': {
       const other = items.find(item => item.key === note.key);
       return <T k="notes.apartFrom" params={{ hours: note.hours, name: other?.name ?? '' }} />;
@@ -53,9 +60,11 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
       <div className="nhsuk-details__text">
         <dl className="nhsuk-summary-list app-compact-summary">
           {row('common.dose', <ItemDose item={item} />)}
-          {row('common.howOften', item.frequencyText ? <ItemText item={item} text={item.frequencyText} /> : <T k={`frequencies.${item.frequency!}`} />)}
-          {item.instructionText && row('common.instructions', <ItemText item={item} text={item.instructionText} />)}
-          {row('common.source', <T k={item.source === 'record' ? 'common.fromRecord' : 'common.addedByYou'} />)}
+          {row('common.howOften', <ItemFrequency item={item} />)}
+          {item.timing && row('common.whenTaken', <T k={`timings.${item.timing}`} />)}
+          {item.instructions.length > 0 && row('common.instructions', <>{item.instructions.map(text => <span className="app-block" key={text}><ItemText item={item} text={text} /></span>)}</>)}
+          {item.recordName && row('schedule.recordedAs', <RecordText text={item.recordName} />)}
+          {row('common.source', <T k={item.source === 'patient' ? 'common.addedByYou' : item.detailsFromPatient ? 'common.fromRecordAndYou' : 'common.fromRecord'} />)}
         </dl>
         {untranslated && <p className="app-untranslated"><T k="common.inEnglish" /></p>}
       </div>
@@ -71,6 +80,12 @@ function Dose({ item, notes, items }: { item: ItemSnapshot; notes: DoseNote[]; i
         {item.source === 'patient' && <> <Tag colour="blue"><T k="common.addedByYou" /></Tag></>}
       </p>
       {notes.length > 0 && <ul className="app-dose__notes">{notes.map((note, index) => <li key={index}><Note note={note} items={items} /></li>)}</ul>}
+      {item.timingFlag && (
+        <div className="app-dose__flag">
+          <p className="app-tags"><Tag colour="orange"><T k="flag.tag" /></Tag></p>
+          <p><TName k={`flag.schedule.${item.timingFlag.recommended}`} name={item.name} /></p>
+        </div>
+      )}
       {!item.matched && <p className="app-dose__reason"><T k="proposal.unmatched" /></p>}
       <DoseDetails item={item} />
     </li>
@@ -127,6 +142,15 @@ export function Timeline({ proposal }: { proposal: OkProposal }) {
           </ul>
         </section>
       )}
+      {proposal.notDaily.length > 0 && (
+        <section className="app-when-needed" aria-labelledby="not-daily-title">
+          <h2 className="nhsuk-heading-m" id="not-daily-title"><T k="proposal.notDailyTitle" /></h2>
+          <p className="nhsuk-body"><T k="proposal.notDailyBody" /></p>
+          <ul className="app-timeline__doses">
+            {proposal.notDaily.map(key => <Dose key={key} item={byKey.get(key)!} notes={[]} items={items} />)}
+          </ul>
+        </section>
+      )}
     </>
   );
 }
@@ -135,6 +159,7 @@ function ProblemText({ problem, items }: { problem: Problem; items: ItemSnapshot
   const name = (key: string) => items.find(item => item.key === key)?.name ?? '';
   switch (problem.code) {
     case 'cannot-separate': return <T k="proposal.problems.cannot-separate" params={{ first: name(problem.keys[0]), second: name(problem.keys[1]), hours: problem.hours }} />;
+    case 'cannot-take-first': return <T k="proposal.problems.cannot-take-first" params={{ first: name(problem.keys[0]), second: name(problem.keys[1]), minutes: problem.minutes }} />;
     case 'too-complex': return <T k="proposal.problems.too-complex" />;
     case 'not-enough-meals': return <T k="proposal.problems.not-enough-meals" params={{ name: name(problem.key), doses: problem.doses }} />;
     case 'not-enough-time': return <T k="proposal.problems.not-enough-time" params={{ name: name(problem.key), doses: problem.doses, hours: problem.hours }} />;
@@ -177,7 +202,7 @@ export function ProposalScreen() {
   const save = () => {
     setState(current => {
       const saved: SavedSchedule = {
-        version: 2,
+        version: 3,
         savedAt: new Date().toISOString(),
         draft: current.draft,
         response: buildResponse(current.draft.answers, new Date().toISOString(), lang),
