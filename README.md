@@ -31,7 +31,7 @@ pnpm nx run-many -t dev -p web api
 
 Open **http://127.0.0.1:3000**. The API listens on loopback port `3001`; Next.js proxies `/api/*` to it. Both servers watch for changes. Stop them together with Ctrl+C. Everyday development requires no AWS credentials or deployed resources.
 
-The UI uses the official [NHS.UK frontend library](https://service-manual.nhs.uk/design-system/production), with NHS spacing, typography, button, skip-link and footer styles. It uses Arial and a project header for this hackathon demo. Results and progress are announced to assistive technology, and errors allow a keyboard retry.
+The UI uses the official [NHS.UK frontend library](https://service-manual.nhs.uk/design-system/production) with an [NHS App-inspired](https://design-system.nhsapp.service.nhs.uk/) layout and custom **LAI App** branding for Leeds Artificial Intelligence. On desktop, the generator sits inside a decorative phone frame beside a short project introduction on a neutral background. At viewport widths of 700px and below, and on touch devices up to 1000px wide (including landscape phones), the frame, simulated status bar and introduction disappear so the app fills the mobile browser, including safe-area spacing. It uses Arial, NHS colours and a rounded primary button. Results and progress are announced to assistive technology, and errors allow a keyboard retry.
 
 ### Build and check
 
