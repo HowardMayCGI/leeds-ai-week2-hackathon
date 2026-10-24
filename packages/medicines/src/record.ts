@@ -1,3 +1,5 @@
+import type { Form } from './catalogue';
+import type { Dose } from './dose';
 import type { TimingWhen } from './rules';
 
 /**
@@ -9,22 +11,25 @@ export interface RecordMedicine {
   id: string;
   productId?: string;
   name: string;
+  /** The size of one tablet, capsule or measure, as recorded, such as "500mg". */
   strength?: string;
-  doseText: string;
+  form: Form;
+  dose: Dose;
   frequencyText: string;
   instructionText?: string;
   language: string;
   dosage: { timesPerDay: number; when?: TimingWhen[]; asNeeded?: boolean };
 }
 
-/** SYNTHETIC record for the demonstration patient. Not a real person or medical advice. */
-export const DEMO_RECORD: RecordMedicine[] = [
+/** A synthetic patient record. Not a real person or medical advice. */
+export const PATIENT_RECORD: RecordMedicine[] = [
   {
     id: 'rec-levothyroxine',
     productId: 'levothyroxine-50mcg-tablet',
     name: 'Levothyroxine',
-    strength: '50 micrograms tablets',
-    doseText: '1 tablet',
+    strength: '50 micrograms',
+    form: 'tablet',
+    dose: { quantity: 1, unit: 'tablet' },
     frequencyText: 'Once a day',
     instructionText: 'Take in the morning on an empty stomach, at least 30 minutes before breakfast',
     language: 'en',
@@ -34,8 +39,9 @@ export const DEMO_RECORD: RecordMedicine[] = [
     id: 'rec-metformin',
     productId: 'metformin-500mg-tablet',
     name: 'Metformin',
-    strength: '500mg tablets',
-    doseText: '1 tablet',
+    strength: '500mg',
+    form: 'tablet',
+    dose: { quantity: 1, unit: 'tablet' },
     frequencyText: 'Twice a day',
     instructionText: 'Take with or just after food',
     language: 'en',
@@ -45,8 +51,9 @@ export const DEMO_RECORD: RecordMedicine[] = [
     id: 'rec-amlodipine',
     productId: 'amlodipine-5mg-tablet',
     name: 'Amlodipine',
-    strength: '5mg tablets',
-    doseText: '1 tablet',
+    strength: '5mg',
+    form: 'tablet',
+    dose: { quantity: 1, unit: 'tablet' },
     frequencyText: 'Once a day',
     instructionText: 'Take at the same time each day',
     language: 'en',
@@ -56,8 +63,9 @@ export const DEMO_RECORD: RecordMedicine[] = [
     id: 'rec-atorvastatin',
     productId: 'atorvastatin-20mg-tablet',
     name: 'Atorvastatin',
-    strength: '20mg tablets',
-    doseText: '1 tablet',
+    strength: '20mg',
+    form: 'tablet',
+    dose: { quantity: 1, unit: 'tablet' },
     frequencyText: 'Once a day',
     instructionText: 'Take in the evening',
     language: 'en',
@@ -67,8 +75,9 @@ export const DEMO_RECORD: RecordMedicine[] = [
     id: 'rec-paracetamol',
     productId: 'paracetamol-500mg-tablet',
     name: 'Paracetamol',
-    strength: '500mg tablets',
-    doseText: '1 or 2 tablets',
+    strength: '500mg',
+    form: 'tablet',
+    dose: { quantity: 1, quantityMax: 2, unit: 'tablet' },
     frequencyText: 'Up to 4 times a day when needed',
     instructionText: 'Leave at least 4 hours between doses. Do not take more than 8 tablets in 24 hours',
     language: 'en',

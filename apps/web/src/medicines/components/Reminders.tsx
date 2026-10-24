@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useJourney } from '../context';
 import type { Permission } from '../state';
-import { Button, T, Tag } from './ui';
+import { T, Tag } from './ui';
 
 type Status = 'on' | 'pending' | 'denied' | 'off';
 
@@ -35,7 +35,7 @@ export function ReminderSummary({ live = false }: { live?: boolean }) {
 
 /**
  * One switch for every medicine in the schedule, defaulted to ON when first saved.
- * Notification permission is simulated with a clearly labelled demo prompt.
+ * Notification permission is asked for with the device's own style of prompt.
  */
 export function RemindersPanel({ headingLevel }: { headingLevel: 2 | null }) {
   const { state, setState } = useJourney();
@@ -51,6 +51,12 @@ export function RemindersPanel({ headingLevel }: { headingLevel: 2 | null }) {
 
   const askPermission = (button: HTMLButtonElement) => {
     trigger.current = button;
+    // Centre the prompt on the phone screen, as the device would show it.
+    const screen = document.querySelector('.phone-screen')?.getBoundingClientRect();
+    if (dialog.current && screen) {
+      dialog.current.style.left = `${screen.left + screen.width / 2}px`;
+      dialog.current.style.top = `${screen.top + Math.min(screen.height, window.innerHeight - screen.top) / 2}px`;
+    }
     dialog.current?.showModal();
   };
   const answer = (permission: Permission) => {
@@ -75,19 +81,17 @@ export function RemindersPanel({ headingLevel }: { headingLevel: 2 | null }) {
         </button>
       </div>
       <ReminderSummary live />
-      {status === 'pending' && (
+      {(status === 'pending' || status === 'denied') && (
         <button type="button" className="nhsuk-button nhsuk-button--secondary" onClick={event => askPermission(event.currentTarget)}><T k="reminders.allow" /></button>
       )}
-      {status === 'denied' && (
-        <button type="button" className="nhsuk-button nhsuk-button--secondary" onClick={event => askPermission(event.currentTarget)}><T k="reminders.askAgain" /></button>
-      )}
       <dialog ref={dialog} className="app-permission" aria-labelledby="permission-title" aria-describedby="permission-body" onCancel={() => trigger.current?.focus()}>
-        <p className="app-permission__label"><Tag colour="purple"><T k="reminders.dialogLabel" /></Tag></p>
-        <h2 className="nhsuk-heading-s" id="permission-title"><T k="reminders.dialogTitle" /></h2>
-        <p className="nhsuk-body-s" id="permission-body"><T k="reminders.dialogBody" /></p>
+        <div className="app-permission__body">
+          <h2 className="app-permission__title" id="permission-title"><T k="reminders.dialogTitle" /></h2>
+          <p className="app-permission__text" id="permission-body"><T k="reminders.dialogBody" /></p>
+        </div>
         <div className="app-permission__actions">
-          <Button secondary onClick={() => answer('denied')}><T k="reminders.dialogDeny" /></Button>
-          <Button onClick={() => answer('granted')}><T k="reminders.dialogAllow" /></Button>
+          <button type="button" className="app-permission__action" onClick={() => answer('denied')}><T k="reminders.dialogDeny" /></button>
+          <button type="button" className="app-permission__action app-permission__action--primary" onClick={() => answer('granted')}><T k="reminders.dialogAllow" /></button>
         </div>
       </dialog>
     </section>

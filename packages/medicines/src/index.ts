@@ -1,5 +1,6 @@
 export * from './catalogue';
 export * from './checker';
+export * from './dose';
 export * from './items';
 export * from './proposal';
 export * from './questionnaire';

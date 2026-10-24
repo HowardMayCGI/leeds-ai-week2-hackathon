@@ -1,63 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import { DEMO_RECORD } from '@hackathon/medicines';
 import { useJourney } from '../context';
-import { emptyDraft, storeSaved } from '../state';
-import { BackLink, Button, Caption, LinkButton, PageHeading, T } from './ui';
-
-function Chevron() {
-  return (
-    <svg className="app-menu__chevron" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+import { CardLink } from './AppNav';
+import { BackLink, Button, Caption, PageHeading, T } from './ui';
 
 export function Prescriptions() {
-  const { state, go, setState } = useJourney();
-  const [reset, setReset] = useState(false);
+  const { state, go } = useJourney();
   const open = () => {
     if (state.saved) go('schedule', { updating: false, proposal: undefined, changeFlow: undefined });
     else go('intro');
   };
-  const resetDemo = () => {
-    storeSaved(undefined);
-    setState(() => ({ screen: 'prescriptions', draft: emptyDraft(), updating: false }));
-    setReset(true);
-  };
   return (
     <>
       <PageHeading><T k="prescriptions.title" /></PageHeading>
-      <p className="nhsuk-body-l"><T k="prescriptions.lede" /></p>
-      <ul className="app-menu">
-        <li className="app-menu__item app-menu__item--inactive">
-          <span className="app-menu__text"><strong><T k="prescriptions.orderRepeat" /></strong><span><T k="prescriptions.orderRepeatDetail" /></span></span>
-        </li>
-        <li className="app-menu__item app-menu__item--inactive">
-          <span className="app-menu__text"><strong><T k="prescriptions.yourMedicines" /></strong><span><T k="prescriptions.yourMedicinesDetail" params={{ count: DEMO_RECORD.length }} /></span></span>
-        </li>
-        <li className="app-menu__item">
-          <a href="#schedule-my-medicines" className="app-menu__link" onClick={event => { event.preventDefault(); open(); }}>
-            <span className="app-menu__icon" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /><circle cx="12" cy="15.5" r="2" /></svg>
-            </span>
-            <span className="app-menu__text">
-              <strong><T k="prescriptions.schedule" /></strong>
-              <span>{state.saved ? <T k="prescriptions.scheduleSaved" /> : <T k="prescriptions.scheduleNew" />}</span>
-            </span>
-            <Chevron />
-          </a>
-        </li>
+      <p className="nhsuk-body"><T k="prescriptions.lede" /></p>
+      <ul className="nhsapp-cards nhsapp-cards--stacked">
+        <CardLink
+          title={<T k="prescriptions.schedule" />}
+          description={state.saved ? <T k="prescriptions.scheduleSaved" /> : <T k="prescriptions.scheduleNew" />}
+          onSelect={open}
+        />
       </ul>
-      <p className="app-small-print"><T k="prescriptions.demoOnly" /></p>
-      {reset && <p className="app-small-print" role="status"><T k="prescriptions.resetDone" /></p>}
-      {state.saved && (
-        <div className="app-demo-controls">
-          <p className="app-small-print"><T k="prescriptions.storageNote" /></p>
-          <LinkButton onClick={resetDemo}><T k="prescriptions.resetDemo" /></LinkButton>
-        </div>
-      )}
     </>
   );
 }

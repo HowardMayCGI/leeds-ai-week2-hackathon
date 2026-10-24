@@ -1,6 +1,6 @@
 import { CATALOGUE_VERSION } from './catalogue';
 import { checkAssignment, type Check } from './checker';
-import { buildConstraints, classify, type Constraint, type ItemSnapshot, type NotTimedReason, type PatientAddition } from './items';
+import { buildConstraints, classify, type Constraint, type ItemSnapshot, type PatientAddition } from './items';
 import type { RecordMedicine } from './record';
 import { MEALS, toDay, type Day, type Meal, type Routine } from './routine';
 import { RULES_VERSION } from './rules';
@@ -27,7 +27,8 @@ export interface ScheduledDose {
 interface ProposalBase {
   routine: Routine;
   items: ItemSnapshot[];
-  notTimed: { key: string; reason: NotTimedReason }[];
+  /** Items taken only when needed, which have no set times. */
+  whenNeeded: string[];
   rulesVersion: string;
   catalogueVersion: string;
 }
@@ -61,8 +62,8 @@ function notesFor(minute: number, constraint: Constraint, day: Day, times: Recor
 /** Builds a proposal from confirmed inputs. A blocked proposal explains why and is never saveable. */
 export function createProposal(inputs: ProposalInputs): Proposal {
   const day = toDay(inputs.routine);
-  const { items, timed, notTimed } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions);
-  const base: ProposalBase = { routine: inputs.routine, items, notTimed, rulesVersion: RULES_VERSION, catalogueVersion: CATALOGUE_VERSION };
+  const { items, timed, whenNeeded } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions);
+  const base: ProposalBase = { routine: inputs.routine, items, whenNeeded, rulesVersion: RULES_VERSION, catalogueVersion: CATALOGUE_VERSION };
   const constraints = buildConstraints(timed, day);
   const result = schedule(constraints, day);
   if (result.status === 'blocked') return { ...base, status: 'blocked', problems: result.problems };
@@ -89,4 +90,29 @@ export function groupByTime(doses: ScheduledDose[]): { time: ClockTime; minute: 
     else groups.push({ time: dose.time, minute: dose.minute, doses: [dose] });
   }
   return groups;
+}
+
+export type RoutineEvent = 'wake' | Meal | 'sleep';
+
+export interface TimelineEntry {
+  time: ClockTime;
+  minute: number;
+  /** Parts of the patient's day at this time, such as waking up or a meal. */
+  events: RoutineEvent[];
+  doses: ScheduledDose[];
+}
+
+/** The patient's day in order: waking, meals and bedtime, with doses at the same time merged in. */
+export function dayTimeline(routine: Routine, doses: ScheduledDose[]): TimelineEntry[] {
+  const day = toDay(routine);
+  const entries = new Map<number, TimelineEntry>();
+  const entry = (minute: number) => {
+    if (!entries.has(minute)) entries.set(minute, { time: formatClockTime(minute), minute, events: [], doses: [] });
+    return entries.get(minute)!;
+  };
+  entry(day.wake).events.push('wake');
+  for (const meal of MEALS) if (day.meals[meal] !== undefined) entry(day.meals[meal]!).events.push(meal);
+  for (const dose of doses) entry(dose.minute).doses.push(dose);
+  entry(day.sleep).events.push('sleep');
+  return [...entries.values()].sort((a, b) => a.minute - b.minute);
 }

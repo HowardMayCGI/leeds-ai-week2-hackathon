@@ -141,123 +141,6 @@
   margin-bottom: 4px;
 }
 
-/* Language selector in the app header */
-.app-language {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--app-blue);
-}
-
-.app-language__select {
-  min-height: 40px;
-  padding: 4px 28px 4px 10px;
-  border: 2px solid var(--app-ink);
-  border-radius: 4px;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23212b32' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 9px center;
-  color: var(--app-ink);
-  font: inherit;
-  font-size: 16px;
-  appearance: none;
-}
-
-[dir='rtl'] .app-language__select {
-  padding: 4px 10px 4px 28px;
-  background-position: left 9px center;
-}
-
-.app-language__select:focus {
-  outline: 4px solid var(--app-focus);
-  outline-offset: 0;
-  box-shadow: 0 0 0 2px #212b32 inset;
-}
-
-/* Prescriptions hub menu */
-.app-menu {
-  margin: 0 0 20px;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: #fff;
-  list-style: none;
-}
-
-.app-menu__item + .app-menu__item {
-  border-top: 1px solid var(--app-border);
-}
-
-.app-menu__item--inactive {
-  padding: 16px 18px;
-  color: var(--app-muted);
-}
-
-.app-menu__link {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: #e8f1fa;
-  color: var(--app-blue);
-  text-decoration: none;
-}
-
-.app-menu__link:hover .app-menu__text strong {
-  text-decoration: underline;
-}
-
-.app-menu__link:focus {
-  outline: none;
-  background: var(--app-focus);
-  box-shadow: inset 0 -4px 0 #212b32;
-  color: #212b32;
-}
-
-.app-menu__text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-menu__text strong {
-  font-size: 18px;
-}
-
-.app-menu__text span {
-  color: var(--app-ink);
-  font-size: 15px;
-}
-
-.app-menu__item--inactive strong {
-  color: var(--app-ink);
-}
-
-.app-menu__icon {
-  display: inline-flex;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--app-blue);
-  color: #fff;
-}
-
-.app-menu__chevron {
-  flex-shrink: 0;
-}
-
-[dir='rtl'] .app-menu__chevron {
-  transform: scaleX(-1);
-}
-
-.app-demo-controls {
-  padding-top: 8px;
-  border-top: 1px solid var(--app-border);
-}
-
 /* Links that act on the page */
 .app-link-button {
   padding: 0;
@@ -293,18 +176,8 @@
   background: #fff;
 }
 
-.app-meal .nhsuk-fieldset__legend {
-  float: left;
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-[dir='rtl'] .app-meal .nhsuk-fieldset__legend {
-  float: right;
-}
-
-.app-meal .nhsuk-fieldset__legend + * {
-  clear: both;
+.app-meal__heading {
+  margin-bottom: 12px;
 }
 
 .app-meal .nhsuk-form-group {
@@ -316,72 +189,57 @@
   color: var(--app-muted);
 }
 
+/* Time entry: hour and minutes, as in the NHS date input, then am or pm */
 .app-time-input {
-  min-width: 8em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.app-time-input .nhsuk-date-input {
+  display: flex;
+  align-items: flex-end;
+}
+
+.app-time-input .nhsuk-date-input__item {
+  margin-right: 0;
+}
+
+.app-time-input .nhsuk-form-group {
+  margin-bottom: 0;
+}
+
+.app-time-input .nhsuk-input {
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
-/* Medicine selection: each checkbox sits in a card, so offset NHS's absolutely positioned markers by the padding */
-.app-medicine-checkboxes .nhsuk-checkboxes__item {
-  --card-padding: 14px;
-  margin-top: 0;
-  margin-bottom: 12px;
-  padding: var(--card-padding) var(--card-padding) 10px;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: #fff;
-}
-
-.app-medicine-checkboxes .nhsuk-checkboxes__label::before {
-  top: calc(.125rem + var(--card-padding));
-  left: calc(.125rem + var(--card-padding));
-}
-
-.app-medicine-checkboxes .nhsuk-checkboxes__label::after {
-  top: calc(.625rem + var(--card-padding));
-  left: calc(1.4375rem + var(--card-padding));
-}
-
-[dir='rtl'] .app-medicine-checkboxes .nhsuk-checkboxes__label::before {
-  right: calc(.125rem + var(--card-padding));
-  left: auto;
-}
-
-[dir='rtl'] .app-medicine-checkboxes .nhsuk-checkboxes__label::after {
-  right: calc(.0625rem + var(--card-padding));
-  left: auto;
-}
-
-.app-medicine-checkboxes .nhsuk-checkboxes__item:has(:checked) {
-  border-color: var(--app-blue);
-  box-shadow: inset 0 0 0 1px var(--app-blue);
-}
-
-.app-medicine-label {
+.app-time-input__separator {
+  padding: 0 6px 8px;
+  font-size: 19px;
   font-weight: 700;
 }
 
-.app-record-details dl {
-  margin: 4px 0 0;
+.app-time-input__period {
+  display: flex;
+  padding-bottom: 2px;
 }
 
-.app-record-details dl > div {
-  margin-bottom: 4px;
+.app-time-input__period .nhsuk-radios__item {
+  max-width: none;
+  flex-wrap: nowrap;
+  margin: 0 8px 0 0;
 }
 
-.app-record-details dt {
-  display: inline;
-  font-weight: 700;
+/* Medicine selection: NHS checkboxes, with record details as each hint */
+.app-record-hint__line {
+  display: block;
 }
 
-.app-record-details dt::after {
-  content: ': ';
-}
-
-.app-record-details dd {
-  display: inline;
-  margin: 0;
-  color: var(--app-ink);
+.app-secondary-text {
+  color: var(--app-muted);
+  font-size: 16px;
 }
 
 .app-untranslated {
@@ -508,53 +366,66 @@
   font-weight: 700;
 }
 
-/* Schedule timeline */
+/* Schedule: the NHS App timeline, with medicines under each time */
 .app-timeline {
-  margin: 8px 0 24px;
-  padding: 0;
-  list-style: none;
+  margin-top: 16px;
 }
 
-.app-slot {
-  position: relative;
-  padding-inline-start: 26px;
-  padding-bottom: 8px;
+.app-timeline .nhsapp-timeline__item {
+  margin-left: 0;
+  margin-inline-start: 12px;
 }
 
-.app-slot::before {
-  position: absolute;
-  top: 8px;
-  bottom: -8px;
-  inset-inline-start: 6px;
-  width: 2px;
-  background: #aeb7bd;
-  content: '';
+.app-timeline .nhsapp-timeline__item::before {
+  left: auto;
+  inset-inline-start: -2px;
 }
 
-.app-slot:last-child::before {
-  display: none;
+.app-timeline .nhsapp-timeline__item:last-child {
+  padding-bottom: 0;
 }
 
-.app-slot::after {
-  position: absolute;
-  top: 4px;
-  inset-inline-start: 0;
-  width: 14px;
-  height: 14px;
-  border: 3px solid var(--app-blue);
-  border-radius: 50%;
-  background: #fff;
-  content: '';
+.app-timeline .nhsapp-timeline__badge {
+  width: 16px;
+  height: 16px;
+  margin: 4px 0 0;
+  margin-inline: -9px 16px;
 }
 
-.app-slot__time {
-  margin: 0 0 8px;
+.app-timeline .nhsapp-timeline__badge--small {
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  margin-inline: -7px 18px;
+}
+
+.app-timeline .nhsapp-timeline__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-timeline__time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 8px;
+  font-size: 19px;
+  line-height: 1.4;
+}
+
+.app-timeline__item--doses .app-timeline__time {
   color: var(--app-blue);
   font-size: 21px;
-  line-height: 1.2;
 }
 
-.app-slot__doses {
+.app-timeline__event {
+  color: var(--app-muted);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.app-timeline__doses {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -609,7 +480,8 @@
 
 .app-dose__reason {
   margin-bottom: 8px !important;
-  font-size: 16px !important;
+  color: var(--app-muted);
+  font-size: 15px !important;
 }
 
 .app-dose-details {
@@ -625,12 +497,8 @@
   padding-bottom: 8px;
 }
 
-.app-not-timed {
-  margin-bottom: 20px;
-}
-
-.app-not-timed .nhsuk-list {
-  margin-bottom: 0;
+.app-when-needed {
+  margin: 8px 0 20px;
 }
 
 .app-time {
@@ -766,25 +634,154 @@
 }
 
 .app-permission {
-  width: min(340px, calc(100vw - 32px));
-  padding: 22px 20px 6px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(270px, calc(100vw - 48px));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   border: 0;
-  border-radius: 16px;
+  border-radius: 14px;
+  background: #f2f2f2;
   box-shadow: 0 20px 50px #212b3266;
-  color: var(--app-ink);
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  text-align: center;
+}
+
+.app-permission[open] {
+  transform: translate(-50%, -50%);
 }
 
 .app-permission::backdrop {
-  background: #212b3299;
+  background: #0006;
+}
+
+.app-permission__body {
+  padding: 20px 16px 16px;
+}
+
+.app-permission__title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.app-permission__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .app-permission__actions {
   display: flex;
-  gap: 12px;
+  border-top: 1px solid #3c3c4349;
 }
 
-.app-permission__actions .nhsuk-button {
-  margin-bottom: 16px;
+.app-permission__action {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 8px;
+  border: 0;
+  background: none;
+  color: #007aff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+}
+
+.app-permission__action + .app-permission__action {
+  border-inline-start: 1px solid #3c3c4349;
+}
+
+.app-permission__action--primary {
+  font-weight: 600;
+}
+
+.app-permission__action:focus {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+  background: var(--app-focus);
+  color: #212b32;
+}
+
+/* NHS App bottom navigation */
+.app-nav {
+  flex-shrink: 0;
+  border-top: 1px solid var(--app-border);
+  background: #fff;
+}
+
+.app-nav__list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-nav__item {
+  flex: 1;
+}
+
+.app-nav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.app-nav__icon {
+  fill: currentColor;
+}
+
+.app-nav__link--current {
+  color: var(--app-blue);
+  font-weight: 700;
+}
+
+.app-nav__link:hover .app-nav__label {
+  text-decoration: underline;
+}
+
+.app-nav__link:focus {
+  outline: none;
+  background: var(--app-focus);
+  box-shadow: inset 0 -4px 0 #212b32;
+  color: #212b32;
+}
+
+/* NHS App card links inside the narrow phone */
+.app-screen .nhsapp-cards {
+  margin-bottom: 24px;
+}
+
+.app-screen .nhsapp-card__link {
+  font-size: 19px;
+}
+
+.app-screen .nhsapp-card__description {
+  font-size: 16px;
+}
+
+/* Quantity with a unit suffix */
+.app-quantity .nhsuk-input-wrapper {
+  display: flex;
+  align-items: stretch;
+}
+
+.app-quantity .nhsuk-input-wrapper__suffix {
+  white-space: nowrap;
+}
+
+.app-unit {
+  margin-top: 16px;
 }
 
 /* Right-to-left support for NHS components, which position their markers with physical properties */
@@ -886,21 +883,44 @@
   padding: 0;
 }
 
-/* Urdu: a Nastaliq face where the device has one, with room for its tall letterforms */
-:lang(ur) {
-  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Naskh Arabic', Arial, sans-serif;
+[dir='rtl'] .app-screen .nhsapp-icon--chevron-right {
+  transform: scaleX(-1);
 }
 
-:lang(ur) .app-screen,
-.app-screen:lang(ur) {
-  line-height: 1.9;
+[dir='rtl'] .app-screen .nhsapp-card .nhsapp-icon--chevron-right {
+  margin-right: 0;
+  margin-left: -8px;
 }
 
-:lang(ur) :lang(en) {
-  font-family: Arial, sans-serif;
+[dir='rtl'] .app-time-input__period .nhsuk-radios__item {
+  margin: 0 0 0 8px;
 }
 
-/* The simulated phone hardware does not mirror with the page language */
-.phone-status {
+[dir='rtl'] .nhsuk-checkboxes__divider {
+  text-align: right;
+}
+
+[dir='rtl'] .app-quantity .nhsuk-input-wrapper {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+/*
+ * Urdu: a Naskh face, bundled so every device shows the same letterforms. It
+ * only covers Arabic script, so Latin text such as medicine names stays in Arial.
+ * Naskh fits NHS line heights; tall Nastaliq letterforms overlapped and were clipped.
+ */
+.app-root:lang(ur),
+.app-root:lang(ur) * {
+  font-family: 'Noto Naskh Arabic', Arial, sans-serif;
+}
+
+.app-root:lang(ur) :is(h1, h2, h3, .nhsuk-heading-l, .nhsuk-heading-m, .nhsuk-heading-s, .nhsuk-fieldset__legend, .nhsuk-label) {
+  line-height: 1.45;
+}
+
+/* The phone hardware and the app's logo do not mirror with the app language */
+.phone-status,
+.app-brand {
   direction: ltr;
 }

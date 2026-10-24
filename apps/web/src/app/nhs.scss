@@ -7,6 +7,7 @@
 @use 'nhsuk-frontend/dist/nhsuk/components/button';
 @use 'nhsuk-frontend/dist/nhsuk/components/card';
 @use 'nhsuk-frontend/dist/nhsuk/components/checkboxes';
+@use 'nhsuk-frontend/dist/nhsuk/components/date-input';
 @use 'nhsuk-frontend/dist/nhsuk/components/details';
 @use 'nhsuk-frontend/dist/nhsuk/components/error-message';
 @use 'nhsuk-frontend/dist/nhsuk/components/error-summary';
@@ -21,3 +22,8 @@
 @use 'nhsuk-frontend/dist/nhsuk/components/summary-list';
 @use 'nhsuk-frontend/dist/nhsuk/components/tag';
 @use 'nhsuk-frontend/dist/nhsuk/components/textarea';
+
+// NHS App components and icons, built on NHS.UK frontend
+@use 'nhsapp-frontend/dist/nhsapp/styles/icon/icons' as nhsapp-icons;
+@use 'nhsapp-frontend/dist/nhsapp/components/card' as nhsapp-card;
+@use 'nhsapp-frontend/dist/nhsapp/components/timeline' as nhsapp-timeline;

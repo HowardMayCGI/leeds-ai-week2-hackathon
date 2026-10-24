@@ -9,8 +9,9 @@ import { RoutineScreen } from './components/RoutineScreen';
 import { ProposalScreen, RemindersScreen, ReviewConfirmation, SavedConfirmation, SavedScheduleScreen } from './components/ScheduleScreens';
 import { Intro, Prescriptions } from './components/StartScreens';
 import { JourneyContext, type Journey } from './context';
-import { DEFAULT_LANGUAGE, formatDate, formatTime, isLanguage, LANGUAGES, languageInfo, translate, type Language } from './i18n';
-import { initialState, loadLanguage, loadSaved, storeLanguage, storeSaved, type Screen, type State } from './state';
+import { BottomNav, MessagesScreen, ProfileScreen } from './components/AppNav';
+import { formatDate, formatTime, languageInfo, translate, type Language } from './i18n';
+import { initialState, loadSaved, storeSaved, type Screen, type State } from './state';
 
 const [wakingSleeping, mealTimes] = routinePages();
 
@@ -21,31 +22,14 @@ function canShow(screen: Screen, state: State): boolean {
   return true;
 }
 
-function LanguageSelect({ lang, onChange, label }: { lang: Language; onChange: (lang: Language) => void; label: string }) {
-  return (
-    <div className="app-language">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z" />
-      </svg>
-      <label className="nhsuk-u-visually-hidden" htmlFor="language-select">{label === 'Language' ? label : `${label} (Language)`}</label>
-      <select id="language-select" className="app-language__select" value={lang} onChange={event => isLanguage(event.target.value) && onChange(event.target.value)}>
-        {LANGUAGES.map(language => <option key={language.code} value={language.code} lang={language.code}>{language.label}</option>)}
-      </select>
-    </div>
-  );
-}
-
-export function MedicinesApp() {
+export function MedicinesApp({ lang }: { lang: Language }) {
   const [state, setStateRaw] = useState<State>(initialState);
-  const [lang, setLang] = useState<Language>(DEFAULT_LANGUAGE);
   const loaded = useRef(false);
   const firstScreen = useRef(true);
   const popping = useRef(false);
 
-  // Restore the device's language preference and the demo's saved schedule after hydration.
+  // Restore the saved schedule after hydration.
   useEffect(() => {
-    const preferred = loadLanguage();
-    if (preferred) setLang(preferred);
     const saved = loadSaved();
     if (saved) setStateRaw(current => ({ ...current, saved }));
     loaded.current = true;
@@ -56,17 +40,12 @@ export function MedicinesApp() {
     if (loaded.current) storeSaved(state.saved);
   }, [state.saved]);
 
-  useEffect(() => {
-    const { dir } = languageInfo(lang);
-    document.documentElement.lang = lang;
-    document.documentElement.dir = dir;
-  }, [lang]);
-
   // Move focus to the new page heading, as a full page load would, but not on first load or language change.
   useEffect(() => {
     if (firstScreen.current) { firstScreen.current = false; return; }
     if (popping.current) popping.current = false;
     else window.history.pushState({ screen: state.screen }, '');
+    document.querySelector('.app-main')?.scrollTo?.({ top: 0 });
     document.querySelector('.phone-screen')?.scrollTo?.({ top: 0 });
     window.scrollTo({ top: 0 });
     document.getElementById('page-heading')?.focus({ preventScroll: true });
@@ -92,11 +71,6 @@ export function MedicinesApp() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-
-  const changeLanguage = (next: Language) => {
-    setLang(next);
-    storeLanguage(next);
-  };
 
   const journey = useMemo<Journey>(() => {
     const go: Journey['go'] = (screen, changes = {}) => setState(current => {
@@ -136,15 +110,14 @@ export function MedicinesApp() {
     schedule: () => <SavedScheduleScreen />,
     reminders: () => <RemindersScreen />,
     'review-confirmation': () => <ReviewConfirmation />,
+    messages: () => <MessagesScreen />,
+    profile: () => <ProfileScreen />,
   };
   const screen = canShow(state.screen, state) ? state.screen : 'prescriptions';
 
   return (
     <JourneyContext.Provider value={journey}>
-      <AppChrome
-        headerExtra={<LanguageSelect lang={lang} onChange={changeLanguage} label={translate(lang, 'common.language').text} />}
-        footer={translate(lang, 'common.demoFooter').text}
-      >
+      <AppChrome lang={lang} dir={languageInfo(lang).dir} nav={<BottomNav screen={screen} />}>
         <div className="app-screen" data-screen={screen}>{screens[screen]()}</div>
       </AppChrome>
     </JourneyContext.Provider>

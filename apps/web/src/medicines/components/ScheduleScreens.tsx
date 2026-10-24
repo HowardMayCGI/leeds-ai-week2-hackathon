@@ -1,19 +1,21 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { buildResponse, groupByTime, type DoseNote, type ItemSnapshot, type Problem, type Proposal } from '@hackathon/medicines';
+import { buildResponse, dayTimeline, type DoseNote, type ItemSnapshot, type Problem, type Proposal, type RoutineEvent } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { MessageKey } from '../i18n';
 import type { SavedSchedule } from '../state';
 import { RemindersPanel, ReminderSummary } from './Reminders';
-import { BackLink, Button, Caption, Entered, InsetText, Latin, NavLink, PageHeading, RecordText, T, Tag, Time } from './ui';
+import { BackLink, Button, Caption, DoseAmount, Entered, InsetText, Latin, NavLink, PageHeading, RecordText, T, Tag, Time } from './ui';
 
 type OkProposal = Extract<Proposal, { status: 'ok' }>;
 
 function ItemName({ item }: { item: ItemSnapshot }) {
-  return item.source === 'record' || item.productId
-    ? <Latin>{item.name}{item.strength ? ` ${item.strength}` : ''}</Latin>
-    : <><Entered>{item.name}</Entered>{item.strength && <> <Entered>{item.strength}</Entered></>}</>;
+  return item.matched ? <Latin>{item.name}{item.strength ? ` ${item.strength}` : ''}</Latin> : <Entered>{item.name}</Entered>;
+}
+
+function ItemDose({ item }: { item: ItemSnapshot }) {
+  return <DoseAmount dose={item.dose} strength={item.strength} entered={!item.matched} />;
 }
 
 /** Item-supplied text: record wording as recorded, patient wording as entered. */
@@ -50,7 +52,7 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
       <summary className="nhsuk-details__summary"><span className="nhsuk-details__summary-text"><T k="schedule.details" /><span className="nhsuk-u-visually-hidden">: {item.name}</span></span></summary>
       <div className="nhsuk-details__text">
         <dl className="nhsuk-summary-list app-compact-summary">
-          {row('common.dose', <ItemText item={item} text={item.doseText} />)}
+          {row('common.dose', <ItemDose item={item} />)}
           {row('common.howOften', item.frequencyText ? <ItemText item={item} text={item.frequencyText} /> : <T k={`frequencies.${item.frequency!}`} />)}
           {item.instructionText && row('common.instructions', <ItemText item={item} text={item.instructionText} />)}
           {row('common.source', <T k={item.source === 'record' ? 'common.fromRecord' : 'common.addedByYou'} />)}
@@ -61,58 +63,70 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
   );
 }
 
+function Dose({ item, notes, items }: { item: ItemSnapshot; notes: DoseNote[]; items: ItemSnapshot[] }) {
+  return (
+    <li className="app-dose">
+      <h3 className="app-dose__name"><ItemName item={item} /></h3>
+      <p className="app-dose__amount"><ItemDose item={item} />
+        {item.source === 'patient' && <> <Tag colour="blue"><T k="common.addedByYou" /></Tag></>}
+      </p>
+      {notes.length > 0 && <ul className="app-dose__notes">{notes.map((note, index) => <li key={index}><Note note={note} items={items} /></li>)}</ul>}
+      {!item.matched && <p className="app-dose__reason"><T k="proposal.unmatched" /></p>}
+      <DoseDetails item={item} />
+    </li>
+  );
+}
+
+function EventLabel({ events }: { events: RoutineEvent[] }) {
+  return <>{events.map((event, index) => <span key={event}>{index > 0 && ', '}<T k={`schedule.events.${event}`} /></span>)}</>;
+}
+
+/**
+ * The schedule as an NHS App timeline of the patient's day: waking up, meals
+ * and going to sleep, with each time's medicines. Times with medicines have a
+ * large marker; parts of the day without medicines have a small one.
+ */
 export function Timeline({ proposal }: { proposal: OkProposal }) {
-  const { lang } = useJourney();
   const items = proposal.items;
   const byKey = new Map(items.map(item => [item.key, item]));
-  const groups = groupByTime(proposal.doses);
+  const entries = dayTimeline(proposal.routine, proposal.doses);
   return (
     <>
-      {groups.length ? (
-        <ol className="app-timeline">
-          {groups.map(group => (
-            <li className="app-slot" key={group.minute}>
-              <h2 className="app-slot__time"><Time value={group.time} /></h2>
-              <ul className="app-slot__doses">
-                {group.doses.map(dose => {
-                  const item = byKey.get(dose.key)!;
-                  return (
-                    <li className="app-dose" key={`${dose.key}-${dose.minute}`}>
-                      <h3 className="app-dose__name"><ItemName item={item} /></h3>
-                      <p className="app-dose__amount"><ItemText item={item} text={item.doseText} />
-                        {item.source === 'patient' && <> <Tag colour="blue"><T k="common.addedByYou" /></Tag></>}
-                      </p>
-                      {dose.notes.length > 0 && (
-                        <ul className="app-dose__notes">{dose.notes.map((note, index) => <li key={index}><Note note={note} items={items} /></li>)}</ul>
-                      )}
-                      <DoseDetails item={item} />
-                    </li>
-                  );
-                })}
-              </ul>
+      {!proposal.doses.length && <p className="nhsuk-body"><T k="proposal.noTimes" /></p>}
+      <ol className="nhsapp-timeline app-timeline">
+        {entries.map(entry => {
+          const hasDoses = entry.doses.length > 0;
+          return (
+            <li className={`nhsapp-timeline__item${hasDoses ? ' app-timeline__item--doses' : ''}`} key={entry.minute}>
+              {hasDoses ? (
+                <svg className="nhsapp-timeline__badge" aria-hidden="true" focusable="false" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#005EB8" /></svg>
+              ) : (
+                <svg className="nhsapp-timeline__badge nhsapp-timeline__badge--small" aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="white" stroke="#AEB7BD" strokeWidth="2" /></svg>
+              )}
+              <div className="nhsapp-timeline__content">
+                <h2 className={`nhsapp-timeline__header app-timeline__time${hasDoses ? ' nhsuk-u-font-weight-bold' : ''}`}>
+                  <Time value={entry.time} />
+                  {entry.events.length > 0 && <span className="app-timeline__event"><EventLabel events={entry.events} /></span>}
+                </h2>
+                {hasDoses && (
+                  <ul className="app-timeline__doses">
+                    {entry.doses.map(dose => <Dose key={`${dose.key}-${dose.minute}`} item={byKey.get(dose.key)!} notes={dose.notes} items={items} />)}
+                  </ul>
+                )}
+              </div>
             </li>
-          ))}
-        </ol>
-      ) : <p className="nhsuk-body"><T k="proposal.noTimes" /></p>}
-      {proposal.notTimed.length > 0 && (
-        <section className="app-not-timed" aria-labelledby="not-timed-title">
-          <h2 className="nhsuk-heading-s" id="not-timed-title"><T k="proposal.notTimedTitle" /></h2>
-          <ul className="nhsuk-list">
-            {proposal.notTimed.map(({ key, reason }) => {
-              const item = byKey.get(key)!;
-              return (
-                <li className="app-dose" key={key}>
-                  <h3 className="app-dose__name"><ItemName item={item} /></h3>
-                  <p className="app-dose__amount"><ItemText item={item} text={item.doseText} /></p>
-                  <p className="app-dose__reason"><T k={`proposal.notTimed.${reason}`} /></p>
-                  <DoseDetails item={item} />
-                </li>
-              );
-            })}
+          );
+        })}
+      </ol>
+      {proposal.whenNeeded.length > 0 && (
+        <section className="app-when-needed" aria-labelledby="when-needed-title">
+          <h2 className="nhsuk-heading-m" id="when-needed-title"><T k="proposal.whenNeededTitle" /></h2>
+          <p className="nhsuk-body"><T k="proposal.whenNeededBody" /></p>
+          <ul className="app-timeline__doses">
+            {proposal.whenNeeded.map(key => <Dose key={key} item={byKey.get(key)!} notes={[]} items={items} />)}
           </ul>
         </section>
       )}
-      <p className="app-small-print" lang={lang}><T k="schedule.rulesNote" params={{ version: proposal.rulesVersion }} /></p>
     </>
   );
 }
@@ -163,7 +177,7 @@ export function ProposalScreen() {
   const save = () => {
     setState(current => {
       const saved: SavedSchedule = {
-        version: 1,
+        version: 2,
         savedAt: new Date().toISOString(),
         draft: current.draft,
         response: buildResponse(current.draft.answers, new Date().toISOString(), lang),
@@ -244,8 +258,9 @@ export function SavedScheduleScreen() {
         <div className="nhsuk-card__content">
           <h2 className="nhsuk-card__heading nhsuk-heading-m"><T k="savedSchedule.reviewTitle" /></h2>
           <p className="nhsuk-card__description"><T k="savedSchedule.reviewBody" /></p>
-          {saved.reviewRequestedAt && <p className="app-tags"><Tag colour="purple"><T k="review.tag" /></Tag> <T k="savedSchedule.reviewRequested" params={{ date: date(saved.reviewRequestedAt) }} /></p>}
-          <Button secondary onClick={requestReview} className="nhsuk-u-margin-bottom-0"><T k="savedSchedule.reviewButton" /></Button>
+          {saved.reviewRequestedAt
+            ? <p className="app-tags"><Tag colour="purple"><T k="review.tag" /></Tag> <T k="savedSchedule.reviewRequested" params={{ date: date(saved.reviewRequestedAt) }} /></p>
+            : <Button secondary onClick={requestReview} className="nhsuk-u-margin-bottom-0"><T k="savedSchedule.reviewButton" /></Button>}
         </div>
       </div>
 

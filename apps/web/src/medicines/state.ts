@@ -1,24 +1,27 @@
 import {
-  createProposal, DEMO_RECORD, initialAnswers, toRoutine,
+  createProposal, initialAnswers, PATIENT_RECORD, toRoutine,
   type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse,
 } from '@hackathon/medicines';
 import { isLanguage, type Language } from './i18n';
 
 export type Screen =
   | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'additions' | 'addition-form'
-  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation';
+  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation'
+  | 'messages' | 'profile';
 
 /** Inputs to one proposal. Language independent, so switching language never changes them. */
 export interface Draft {
   answers: Answers;
   selected: string[];
+  /** The patient chose "None of these" for their record medicines. */
+  noneSelected: boolean;
   additions: PatientAddition[];
 }
 
 export type Permission = 'not-requested' | 'granted' | 'denied';
 
 export interface SavedSchedule {
-  version: 1;
+  version: 2;
   savedAt: string;
   draft: Draft;
   response: QuestionnaireResponse;
@@ -46,7 +49,7 @@ export interface State {
 }
 
 export function emptyDraft(): Draft {
-  return { answers: initialAnswers(), selected: [], additions: [] };
+  return { answers: initialAnswers(), selected: [], noneSelected: false, additions: [] };
 }
 
 export function initialState(): State {
@@ -56,17 +59,16 @@ export function initialState(): State {
 export function proposalFor(draft: Draft): Proposal | undefined {
   const routine = toRoutine(draft.answers);
   if (!routine) return undefined;
-  return createProposal({ routine, record: DEMO_RECORD, selectedRecordIds: draft.selected, additions: draft.additions });
+  return createProposal({ routine, record: PATIENT_RECORD, selectedRecordIds: draft.selected, additions: draft.additions });
 }
 
 // ---------------------------------------------------------------------------
 // Device storage. The language preference is a per-device convenience. The
-// saved schedule stands in for the API persistence that is follow-on work,
-// and is clearly labelled as demo storage in the interface.
+// saved schedule is kept on the device until API persistence is added.
 // ---------------------------------------------------------------------------
 
 const LANGUAGE_KEY = 'lai-app:language';
-const SAVED_KEY = 'lai-app:medicines-demo:saved-schedule';
+const SAVED_KEY = 'lai-app:medicines:saved-schedule';
 
 function storage(): Storage | undefined {
   try {
@@ -92,7 +94,7 @@ export function storeLanguage(language: Language) {
 export function loadSaved(): SavedSchedule | undefined {
   try {
     const value = JSON.parse(storage()?.getItem(SAVED_KEY) ?? 'null') as SavedSchedule | null;
-    return value?.version === 1 && value.proposal?.status === 'ok' ? value : undefined;
+    return value?.version === 2 && value.proposal?.status === 'ok' ? value : undefined;
   } catch {
     return undefined;
   }
@@ -102,5 +104,10 @@ export function storeSaved(saved: SavedSchedule | undefined) {
   try {
     if (saved) storage()?.setItem(SAVED_KEY, JSON.stringify(saved));
     else storage()?.removeItem(SAVED_KEY);
-  } catch { /* the demo still works for this visit */ }
+  } catch { /* the schedule still works for this visit */ }
+}
+
+/** Forgets everything this device remembers about the patient, as for a new user. */
+export function clearDevice() {
+  storeSaved(undefined);
 }

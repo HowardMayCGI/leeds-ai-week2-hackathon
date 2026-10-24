@@ -2,13 +2,13 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import {
-  DEMO_RECORD, findProduct, formatStrength, FREQUENCIES, searchCatalogue,
-  type CatalogueProduct, type Frequency, type PatientAddition, type SearchResult,
+  DOSE_UNITS, findProduct, formatStrength, FREQUENCIES, parseQuantity, PATIENT_RECORD, searchCatalogue, unitForForm,
+  type CatalogueProduct, type DoseUnit, type Frequency, type PatientAddition, type SearchResult,
 } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { MessageKey } from '../i18n';
 import {
-  BackLink, Button, Caption, Entered, ErrorMessage, ErrorSummary, InsetText, Latin, LinkButton, NavLink, PageHeading,
+  BackLink, Button, Caption, DoseAmount, Entered, ErrorMessage, ErrorSummary, InsetText, Latin, LinkButton, NavLink, PageHeading,
   RecordText, T, Tag, UntranslatedNote,
 } from './ui';
 
@@ -16,48 +16,80 @@ export function MedicineName({ name, strength }: { name: string; strength?: stri
   return <Latin>{name}{strength ? ` ${strength}` : ''}</Latin>;
 }
 
+/** A patient addition's name: catalogue names in Latin script, entered names as typed. */
+export function AdditionName({ addition }: { addition: PatientAddition }) {
+  const product = findProduct(addition.productId);
+  return product ? <MedicineName name={product.name} strength={formatStrength(product)} /> : <Entered>{addition.name}</Entered>;
+}
+
+/** NHS checkboxes for the record's medicines, with an exclusive "None of these" option. */
 export function SelectMedicines() {
-  const { state, updateDraft, next, back } = useJourney();
-  const selected = state.draft.selected;
-  const toggle = (id: string, checked: boolean) => updateDraft(draft => ({
-    ...draft,
-    // Keep record order so the selection reads the same everywhere.
-    selected: DEMO_RECORD.map(medicine => medicine.id).filter(other => (other === id ? checked : draft.selected.includes(other))),
-  }));
+  const { state, updateDraft, next, back, t } = useJourney();
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const { selected, noneSelected } = state.draft;
+  const toggle = (id: string, checked: boolean) => {
+    updateDraft(draft => ({
+      ...draft,
+      // Keep record order so the selection reads the same everywhere.
+      selected: PATIENT_RECORD.map(medicine => medicine.id).filter(other => (other === id ? checked : draft.selected.includes(other))),
+      noneSelected: false,
+    }));
+    setError(false);
+  };
+  const toggleNone = (checked: boolean) => {
+    updateDraft(draft => ({ ...draft, selected: checked ? [] : draft.selected, noneSelected: checked }));
+    setError(false);
+  };
+  const submit = () => {
+    setAttempt(count => count + 1);
+    if (!selected.length && !noneSelected) { setError(true); return; }
+    next('medicines', 'additions');
+  };
+  const firstId = `medicine-${PATIENT_RECORD[0].id}`;
   return (
     <>
       <BackLink to={back('medicines', 'meal-times')} />
-      <div className="nhsuk-form-group">
-        <fieldset className="nhsuk-fieldset" aria-describedby="medicines-hint">
+      <ErrorSummary attempt={attempt} errors={error ? [{ href: `#${firstId}`, text: t('select.error') }] : []} />
+      <div className={`nhsuk-form-group${error ? ' nhsuk-form-group--error' : ''}`}>
+        <fieldset className="nhsuk-fieldset" aria-describedby={`medicines-hint${error ? ' medicines-error' : ''}`}>
           <legend className="nhsuk-fieldset__legend nhsuk-fieldset__legend--l">
             <span className="nhsuk-caption-l"><Caption /><span className="nhsuk-u-visually-hidden"> – </span></span>
             <h1 className="nhsuk-fieldset__heading" id="page-heading" tabIndex={-1}><T k="select.title" /></h1>
           </legend>
           <div className="nhsuk-hint" id="medicines-hint"><T k="select.hint" /></div>
-          <InsetText><p><T k="select.inset" /></p></InsetText>
           <UntranslatedNote />
-          <div className="nhsuk-checkboxes app-medicine-checkboxes">
-            {DEMO_RECORD.map(medicine => (
-              <div className="nhsuk-checkboxes__item" key={medicine.id}>
-                <input className="nhsuk-checkboxes__input" id={`medicine-${medicine.id}`} name="medicines" type="checkbox" value={medicine.id}
-                  checked={selected.includes(medicine.id)} aria-describedby={`medicine-${medicine.id}-details`}
-                  onChange={event => toggle(medicine.id, event.target.checked)} />
-                <label className="nhsuk-label nhsuk-checkboxes__label app-medicine-label" htmlFor={`medicine-${medicine.id}`}>
-                  <MedicineName name={medicine.name} strength={medicine.strength} />
-                </label>
-                <div className="nhsuk-hint nhsuk-checkboxes__hint app-record-details" id={`medicine-${medicine.id}-details`}>
-                  <dl>
-                    <div><dt><T k="common.dose" /></dt><dd><RecordText text={medicine.doseText} language={medicine.language} /></dd></div>
-                    <div><dt><T k="common.howOften" /></dt><dd><RecordText text={medicine.frequencyText} language={medicine.language} /></dd></div>
-                    {medicine.instructionText && <div><dt><T k="common.instructions" /></dt><dd><RecordText text={medicine.instructionText} language={medicine.language} /></dd></div>}
-                  </dl>
+          {error && <ErrorMessage id="medicines-error"><T k="select.error" /></ErrorMessage>}
+          <div className="nhsuk-checkboxes">
+            {PATIENT_RECORD.map(medicine => {
+              const id = `medicine-${medicine.id}`;
+              return (
+                <div className="nhsuk-checkboxes__item" key={medicine.id}>
+                  <input className="nhsuk-checkboxes__input" id={id} name="medicines" type="checkbox" value={medicine.id}
+                    checked={selected.includes(medicine.id)} aria-describedby={`${id}-hint`}
+                    onChange={event => toggle(medicine.id, event.target.checked)} />
+                  <label className="nhsuk-label nhsuk-checkboxes__label" htmlFor={id}>
+                    <MedicineName name={medicine.name} strength={medicine.strength} />
+                  </label>
+                  <div className="nhsuk-hint nhsuk-checkboxes__hint app-record-hint" id={`${id}-hint`}>
+                    <span className="app-record-hint__line"><DoseAmount dose={medicine.dose} strength={medicine.strength} /></span>
+                    <span className="app-record-hint__line"><RecordText text={medicine.frequencyText} language={medicine.language} /></span>
+                    {medicine.instructionText && <span className="app-record-hint__line"><RecordText text={medicine.instructionText} language={medicine.language} /></span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            <div className="nhsuk-checkboxes__divider"><T k="common.or" /></div>
+            <div className="nhsuk-checkboxes__item">
+              <input className="nhsuk-checkboxes__input" id="medicine-none" name="medicines" type="checkbox" value="none"
+                data-checkbox-exclusive="" checked={noneSelected} onChange={event => toggleNone(event.target.checked)} />
+              <label className="nhsuk-label nhsuk-checkboxes__label" htmlFor="medicine-none"><T k="select.none" /></label>
+            </div>
           </div>
         </fieldset>
       </div>
-      <Button onClick={() => next('medicines', 'additions')}><T k="common.continue" /></Button>
+      <InsetText><p><T k="select.inset" /></p></InsetText>
+      <Button onClick={submit}><T k="common.continue" /></Button>
     </>
   );
 }
@@ -68,17 +100,12 @@ function productLabel(product: CatalogueProduct, t: (key: MessageKey) => string)
 }
 
 function AdditionSummary({ addition }: { addition: PatientAddition }) {
-  const { t } = useJourney();
   const product = findProduct(addition.productId);
   return (
     <dl className="nhsuk-summary-list app-compact-summary">
       <div className="nhsuk-summary-list__row">
-        <dt className="nhsuk-summary-list__key"><T k="common.strength" /></dt>
-        <dd className="nhsuk-summary-list__value">{product ? <><Latin>{formatStrength(product)}</Latin> {t(`forms.${product.form}` as MessageKey)}</> : <Entered>{addition.strength}</Entered>}</dd>
-      </div>
-      <div className="nhsuk-summary-list__row">
         <dt className="nhsuk-summary-list__key"><T k="common.dose" /></dt>
-        <dd className="nhsuk-summary-list__value"><Entered>{addition.doseText}</Entered></dd>
+        <dd className="nhsuk-summary-list__value"><DoseAmount dose={addition.dose} strength={product ? formatStrength(product) : addition.strength} entered={!product} /></dd>
       </div>
       <div className="nhsuk-summary-list__row">
         <dt className="nhsuk-summary-list__key"><T k="common.howOften" /></dt>
@@ -117,7 +144,7 @@ export function Additions() {
             {additions.map(addition => (
               <li className="nhsuk-card app-card" key={addition.id}>
                 <div className="nhsuk-card__content">
-                  <h3 className="nhsuk-card__heading nhsuk-heading-s"><Entered>{addition.name}</Entered></h3>
+                  <h3 className="nhsuk-card__heading nhsuk-heading-s"><AdditionName addition={addition} /></h3>
                   <p className="app-tags">
                     <Tag colour="blue"><T k="common.addedByYou" /></Tag>
                     {!addition.productId && <Tag colour="orange"><T k="common.notMatched" /></Tag>}
@@ -149,13 +176,16 @@ interface FormState {
   manual: boolean;
   manualName: string;
   strength: string;
-  doseText: string;
+  quantity: string;
+  unit?: DoseUnit;
   frequency?: Frequency;
   instructions: string;
 }
 
-type FormField = 'name' | 'manualName' | 'strength' | 'dose' | 'frequency';
-const FIELD_IDS: Record<FormField, string> = { name: 'addition-name', manualName: 'addition-manual-name', strength: 'addition-strength', dose: 'addition-dose', frequency: 'addition-frequency' };
+type FormField = 'name' | 'manualName' | 'strength' | 'quantity' | 'unit' | 'frequency';
+const FIELD_IDS: Record<FormField, string> = {
+  name: 'addition-name', manualName: 'addition-manual-name', strength: 'addition-strength', quantity: 'addition-quantity', unit: 'addition-unit', frequency: 'addition-frequency',
+};
 
 function SearchOption({ result }: { result: SearchResult }) {
   const { t } = useJourney();
@@ -174,7 +204,7 @@ function SearchOption({ result }: { result: SearchResult }) {
 }
 
 export function AdditionForm() {
-  const { state, go, updateDraft, t } = useJourney();
+  const { state, go, updateDraft, back, t, lang } = useJourney();
   const editing = state.draft.additions.find(addition => addition.id === state.editingAdditionId);
   const [form, setForm] = useState<FormState>(() => ({
     query: '',
@@ -182,7 +212,8 @@ export function AdditionForm() {
     manual: Boolean(editing && !editing.productId),
     manualName: editing && !editing.productId ? editing.name : '',
     strength: editing && !editing.productId ? editing.strength : '',
-    doseText: editing?.doseText ?? '',
+    quantity: editing ? new Intl.NumberFormat(lang === 'en' ? 'en-GB' : lang, { maximumFractionDigits: 2, useGrouping: false }).format(editing.dose.quantity) : '',
+    unit: editing && !editing.productId ? editing.dose.unit : undefined,
     frequency: editing?.frequency,
     instructions: editing?.instructions ?? '',
   }));
@@ -227,7 +258,9 @@ export function AdditionForm() {
     if (!product && !form.manual) found.push('name');
     if (form.manual && !form.manualName.trim()) found.push('manualName');
     if (form.manual && !form.strength.trim()) found.push('strength');
-    if (!form.doseText.trim()) found.push('dose');
+    const quantity = parseQuantity(form.quantity);
+    if (quantity === null) found.push('quantity');
+    if (!product && !form.unit) found.push('unit');
     if (!form.frequency) found.push('frequency');
     setErrors(found);
     setAttempt(count => count + 1);
@@ -237,7 +270,7 @@ export function AdditionForm() {
       productId: product?.id,
       name: product ? product.name : form.manualName.trim(),
       strength: product ? formatStrength(product) : form.strength.trim(),
-      doseText: form.doseText.trim(),
+      dose: { quantity: quantity!, unit: product ? unitForForm(product.form) : form.unit! },
       frequency: form.frequency!,
       instructions: form.instructions.trim() || undefined,
     };
@@ -245,15 +278,17 @@ export function AdditionForm() {
       ...draft,
       additions: editing ? draft.additions.map(other => (other.id === editing.id ? addition : other)) : [...draft.additions, addition],
     }));
-    go('additions', { editingAdditionId: undefined });
+    // From check answers, a change returns there; otherwise to the list of additions.
+    go(state.changeFlow?.end === 'addition-form' ? 'check' : 'additions', { editingAdditionId: undefined });
   };
+  const leave = back('addition-form', 'additions');
 
   const showList = open && form.query.trim().length >= 2 && !product && !form.manual;
   const optionId = (index: number) => `${listId}-option-${index}`;
 
   return (
     <>
-      <BackLink to="additions" />
+      <BackLink onClick={() => go(leave, { editingAdditionId: undefined })} />
       <ErrorSummary attempt={attempt} errors={errors.map(field => ({ href: `#${FIELD_IDS[field]}`, text: errorText(field) }))} />
       <PageHeading caption={<Caption />}><T k={editing ? 'addForm.titleEdit' : 'addForm.titleAdd'} /></PageHeading>
 
@@ -281,7 +316,7 @@ export function AdditionForm() {
             </LinkButton></p>
           </div>
           <div className={groupClass('strength')}>
-            <label className="nhsuk-label nhsuk-label--s" htmlFor="addition-strength"><T k="common.strength" /></label>
+            <label className="nhsuk-label nhsuk-label--s" htmlFor="addition-strength"><T k="addForm.strengthLabel" /></label>
             <div className="nhsuk-hint" id="addition-strength-hint"><T k="addForm.strengthHint" /></div>
             {fieldError('strength')}
             <input className={`nhsuk-input nhsuk-input--width-10${errors.includes('strength') ? ' nhsuk-input--error' : ''}`} id="addition-strength" type="text" dir="auto" autoComplete="off"
@@ -334,12 +369,35 @@ export function AdditionForm() {
         </div>
       )}
 
-      <div className={groupClass('dose')}>
-        <label className="nhsuk-label nhsuk-label--s" htmlFor="addition-dose"><T k="addForm.doseLabel" /></label>
-        <div className="nhsuk-hint" id="addition-dose-hint"><T k="addForm.doseHint" /></div>
-        {fieldError('dose')}
-        <input className={`nhsuk-input nhsuk-input--width-20${errors.includes('dose') ? ' nhsuk-input--error' : ''}`} id="addition-dose" type="text" dir="auto" autoComplete="off"
-          value={form.doseText} aria-describedby="addition-dose-hint" onChange={event => change({ doseText: event.target.value })} />
+      <div className={`nhsuk-form-group${errors.includes('quantity') || errors.includes('unit') ? ' nhsuk-form-group--error' : ''}`}>
+        <fieldset className="nhsuk-fieldset" aria-describedby="addition-quantity-hint">
+          <legend className="nhsuk-fieldset__legend nhsuk-fieldset__legend--s"><T k="addForm.doseLegend" /></legend>
+          <div className="nhsuk-hint" id="addition-quantity-hint"><T k="addForm.quantityHint" /></div>
+          {fieldError('quantity')}
+          <div className="nhsuk-form-group app-quantity">
+            <label className="nhsuk-label" htmlFor="addition-quantity"><T k="addForm.quantityLabel" /></label>
+            <div className="nhsuk-input-wrapper">
+              <input className={`nhsuk-input nhsuk-input--width-3${errors.includes('quantity') ? ' nhsuk-input--error' : ''}`} id="addition-quantity" type="text" inputMode="decimal" autoComplete="off" dir="ltr"
+                value={form.quantity} aria-describedby={errors.includes('quantity') ? 'addition-quantity-error' : undefined} onChange={event => change({ quantity: event.target.value })} />
+              {product && <div className="nhsuk-input-wrapper__suffix" aria-hidden="true"><T k={`unitNames.${unitForForm(product.form)}`} /></div>}
+            </div>
+          </div>
+          {!product && (
+            <div className="app-unit">
+              <p className="nhsuk-label" id="addition-unit-legend"><T k="addForm.unitLegend" /></p>
+              {fieldError('unit')}
+              <div className="nhsuk-radios nhsuk-radios--small" role="radiogroup" aria-labelledby="addition-unit-legend">
+                {DOSE_UNITS.map((unit, index) => (
+                  <div className="nhsuk-radios__item" key={unit}>
+                    <input className="nhsuk-radios__input" id={index === 0 ? 'addition-unit' : `addition-unit-${unit}`} name="addition-unit" type="radio" value={unit}
+                      checked={form.unit === unit} onChange={() => change({ unit })} />
+                    <label className="nhsuk-label nhsuk-radios__label" htmlFor={index === 0 ? 'addition-unit' : `addition-unit-${unit}`}><T k={`unitNames.${unit}`} /></label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </fieldset>
       </div>
 
       <div className={groupClass('frequency')}>
@@ -366,7 +424,7 @@ export function AdditionForm() {
       </div>
 
       <Button onClick={save}><T k={editing ? 'addForm.saveEdit' : 'addForm.saveAdd'} /></Button>
-      <p><NavLink to="additions"><T k="common.cancel" /></NavLink></p>
+      <p><NavLink onClick={() => go(leave, { editingAdditionId: undefined })}><T k="common.cancel" /></NavLink></p>
     </>
   );
 }

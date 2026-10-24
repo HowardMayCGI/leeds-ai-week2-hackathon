@@ -1,9 +1,9 @@
 /**
- * ILLUSTRATIVE administration rules for the demonstration only. They are not a
+ * Proof-of-concept administration rules. They are not a
  * clinical knowledge base. Choosing real administration-rule and interaction
  * sources is follow-on work; these stand in so the journey can be shown.
  */
-export const RULES_VERSION = 'demo-rules-2026-10-24';
+export const RULES_VERSION = 'rules-2026-10-24';
 
 /** A subset of FHIR R4 `Timing.repeat.when` codes used by the record. */
 export type TimingWhen = 'ACM' | 'ACD' | 'ACV' | 'C' | 'CM' | 'CD' | 'CV' | 'MORN' | 'EVE' | 'HS' | 'WAKE';

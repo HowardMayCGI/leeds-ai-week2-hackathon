@@ -1,11 +1,12 @@
 import { findProduct, formatStrength, ingredientCodes } from './catalogue';
+import type { Dose } from './dose';
 import type { RecordMedicine } from './record';
 import { ADMINISTRATION_RULES, DEFAULT_MIN_INTERVAL_HOURS, type TimingWhen } from './rules';
 import { MEALS, type Day, type Meal } from './routine';
 
-export const FREQUENCIES = ['once-daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'as-needed', 'other'] as const;
+export const FREQUENCIES = ['once-daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'as-needed'] as const;
 export type Frequency = (typeof FREQUENCIES)[number];
-const DOSES_PER_DAY: Partial<Record<Frequency, number>> = { 'once-daily': 1, 'twice-daily': 2, 'three-times-daily': 3, 'four-times-daily': 4 };
+const DOSES_PER_DAY: Record<Exclude<Frequency, 'as-needed'>, number> = { 'once-daily': 1, 'twice-daily': 2, 'three-times-daily': 3, 'four-times-daily': 4 };
 
 /** A medicine or supplement the patient added. It is never written to the clinical record. */
 export interface PatientAddition {
@@ -13,8 +14,9 @@ export interface PatientAddition {
   /** Set when the patient chose a catalogue match; absent for an unlinked manual entry. */
   productId?: string;
   name: string;
+  /** Size of one tablet, capsule or measure. From the product when matched, otherwise as entered. */
   strength: string;
-  doseText: string;
+  dose: Dose;
   frequency: Frequency;
   instructions?: string;
 }
@@ -25,7 +27,7 @@ export interface ItemSnapshot {
   source: 'record' | 'patient';
   name: string;
   strength?: string;
-  doseText: string;
+  dose: Dose;
   /** Record wording, shown as supplied. */
   frequencyText?: string;
   /** Patient additions use a coded frequency so it can be shown in any language. */
@@ -34,9 +36,9 @@ export interface ItemSnapshot {
   /** Language of record-supplied text. */
   language?: string;
   productId?: string;
+  /** False for a patient addition we could not match, so no food or interaction rules were applied. */
+  matched: boolean;
 }
-
-export type NotTimedReason = 'as-needed' | 'unlinked' | 'unsupported-frequency';
 
 export interface Constraint {
   key: string;
@@ -56,8 +58,8 @@ export interface Constraint {
 export function recordSnapshot(medicine: RecordMedicine): ItemSnapshot {
   return {
     key: `record:${medicine.id}`, source: 'record', name: medicine.name, strength: medicine.strength,
-    doseText: medicine.doseText, frequencyText: medicine.frequencyText, instructionText: medicine.instructionText,
-    language: medicine.language, productId: medicine.productId,
+    dose: medicine.dose, frequencyText: medicine.frequencyText, instructionText: medicine.instructionText,
+    language: medicine.language, productId: medicine.productId, matched: true,
   };
 }
 
@@ -66,35 +68,36 @@ export function additionSnapshot(addition: PatientAddition): ItemSnapshot {
   return {
     key: `patient:${addition.id}`, source: 'patient', name: addition.name,
     strength: product ? formatStrength(product) || undefined : addition.strength || undefined,
-    doseText: addition.doseText, frequency: addition.frequency, instructionText: addition.instructions || undefined,
-    productId: product?.id,
+    dose: addition.dose, frequency: addition.frequency, instructionText: addition.instructions || undefined,
+    productId: product?.id, matched: Boolean(product),
   };
 }
 
 interface Timed { snapshot: ItemSnapshot; doses: number; when: TimingWhen[] }
 
+/**
+ * Splits included items into those given set times and those taken only when
+ * needed. Every daily item gets times. An unmatched addition has no rules to
+ * look up, so it is timed by its frequency alone.
+ */
 export function classify(record: RecordMedicine[], selectedIds: string[], additions: PatientAddition[]) {
   const items: ItemSnapshot[] = [];
   const timed: Timed[] = [];
-  const notTimed: { key: string; reason: NotTimedReason }[] = [];
+  const whenNeeded: string[] = [];
   for (const medicine of record) {
     if (!selectedIds.includes(medicine.id)) continue;
     const snapshot = recordSnapshot(medicine);
     items.push(snapshot);
-    if (medicine.dosage.asNeeded) notTimed.push({ key: snapshot.key, reason: 'as-needed' });
+    if (medicine.dosage.asNeeded) whenNeeded.push(snapshot.key);
     else timed.push({ snapshot, doses: medicine.dosage.timesPerDay, when: medicine.dosage.when ?? [] });
   }
   for (const addition of additions) {
     const snapshot = additionSnapshot(addition);
     items.push(snapshot);
-    const doses = DOSES_PER_DAY[addition.frequency];
-    if (addition.frequency === 'as-needed') notTimed.push({ key: snapshot.key, reason: 'as-needed' });
-    else if (!doses) notTimed.push({ key: snapshot.key, reason: 'unsupported-frequency' });
-    // Without a catalogue match we cannot look up timing rules, so we do not guess a time.
-    else if (!snapshot.productId) notTimed.push({ key: snapshot.key, reason: 'unlinked' });
-    else timed.push({ snapshot, doses, when: [] });
+    if (addition.frequency === 'as-needed') whenNeeded.push(snapshot.key);
+    else timed.push({ snapshot, doses: DOSES_PER_DAY[addition.frequency], when: [] });
   }
-  return { items, timed, notTimed };
+  return { items, timed, whenNeeded };
 }
 
 const MEAL_FOR: Partial<Record<TimingWhen, Meal>> = { ACM: 'breakfast', ACD: 'lunch', ACV: 'dinner', CM: 'breakfast', CD: 'lunch', CV: 'dinner' };

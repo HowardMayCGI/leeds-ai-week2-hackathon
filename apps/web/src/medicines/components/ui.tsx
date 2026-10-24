@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import type { Dose } from '@hackathon/medicines';
 import { useJourney } from '../context';
-import type { MessageKey, Params } from '../i18n';
+import { formatAmount, type MessageKey, type Params } from '../i18n';
 import type { Screen } from '../state';
 
 /** Translated text, marked with its language when it falls back to English. */
@@ -20,6 +21,19 @@ export function Latin({ children }: { children: ReactNode }) {
 /** Patient-entered free text, kept as entered in whatever direction it was written. */
 export function Entered({ children }: { children: ReactNode }) {
   return <bdi dir="auto">{children}</bdi>;
+}
+
+/**
+ * How much to take, with the size of each tablet or measure, such as
+ * "1 tablet (500mg)" or "1 or 2 tablets (500mg each)".
+ */
+export function DoseAmount({ dose, strength, entered = false }: { dose: Dose; strength?: string; entered?: boolean }) {
+  const { lang, tr } = useJourney();
+  const amount = formatAmount(dose, lang).text;
+  if (!strength) return <>{amount}</>;
+  const several = (dose.quantityMax ?? dose.quantity) > 1;
+  const [before, after = ''] = tr(several ? 'dose.withStrengthEach' : 'dose.withStrength', { amount }).text.split('{strength}');
+  return <>{before}{entered ? <Entered>{strength}</Entered> : <Latin>{strength}</Latin>}{after}</>;
 }
 
 export function Time({ value }: { value: string }) {
