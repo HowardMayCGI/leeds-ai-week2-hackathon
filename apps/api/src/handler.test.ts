@@ -95,3 +95,29 @@ test('lists every distinct current medicine across all patients', async () => {
   assert.ok(body.medicines.some((m: { name: string }) => m.name === 'Naproxen 250mg tablets'));
   assert.ok(body.medicines.every((m: Record<string, unknown>) => Object.keys(m).every(key => ['name', 'code', 'system'].includes(key))));
 });
+
+test('interactions endpoint returns demo guidance for the current patient medicines', async () => {
+  const nhsNumber = '9991789243';
+  const { status, body } = await get(`/api/patients/${nhsNumber}/interactions`);
+  assert.equal(status, 200);
+  assert.equal(body.nhsNumber, nhsNumber);
+  assert.equal(body.demoOnly, true);
+  assert.equal(body.clinicallyValidated, false);
+  assert.ok(body.interactions.length > 0);
+  const record = (await patients.getMedications(nhsNumber))!;
+  for (const interaction of body.interactions) {
+    assert.ok(interaction.medications.every((m: { id: string }) => record.medications.some(current => current.id === m.id)));
+    assert.ok(interaction.patientGuidance);
+  }
+});
+
+test('interactions endpoint preserves validation, origin protection and GET-only access', async () => {
+  assert.equal((await get('/api/patients/abc/interactions')).status, 400);
+  assert.equal((await get('/api/patients/1234567890/interactions')).status, 404);
+  const path = `/api/patients/${MITCH}/interactions`;
+  assert.equal((await handleRequest({ ...request, path, headers: {} }, options)).statusCode, 403);
+  const post = await handleRequest({ ...request, path, method: 'POST' }, options);
+  assert.equal(post.statusCode, 405);
+  assert.equal(post.headers?.allow, 'GET');
+  assert.equal((await handleRequest({ ...request, path }, { ...options, patients })).headers?.['cache-control'], 'no-store');
+});

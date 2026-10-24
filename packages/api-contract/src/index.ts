@@ -88,3 +88,56 @@ export function isMedicineListResponse(value: unknown): value is MedicineListRes
 }
 
 export const NHS_NUMBER_PATTERN = /^\d{10}$/;
+
+/** Actions are independent of severity: a serious interaction is not necessarily a contraindication. */
+export type InteractionManagement =
+  | { action: 'separate_doses'; minimumGapMinutes: number; direction: 'either_order'; guidance: string }
+  | { action: 'prescriber_review'; guidance: string }
+  | { action: 'dose_review'; ingredientId: string; maximumDailyDose: { value: number; unit: 'mg' }; guidance: string };
+
+export interface InteractionRule {
+  id: string;
+  /** Unordered ingredient pair; mechanisms and management may still be directional. */
+  ingredients: [string, string];
+  severity: 'moderate' | 'major';
+  mechanism: 'pharmacokinetic' | 'pharmacodynamic';
+  effect: string;
+  patientGuidance: string;
+  management: InteractionManagement;
+  sourceIds: string[];
+}
+
+export interface InteractionDataset {
+  version: string;
+  demoOnly: true;
+  clinicallyValidated: false;
+  compiledOn: string;
+  ingredients: { id: string; name: string }[];
+  products: { code: string; system: string; name: string; ingredientIds: string[]; route: string }[];
+  sources: { id: string; title: string; url: string; accessedOn: string }[];
+  interactions: InteractionRule[];
+}
+
+export interface MatchedInteraction extends InteractionRule {
+  ruleId: string;
+  medications: [Medication, Medication];
+}
+
+export interface InteractionsResponse {
+  nhsNumber: string;
+  datasetVersion: string;
+  demoOnly: true;
+  clinicallyValidated: false;
+  assessment: 'potential_interactions_from_record';
+  /** Never means safe: this is a deliberately incomplete example dataset. */
+  coverage: 'limited_demo_rules';
+  notice: string;
+  sources: InteractionDataset['sources'];
+  interactions: MatchedInteraction[];
+  uncheckedMedications: { medication: Medication; reason: 'unmapped_product' | 'no_demo_rules' }[];
+  scheduling: {
+    status: 'review_required' | 'spacing_constraints' | 'no_rules_matched';
+    reviewInteractionIds: string[];
+    constraints: { interactionId: string; medicationIds: [string, string]; minimumGapMinutes: number; direction: 'either_order'; appliesAcrossMidnight: true }[];
+  };
+}

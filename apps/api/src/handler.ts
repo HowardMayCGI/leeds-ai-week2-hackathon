@@ -2,6 +2,7 @@ import { randomInt, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { NHS_NUMBER_PATTERN, type RandomNumberResponse } from '@hackathon/api-contract';
 import { createFilePatientRepository, defaultDataDirectory, type PatientRepository } from './patient-data';
+import { checkInteractions } from './interactions';
 
 export const ORIGIN_HEADER = 'x-hackathon-origin';
 
@@ -38,7 +39,7 @@ function methodNotAllowed() {
   return response;
 }
 
-const PATIENT_ROUTE = /^\/api\/patients\/([^/]+)\/(demographics|medications)$/;
+const PATIENT_ROUTE = /^\/api\/patients\/([^/]+)\/(demographics|medications|interactions)$/;
 
 export async function handleRequest(request: ApiRequest, options: HandlerOptions): Promise<APIGatewayProxyStructuredResultV2> {
   // Fail closed if deployment configuration is missing, too.
@@ -61,8 +62,14 @@ export async function handleRequest(request: ApiRequest, options: HandlerOptions
     if (request.path === '/api/medicines') return json(200, await patients.listMedicines());
     const [, nhsNumber, resource] = route!;
     if (!NHS_NUMBER_PATTERN.test(nhsNumber)) return json(400, { message: 'NHS number must be 10 digits' });
-    const result = resource === 'demographics' ? await patients.getDemographics(nhsNumber) : await patients.getMedications(nhsNumber);
-    return result ? json(200, result) : json(404, { message: 'Patient not found' });
+    if (resource === 'demographics') {
+      const result = await patients.getDemographics(nhsNumber);
+      return result ? json(200, result) : json(404, { message: 'Patient not found' });
+    }
+    // Interactions use the same current, de-duplicated record as medications.
+    const result = await patients.getMedications(nhsNumber);
+    if (!result) return json(404, { message: 'Patient not found' });
+    return json(200, resource === 'interactions' ? checkInteractions(result) : result);
   } catch (error) {
     console.error('Patient data error', error);
     return json(500, { message: 'Internal server error' });
