@@ -1,6 +1,30 @@
 # leeds-ai-week2-hackathon
 Leeds AI Week2 Hackathon repository
 
+## Schedule my medicines (proof of concept)
+
+The home page (`/`) is the **Schedule my medicines** journey agreed in the 24 October design session (`meds-scheduler-design.md`), in an NHS App style using NHS.UK frontend components. It uses a synthetic patient record and illustrative timing rules only; it is not for clinical use.
+
+**Prescriptions → Introduction → Routine (2 screens) → Select medicines → Add anything missing → Check answers → Proposed schedule → Save → Reminders.** Returning users go straight to their saved schedule, where they can view dose details, change their routine or medicines (creating a new proposal that only replaces the saved one when saved), manage the single reminder switch and make a clearly labelled demo pharmacist-review request.
+
+| Where | What |
+| --- | --- |
+| `packages/medicines` | Framework-free domain code with unit tests: the versioned FHIR R4 routine `Questionnaire` (static JSON with FHIR translation extensions), a small renderer model (`enableWhen`, validation, `QuestionnaireResponse`), the replaceable POC catalogue and fuzzy search, the synthetic record, illustrative administration rules, the deterministic scheduler and an independent checker. |
+| `apps/web/src/medicines` | The client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. |
+| `apps/web/e2e/medicines.spec.ts` | Browser walkthrough of the design doc's checks, with axe accessibility scans in English and Urdu. |
+
+Behaviour worth knowing for a demo:
+
+- Routine questions, hints and translations come from the Questionnaire. A skipped meal is recorded as a boolean and its stale time is dropped; sleeping after midnight is supported.
+- Record medicines start unchecked and show recorded wording read-only, untranslated and labelled as such in Polish and Urdu.
+- Added items are searched by partial, misspelt, generic or brand name and must be explicitly selected. Unmatched items can be entered manually; they are marked as not matched and are listed without a suggested time rather than guessed.
+- The scheduler never relaxes a rule. If no valid schedule exists (for example, metformin with food twice a day when only one meal is eaten) the page explains why and offers no save. Every proposal is re-verified by the independent checker before it is shown.
+- Reminders default to ON, but permission is a separate, simulated and clearly labelled state; nothing is sent.
+- The saved schedule is kept in this browser's local storage in place of the API persistence that is follow-on work. **Reset demo** on the Prescriptions page clears it. The language preference is also remembered on the device.
+- Everything runs in the static UI, so no infrastructure changed. Moving schedule generation behind the API would need `POST` allowed on the CloudFront `/api/*` behaviour, which requires approval.
+
+The original random number generator is now at `/random/`.
+
 ## Random number website
 
 A minimal TypeScript application. The Next.js UI exports static pages and requests an integer from **1 to 100 inclusive** from a Lambda API when you select **Generate number**. Repeated numbers are possible.

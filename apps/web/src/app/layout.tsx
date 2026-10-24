@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './nhs.scss';
 import './styles.css';
+import '../medicines/medicines.css';
 
 export const metadata: Metadata = {
-  title: 'Random number generator | LAI App',
-  description: 'The Leeds Artificial Intelligence hackathon demo. Generate a random number from 1 to 100 in the LAI App.',
+  title: 'LAI App',
+  description: 'The Leeds Artificial Intelligence hackathon demo.',
   robots: { index: false, follow: false },
 };
 
@@ -20,14 +21,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <a className="nhsuk-skip-link" href="#maincontent">Skip to main content</a>
+        <a className="nhsuk-skip-link" href="#maincontent" lang="en" dir="ltr">Skip to main content</a>
         <div className="showcase">
-          <aside className="showcase-intro" aria-label="About this demonstration">
+          <aside className="showcase-intro" aria-label="About this demonstration" lang="en" dir="ltr">
             <p className="showcase-intro__eyebrow">Leeds AI Week <span aria-hidden="true">/</span> Hackathon 2026</p>
             <p className="showcase-intro__title">Leeds Artificial<br />Intelligence<span className="showcase-intro__stop">.</span></p>
             <div className="showcase-intro__rule" />
-            <p className="showcase-intro__description">A simple number generator.<br />A familiar app experience.</p>
-            <p className="showcase-intro__detail">Inspired by the NHS App, built for the Leeds AI Week hackathon. Try the LAI App right here.</p>
+            <p className="showcase-intro__description">Schedule my medicines.<br />Fitted around your day.</p>
+            <p className="showcase-intro__detail">A proof of concept in the style of the NHS App, built for the Leeds AI Week hackathon. Synthetic patient data only. Not for clinical use.</p>
             <p className="showcase-intro__note"><span aria-hidden="true" /> Interactive demo</p>
           </aside>
 
@@ -41,18 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   <svg width="25" height="13" viewBox="0 0 27 14" fill="none"><rect x=".5" y=".5" width="23" height="13" rx="3" stroke="currentColor" strokeOpacity=".5" /><rect x="2.5" y="2.5" width="19" height="9" rx="1" fill="currentColor" /><path d="M25 4.5v5c2 0 2-5 0-5Z" fill="currentColor" fillOpacity=".5" /></svg>
                 </div>
               </div>
-              <header className="app-header">
-                <div className="app-brand" role="img" aria-label="LAI App — Leeds Artificial Intelligence">
-                  <span className="app-brand__logo" aria-hidden="true">LAI</span>
-                  <span className="app-brand__name" aria-hidden="true">App</span>
-                </div>
-                <span className="app-header__tag">Hackathon demo</span>
-              </header>
-              <main className="app-main" id="maincontent" tabIndex={-1}>{children}</main>
-              <footer className="app-footer">
-                <p>Leeds Artificial Intelligence</p>
-                <p className="app-footer__detail">Leeds AI Week hackathon</p>
-              </footer>
+              {children}
               <div className="phone-home-indicator" aria-hidden="true"><span /></div>
             </div>
           </div>

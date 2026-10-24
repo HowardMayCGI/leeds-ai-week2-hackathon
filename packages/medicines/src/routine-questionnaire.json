@@ -1,0 +1,792 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "medicine-routine",
+  "url": "https://lai-app.example/fhir/Questionnaire/medicine-routine",
+  "version": "0.1.0",
+  "name": "MedicineRoutine",
+  "title": "Your usual daily routine",
+  "_title": {
+    "extension": [
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/translation",
+        "extension": [
+          {
+            "url": "lang",
+            "valueCode": "pl"
+          },
+          {
+            "url": "content",
+            "valueString": "Twój zwykły plan dnia"
+          }
+        ]
+      },
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/translation",
+        "extension": [
+          {
+            "url": "lang",
+            "valueCode": "ur"
+          },
+          {
+            "url": "content",
+            "valueString": "آپ کا روزمرہ کا معمول"
+          }
+        ]
+      }
+    ]
+  },
+  "status": "draft",
+  "language": "en",
+  "subjectType": [
+    "Patient"
+  ],
+  "date": "2026-10-24",
+  "publisher": "Leeds AI Week hackathon (proof of concept)",
+  "description": "One usual day: waking, sleeping and meal times, used to fit a medicine schedule around the patient. Proof of concept only.",
+  "item": [
+    {
+      "linkId": "waking-sleeping",
+      "type": "group",
+      "text": "Your waking and sleeping times",
+      "_text": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/translation",
+            "extension": [
+              {
+                "url": "lang",
+                "valueCode": "pl"
+              },
+              {
+                "url": "content",
+                "valueString": "Godziny wstawania i zasypiania"
+              }
+            ]
+          },
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/translation",
+            "extension": [
+              {
+                "url": "lang",
+                "valueCode": "ur"
+              },
+              {
+                "url": "content",
+                "valueString": "آپ کے جاگنے اور سونے کے اوقات"
+              }
+            ]
+          }
+        ]
+      },
+      "item": [
+        {
+          "linkId": "waking-sleeping-intro",
+          "type": "display",
+          "text": "These times help us fit your medicines around your day.",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Te godziny pomogą nam dopasować przyjmowanie leków do Twojego dnia."
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "یہ اوقات ہمیں آپ کی دوائیں آپ کے دن کے مطابق ترتیب دینے میں مدد دیتے ہیں۔"
+                  }
+                ]
+              }
+            ]
+          },
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-displayCategory",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-display-category",
+                    "code": "instructions"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "wake-time",
+          "type": "time",
+          "required": true,
+          "text": "What time do you usually wake up?",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "O której godzinie zwykle się budzisz?"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "آپ عام طور پر کس وقت جاگتے ہیں؟"
+                  }
+                ]
+              }
+            ]
+          },
+          "item": [
+            {
+              "linkId": "wake-time-hint",
+              "type": "display",
+              "text": "Give the time you get up on most days.",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "Podaj godzinę, o której wstajesz w większość dni."
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "وہ وقت درج کریں جب آپ زیادہ تر دنوں میں اٹھتے ہیں۔"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "inline"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "sleep-time",
+          "type": "time",
+          "required": true,
+          "text": "What time do you usually go to sleep?",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "O której godzinie zwykle kładziesz się spać?"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "آپ عام طور پر کس وقت سوتے ہیں؟"
+                  }
+                ]
+              }
+            ]
+          },
+          "item": [
+            {
+              "linkId": "sleep-time-hint",
+              "type": "display",
+              "text": "If you go to sleep after midnight, enter that time.",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "Jeśli kładziesz się spać po północy, podaj tę godzinę."
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "اگر آپ آدھی رات کے بعد سوتے ہیں تو وہی وقت درج کریں۔"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "inline"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "meal-times",
+      "type": "group",
+      "text": "Your meal times",
+      "_text": {
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/translation",
+            "extension": [
+              {
+                "url": "lang",
+                "valueCode": "pl"
+              },
+              {
+                "url": "content",
+                "valueString": "Godziny posiłków"
+              }
+            ]
+          },
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/translation",
+            "extension": [
+              {
+                "url": "lang",
+                "valueCode": "ur"
+              },
+              {
+                "url": "content",
+                "valueString": "آپ کے کھانے کے اوقات"
+              }
+            ]
+          }
+        ]
+      },
+      "item": [
+        {
+          "linkId": "meal-times-intro",
+          "type": "display",
+          "text": "Tell us when you usually eat. If you do not usually eat a meal, you do not need to give a time.",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Podaj, kiedy zwykle jesz. Jeśli zwykle nie jesz danego posiłku, nie musisz podawać godziny."
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "ہمیں بتائیں کہ آپ عام طور پر کب کھانا کھاتے ہیں۔ اگر آپ کوئی کھانا عام طور پر نہیں کھاتے تو اس کا وقت دینے کی ضرورت نہیں۔"
+                  }
+                ]
+              }
+            ]
+          },
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-displayCategory",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/questionnaire-display-category",
+                    "code": "instructions"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "breakfast",
+          "type": "group",
+          "text": "Breakfast",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Śniadanie"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "ناشتہ"
+                  }
+                ]
+              }
+            ]
+          },
+          "item": [
+            {
+              "linkId": "breakfast-time",
+              "type": "time",
+              "required": true,
+              "text": "What time do you usually have breakfast?",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "O której godzinie zwykle jesz śniadanie?"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "آپ عام طور پر کس وقت ناشتہ کرتے ہیں؟"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "enableWhen": [
+                {
+                  "question": "breakfast-skipped",
+                  "operator": "=",
+                  "answerBoolean": false
+                }
+              ]
+            },
+            {
+              "linkId": "breakfast-skipped",
+              "type": "boolean",
+              "required": true,
+              "initial": [
+                {
+                  "valueBoolean": false
+                }
+              ],
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "check-box"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "I do not usually eat this meal",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "Zwykle nie jem tego posiłku"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "یہ کھانا عام طور پر میرے معمول میں شامل نہیں"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "lunch",
+          "type": "group",
+          "text": "Lunch",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Obiad"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "دوپہر کا کھانا"
+                  }
+                ]
+              }
+            ]
+          },
+          "item": [
+            {
+              "linkId": "lunch-time",
+              "type": "time",
+              "required": true,
+              "text": "What time do you usually have lunch?",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "O której godzinie zwykle jesz obiad?"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "آپ عام طور پر کس وقت دوپہر کا کھانا کھاتے ہیں؟"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "enableWhen": [
+                {
+                  "question": "lunch-skipped",
+                  "operator": "=",
+                  "answerBoolean": false
+                }
+              ]
+            },
+            {
+              "linkId": "lunch-skipped",
+              "type": "boolean",
+              "required": true,
+              "initial": [
+                {
+                  "valueBoolean": false
+                }
+              ],
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "check-box"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "I do not usually eat this meal",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "Zwykle nie jem tego posiłku"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "یہ کھانا عام طور پر میرے معمول میں شامل نہیں"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "dinner",
+          "type": "group",
+          "text": "Evening meal",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "pl"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "Kolacja"
+                  }
+                ]
+              },
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                "extension": [
+                  {
+                    "url": "lang",
+                    "valueCode": "ur"
+                  },
+                  {
+                    "url": "content",
+                    "valueString": "شام کا کھانا"
+                  }
+                ]
+              }
+            ]
+          },
+          "item": [
+            {
+              "linkId": "dinner-time",
+              "type": "time",
+              "required": true,
+              "text": "What time do you usually have your evening meal?",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "O której godzinie zwykle jesz kolację?"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "آپ عام طور پر کس وقت شام کا کھانا کھاتے ہیں؟"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "enableWhen": [
+                {
+                  "question": "dinner-skipped",
+                  "operator": "=",
+                  "answerBoolean": false
+                }
+              ]
+            },
+            {
+              "linkId": "dinner-skipped",
+              "type": "boolean",
+              "required": true,
+              "initial": [
+                {
+                  "valueBoolean": false
+                }
+              ],
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+                  "valueCodeableConcept": {
+                    "coding": [
+                      {
+                        "system": "http://hl7.org/fhir/questionnaire-item-control",
+                        "code": "check-box"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "I do not usually eat this meal",
+              "_text": {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "pl"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "Zwykle nie jem tego posiłku"
+                      }
+                    ]
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/translation",
+                    "extension": [
+                      {
+                        "url": "lang",
+                        "valueCode": "ur"
+                      },
+                      {
+                        "url": "content",
+                        "valueString": "یہ کھانا عام طور پر میرے معمول میں شامل نہیں"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

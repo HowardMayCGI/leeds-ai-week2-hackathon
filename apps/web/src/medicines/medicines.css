@@ -1,0 +1,906 @@
+/*
+ * Styles for the Schedule my medicines journey, on top of NHS.UK frontend.
+ * The phone frame is narrow on every screen size, so NHS components use their
+ * small-screen sizes here, with NHS App-style cards on a grey background.
+ */
+
+.app-screen {
+  --app-green: #007f3b;
+  --app-red: #d5281b;
+  --app-focus: #ffeb3b;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.app-screen .nhsuk-heading-l,
+.app-screen .nhsuk-fieldset__legend--l {
+  margin-bottom: 16px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.app-screen .nhsuk-heading-m,
+.app-screen .nhsuk-fieldset__legend--m,
+.app-screen .nhsuk-label--m {
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+.app-screen .nhsuk-heading-s,
+.app-screen .nhsuk-label--s,
+.app-screen .nhsuk-fieldset__legend--s {
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.app-screen .nhsuk-body-l {
+  font-size: 19px;
+  line-height: 1.5;
+}
+
+.app-screen .nhsuk-body,
+.app-screen p,
+.app-screen .nhsuk-list,
+.app-screen .nhsuk-label,
+.app-screen .nhsuk-summary-list {
+  font-size: 17px;
+}
+
+.app-screen .nhsuk-hint,
+.app-screen .nhsuk-body-s {
+  font-size: 16px;
+}
+
+.app-screen .nhsuk-caption-l {
+  margin-bottom: 4px;
+  font-size: 17px;
+}
+
+.app-screen h1:focus,
+.app-screen h1:focus-visible {
+  outline: none;
+}
+
+.app-screen .nhsuk-button {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.app-screen .nhsuk-back-link {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.app-screen .nhsuk-card {
+  margin-bottom: 20px;
+}
+
+.app-screen .nhsuk-card__heading {
+  margin-bottom: 8px;
+}
+
+.app-screen .nhsuk-summary-list__key,
+.app-screen .nhsuk-summary-list__value,
+.app-screen .nhsuk-summary-list__actions {
+  display: block;
+  width: auto;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.app-screen .nhsuk-summary-list__row {
+  display: block;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.app-screen .nhsuk-summary-list__key {
+  margin-bottom: 4px;
+}
+
+.app-screen .nhsuk-summary-list__actions {
+  margin-top: 6px;
+  text-align: start;
+}
+
+.app-screen .nhsuk-summary-list__value > p,
+.app-screen .nhsuk-summary-list__value > ul {
+  margin-bottom: 0;
+}
+
+.app-screen .nhsuk-summary-list {
+  margin-bottom: 28px;
+}
+
+.app-small-print {
+  color: var(--app-muted);
+  font-size: 15px !important;
+  line-height: 1.5;
+}
+
+.app-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.app-tags .nhsuk-tag {
+  margin: 0;
+}
+
+.app-plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-plain-list li {
+  margin-bottom: 4px;
+}
+
+/* Language selector in the app header */
+.app-language {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-blue);
+}
+
+.app-language__select {
+  min-height: 40px;
+  padding: 4px 28px 4px 10px;
+  border: 2px solid var(--app-ink);
+  border-radius: 4px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23212b32' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 9px center;
+  color: var(--app-ink);
+  font: inherit;
+  font-size: 16px;
+  appearance: none;
+}
+
+[dir='rtl'] .app-language__select {
+  padding: 4px 10px 4px 28px;
+  background-position: left 9px center;
+}
+
+.app-language__select:focus {
+  outline: 4px solid var(--app-focus);
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px #212b32 inset;
+}
+
+/* Prescriptions hub menu */
+.app-menu {
+  margin: 0 0 20px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+  list-style: none;
+}
+
+.app-menu__item + .app-menu__item {
+  border-top: 1px solid var(--app-border);
+}
+
+.app-menu__item--inactive {
+  padding: 16px 18px;
+  color: var(--app-muted);
+}
+
+.app-menu__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #e8f1fa;
+  color: var(--app-blue);
+  text-decoration: none;
+}
+
+.app-menu__link:hover .app-menu__text strong {
+  text-decoration: underline;
+}
+
+.app-menu__link:focus {
+  outline: none;
+  background: var(--app-focus);
+  box-shadow: inset 0 -4px 0 #212b32;
+  color: #212b32;
+}
+
+.app-menu__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-menu__text strong {
+  font-size: 18px;
+}
+
+.app-menu__text span {
+  color: var(--app-ink);
+  font-size: 15px;
+}
+
+.app-menu__item--inactive strong {
+  color: var(--app-ink);
+}
+
+.app-menu__icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--app-blue);
+  color: #fff;
+}
+
+.app-menu__chevron {
+  flex-shrink: 0;
+}
+
+[dir='rtl'] .app-menu__chevron {
+  transform: scaleX(-1);
+}
+
+.app-demo-controls {
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
+}
+
+/* Links that act on the page */
+.app-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--app-blue);
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+  text-align: start;
+  text-decoration: underline;
+}
+
+.app-link-button:hover {
+  color: #7c2855;
+  text-decoration: none;
+}
+
+.app-link-button:focus {
+  outline: 4px solid transparent;
+  background-color: var(--app-focus);
+  box-shadow: 0 -2px var(--app-focus), 0 4px #212b32;
+  color: #212b32;
+  text-decoration: none;
+}
+
+/* Routine questions */
+.app-meal {
+  margin-bottom: 24px;
+  padding: 16px 16px 4px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.app-meal .nhsuk-fieldset__legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+[dir='rtl'] .app-meal .nhsuk-fieldset__legend {
+  float: right;
+}
+
+.app-meal .nhsuk-fieldset__legend + * {
+  clear: both;
+}
+
+.app-meal .nhsuk-form-group {
+  margin-bottom: 8px;
+}
+
+.app-or {
+  margin: 0 0 8px !important;
+  color: var(--app-muted);
+}
+
+.app-time-input {
+  min-width: 8em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Medicine selection: each checkbox sits in a card, so offset NHS's absolutely positioned markers by the padding */
+.app-medicine-checkboxes .nhsuk-checkboxes__item {
+  --card-padding: 14px;
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding: var(--card-padding) var(--card-padding) 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.app-medicine-checkboxes .nhsuk-checkboxes__label::before {
+  top: calc(.125rem + var(--card-padding));
+  left: calc(.125rem + var(--card-padding));
+}
+
+.app-medicine-checkboxes .nhsuk-checkboxes__label::after {
+  top: calc(.625rem + var(--card-padding));
+  left: calc(1.4375rem + var(--card-padding));
+}
+
+[dir='rtl'] .app-medicine-checkboxes .nhsuk-checkboxes__label::before {
+  right: calc(.125rem + var(--card-padding));
+  left: auto;
+}
+
+[dir='rtl'] .app-medicine-checkboxes .nhsuk-checkboxes__label::after {
+  right: calc(.0625rem + var(--card-padding));
+  left: auto;
+}
+
+.app-medicine-checkboxes .nhsuk-checkboxes__item:has(:checked) {
+  border-color: var(--app-blue);
+  box-shadow: inset 0 0 0 1px var(--app-blue);
+}
+
+.app-medicine-label {
+  font-weight: 700;
+}
+
+.app-record-details dl {
+  margin: 4px 0 0;
+}
+
+.app-record-details dl > div {
+  margin-bottom: 4px;
+}
+
+.app-record-details dt {
+  display: inline;
+  font-weight: 700;
+}
+
+.app-record-details dt::after {
+  content: ': ';
+}
+
+.app-record-details dd {
+  display: inline;
+  margin: 0;
+  color: var(--app-ink);
+}
+
+.app-untranslated {
+  margin-bottom: 12px !important;
+  color: var(--app-muted);
+  font-size: 15px !important;
+  font-style: italic;
+}
+
+/* Added items */
+.app-cards {
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-card .nhsuk-card__content {
+  padding: 18px;
+}
+
+.app-compact-summary {
+  margin-bottom: 8px !important;
+}
+
+.app-compact-summary .nhsuk-summary-list__row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.app-card-actions {
+  display: flex;
+  gap: 24px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-empty {
+  color: var(--app-muted);
+}
+
+/* Name search */
+.app-combobox {
+  position: relative;
+}
+
+.app-combobox__list {
+  margin: 4px 0 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--app-ink);
+  border-radius: 4px;
+  background: #fff;
+  list-style: none;
+}
+
+.app-combobox__list[hidden] {
+  display: none;
+}
+
+.app-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--app-border);
+  cursor: pointer;
+}
+
+.app-option:last-child {
+  border-bottom: 0;
+}
+
+.app-option:hover,
+.app-option--active {
+  background: #e8f1fa;
+  box-shadow: inset 4px 0 0 var(--app-blue);
+}
+
+[dir='rtl'] .app-option:hover,
+[dir='rtl'] .app-option--active {
+  box-shadow: inset -4px 0 0 var(--app-blue);
+}
+
+.app-option--empty {
+  color: var(--app-muted);
+  cursor: default;
+}
+
+.app-option__name {
+  font-weight: 700;
+}
+
+.app-option__detail,
+.app-option__alias {
+  font-size: 15px;
+}
+
+.app-option__alias {
+  color: var(--app-muted);
+}
+
+.app-selected {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border-inline-start: 4px solid var(--app-blue);
+  background: #fff;
+}
+
+.app-selected:focus {
+  outline: 4px solid var(--app-focus);
+}
+
+.app-cannot-find {
+  margin: 12px 0 0 !important;
+}
+
+.app-readonly-value {
+  margin-bottom: 4px !important;
+  font-weight: 700;
+}
+
+/* Schedule timeline */
+.app-timeline {
+  margin: 8px 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-slot {
+  position: relative;
+  padding-inline-start: 26px;
+  padding-bottom: 8px;
+}
+
+.app-slot::before {
+  position: absolute;
+  top: 8px;
+  bottom: -8px;
+  inset-inline-start: 6px;
+  width: 2px;
+  background: #aeb7bd;
+  content: '';
+}
+
+.app-slot:last-child::before {
+  display: none;
+}
+
+.app-slot::after {
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 0;
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--app-blue);
+  border-radius: 50%;
+  background: #fff;
+  content: '';
+}
+
+.app-slot__time {
+  margin: 0 0 8px;
+  color: var(--app-blue);
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.app-slot__doses {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-dose {
+  margin-bottom: 12px;
+  padding: 14px 16px 2px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.app-dose__name {
+  margin: 0 0 2px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.app-dose__amount {
+  margin-bottom: 6px !important;
+}
+
+.app-dose__amount .nhsuk-tag {
+  margin-inline-start: 4px;
+}
+
+.app-dose__notes {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-dose__notes li {
+  position: relative;
+  margin-bottom: 2px;
+  padding-inline-start: 18px;
+  color: var(--app-ink);
+  font-size: 16px;
+}
+
+.app-dose__notes li::before {
+  position: absolute;
+  top: .55em;
+  inset-inline-start: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app-green);
+  content: '';
+}
+
+.app-dose__reason {
+  margin-bottom: 8px !important;
+  font-size: 16px !important;
+}
+
+.app-dose-details {
+  margin-bottom: 12px;
+}
+
+.app-dose-details .nhsuk-details__summary-text {
+  font-size: 16px;
+}
+
+.app-dose-details .nhsuk-details__text {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.app-not-timed {
+  margin-bottom: 20px;
+}
+
+.app-not-timed .nhsuk-list {
+  margin-bottom: 0;
+}
+
+.app-time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.app-actions {
+  margin-top: 8px;
+}
+
+.app-problems {
+  padding: 16px 16px 4px;
+}
+
+.app-problems .nhsuk-list {
+  margin-bottom: 12px;
+}
+
+.app-panel .nhsuk-card__content {
+  padding: 20px;
+}
+
+.app-panel .nhsuk-button {
+  margin-bottom: 0;
+}
+
+.app-link-list {
+  margin-bottom: 0 !important;
+}
+
+/* Reminders */
+.app-reminders {
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.app-reminders .nhsuk-button {
+  margin-bottom: 0;
+}
+
+.app-switch-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.app-switch-row__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-switch-row__text .nhsuk-label {
+  margin-bottom: 4px;
+}
+
+.app-switch-row__text .nhsuk-hint {
+  margin-bottom: 0;
+}
+
+.app-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.app-switch:focus {
+  outline: 4px solid var(--app-focus);
+  box-shadow: 0 0 0 2px #212b32 inset;
+}
+
+.app-switch__track {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 32px;
+  border: 2px solid #4c6272;
+  border-radius: 16px;
+  background: #fff;
+  transition: background .15s;
+}
+
+.app-switch__thumb {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #4c6272;
+  transition: inset-inline-start .15s;
+}
+
+.app-switch[aria-checked='true'] .app-switch__track {
+  border-color: var(--app-green);
+  background: var(--app-green);
+}
+
+.app-switch[aria-checked='true'] .app-switch__thumb {
+  inset-inline-start: 27px;
+  background: #fff;
+}
+
+.app-switch__state {
+  color: var(--app-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.app-reminder-status {
+  margin-bottom: 12px;
+}
+
+.app-reminder-status .app-tags {
+  margin-bottom: 6px;
+}
+
+.app-reminder-status .nhsuk-body-s {
+  margin-bottom: 0;
+}
+
+.app-permission {
+  width: min(340px, calc(100vw - 32px));
+  padding: 22px 20px 6px;
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px #212b3266;
+  color: var(--app-ink);
+}
+
+.app-permission::backdrop {
+  background: #212b3299;
+}
+
+.app-permission__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.app-permission__actions .nhsuk-button {
+  margin-bottom: 16px;
+}
+
+/* Right-to-left support for NHS components, which position their markers with physical properties */
+[dir='rtl'] .app-screen {
+  text-align: right;
+}
+
+[dir='rtl'] .nhsuk-checkboxes__label::before,
+[dir='rtl'] .nhsuk-radios__label::before {
+  right: .125rem;
+  left: auto;
+}
+
+[dir='rtl'] .nhsuk-checkboxes__label::after {
+  right: .0625rem;
+  left: auto;
+}
+
+[dir='rtl'] .nhsuk-radios__label::after {
+  right: .125rem;
+  left: auto;
+}
+
+[dir='rtl'] .nhsuk-checkboxes--small .nhsuk-checkboxes__label::after {
+  right: .1875rem;
+}
+
+[dir='rtl'] .nhsuk-radios--small .nhsuk-radios__label::after {
+  right: .25rem;
+}
+
+[dir='rtl'] .nhsuk-checkboxes--small .nhsuk-checkboxes__input,
+[dir='rtl'] .nhsuk-radios--small .nhsuk-radios__input {
+  margin-right: -.625rem;
+  margin-left: 0;
+}
+
+[dir='rtl'] .nhsuk-checkboxes--small .nhsuk-checkboxes__label,
+[dir='rtl'] .nhsuk-radios--small .nhsuk-radios__label {
+  padding-right: .375rem;
+  padding-left: .75rem;
+}
+
+[dir='rtl'] .nhsuk-checkboxes__hint,
+[dir='rtl'] .nhsuk-radios__hint {
+  padding-right: 3.5rem;
+  padding-left: .75rem;
+}
+
+[dir='rtl'] .nhsuk-back-link {
+  padding: 0 1em 0 0;
+}
+
+[dir='rtl'] .nhsuk-back-link::before {
+  right: 0;
+  left: auto;
+  transform: translate(-.105263em) rotate(45deg);
+}
+
+[dir='rtl'] .nhsuk-details__summary {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+[dir='rtl'] .nhsuk-details__summary::before {
+  right: 0;
+  left: auto;
+}
+
+[dir='rtl'] .nhsuk-details:not([open]) > .nhsuk-details__summary::before {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .nhsuk-details__text {
+  border-right: 4px solid #aeb7bd;
+  border-left: 0;
+  padding: 16px calc(1.5rem - 4px) 16px 0;
+}
+
+[dir='rtl'] .nhsuk-inset-text {
+  border-right: 8px solid #005eb8;
+  border-left: 0;
+}
+
+[dir='rtl'] .nhsuk-list--bullet {
+  padding-right: 1.25rem;
+  padding-left: 0;
+}
+
+[dir='rtl'] .nhsuk-form-group--error {
+  border-right: 4px solid var(--app-red);
+  border-left: 0;
+  padding-right: 16px;
+  padding-left: 0;
+}
+
+[dir='rtl'] .nhsuk-form-group--error .nhsuk-form-group {
+  border: 0;
+  padding: 0;
+}
+
+/* Urdu: a Nastaliq face where the device has one, with room for its tall letterforms */
+:lang(ur) {
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Naskh Arabic', Arial, sans-serif;
+}
+
+:lang(ur) .app-screen,
+.app-screen:lang(ur) {
+  line-height: 1.9;
+}
+
+:lang(ur) :lang(en) {
+  font-family: Arial, sans-serif;
+}
+
+/* The simulated phone hardware does not mirror with the page language */
+.phone-status {
+  direction: ltr;
+}

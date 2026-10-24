@@ -53,6 +53,9 @@ importers:
       '@hackathon/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@hackathon/medicines':
+        specifier: workspace:*
+        version: link:../../packages/medicines
       next:
         specifier: 16.4.2
         version: 16.4.2(@opentelemetry/api@1.9.0)(@playwright/test@1.64.1)(@types/node@24.10.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.106.1)
@@ -83,6 +86,8 @@ importers:
         version: 4.21.4(typescript@5.9.3)
 
   packages/api-contract: {}
+
+  packages/medicines: {}
 
 packages:
 

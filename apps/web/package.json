@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@hackathon/api-contract": "workspace:*",
+    "@hackathon/medicines": "workspace:*",
     "next": "16.4.2",
     "nhsuk-frontend": "10.6.1",
     "react": "19.3.1",
