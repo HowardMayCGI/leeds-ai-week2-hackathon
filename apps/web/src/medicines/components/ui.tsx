@@ -36,6 +36,15 @@ export function DoseAmount({ dose, strength, entered = false }: { dose: Dose; st
   return <>{before}{entered ? <Entered>{strength}</Entered> : <Latin>{strength}</Latin>}{after}</>;
 }
 
+/** Translated text with a medicine name placed inside it, kept in Latin script. */
+export function TName({ k, name, params }: { k: MessageKey; name: ReactNode; params?: Params }) {
+  const { tr, lang } = useJourney();
+  const { text, lang: actual } = tr(k, params);
+  const [before, after = ''] = text.split('{name}');
+  const content = <>{before}{typeof name === 'string' ? <Latin>{name}</Latin> : name}{after}</>;
+  return actual === lang ? content : <span lang={actual} dir="ltr">{content}</span>;
+}
+
 export function Time({ value }: { value: string }) {
   const { time } = useJourney();
   return <bdi className="app-time" dir="ltr"><time dateTime={value}>{time(value)}</time></bdi>;
@@ -142,4 +151,16 @@ export function LinkButton({ children, onClick, className = '' }: { children: Re
 
 export function InsetText({ children }: { children: ReactNode }) {
   return <div className="nhsuk-inset-text">{children}</div>;
+}
+
+/** NHS warning callout, which NHS.UK frontend 10 draws as a warning card. */
+export function WarningCallout({ heading, children }: { heading: ReactNode; children: ReactNode }) {
+  return (
+    <div className="nhsuk-card nhsuk-card--warning">
+      <div className="nhsuk-card__content">
+        <h2 className="nhsuk-card__heading">{heading}</h2>
+        {children}
+      </div>
+    </div>
+  );
 }
