@@ -7,8 +7,8 @@ import './styles.css';
 import '../medicines/medicines.css';
 
 export const metadata: Metadata = {
-  title: 'LAI App',
-  description: 'The LAI App, in the style of the NHS App.',
+  title: 'NHS App concept',
+  description: 'A concept for a new NHS App feature. Not a live NHS service.',
   robots: { index: false, follow: false },
 };
 

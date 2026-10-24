@@ -5,7 +5,7 @@ import type { PatientSummary } from '@hackathon/api-contract';
 import { routinePages, type MedicineOption, type RecordMedicine } from '@hackathon/medicines';
 import { AppChrome } from '../app/app-chrome';
 import { CheckAnswers } from './components/CheckAnswers';
-import { AdditionForm, Additions, AdditionTiming, RecordDetailsScreen, SelectMedicines } from './components/MedicineScreens';
+import { AdditionForm, Additions, AdditionTiming, SelectMedicines } from './components/MedicineScreens';
 import { RoutineScreen } from './components/RoutineScreen';
 import { ProposalScreen, RemindersScreen, ReviewConfirmation, SavedConfirmation, SavedScheduleScreen } from './components/ScheduleScreens';
 import { Intro, Prescriptions } from './components/StartScreens';
@@ -13,13 +13,13 @@ import { JourneyContext, type Journey } from './context';
 import { BottomNav, MessagesScreen, ProfileScreen } from './components/AppNav';
 import { formatDate, formatTime, languageInfo, translate, type Language } from './i18n';
 import { initialState, loadSaved, storeSaved, type Screen, type State } from './state';
+import { usualDay } from './routines';
 
 const [wakingSleeping, mealTimes] = routinePages();
 
 /** Screens that only make sense with something to show; anything else falls back to the start. */
 function canShow(screen: Screen, state: State): boolean {
   if (screen === 'proposal') return Boolean(state.proposal);
-  if (screen === 'record-details') return Boolean(state.editingRecordId);
   if (screen === 'addition-timing') return state.draft.additions.some(addition => addition.id === state.editingAdditionId);
   if (['saved-confirmation', 'schedule', 'reminders', 'review-confirmation'].includes(screen)) return Boolean(state.saved);
   return true;
@@ -32,7 +32,7 @@ export function MedicinesApp({ lang, patient, record, options }: {
   options: MedicineOption[];
 }) {
   // The app renders only in the browser, once the record has loaded, so the saved schedule can be read straight away.
-  const [state, setStateRaw] = useState<State>(() => ({ ...initialState(), saved: loadSaved(patient.nhsNumber) }));
+  const [state, setStateRaw] = useState<State>(() => ({ ...initialState(usualDay(patient.nhsNumber)), saved: loadSaved(patient.nhsNumber) }));
   const firstScreen = useRef(true);
   const popping = useRef(false);
 
@@ -53,7 +53,7 @@ export function MedicinesApp({ lang, patient, record, options }: {
     document.querySelector('.phone-screen')?.scrollTo?.({ top: 0 });
     window.scrollTo({ top: 0 });
     document.getElementById('page-heading')?.focus({ preventScroll: true });
-  }, [state.screen, state.editingAdditionId, state.editingRecordId]);
+  }, [state.screen, state.editingAdditionId]);
 
   useEffect(() => {
     const heading = document.getElementById('page-heading')?.textContent?.trim();
@@ -109,7 +109,6 @@ export function MedicinesApp({ lang, patient, record, options }: {
     'waking-sleeping': () => <RoutineScreen key="waking-sleeping" group={wakingSleeping} previous="intro" nextScreen="meal-times" />,
     'meal-times': () => <RoutineScreen key="meal-times" group={mealTimes} previous="waking-sleeping" nextScreen="medicines" />,
     medicines: () => <SelectMedicines />,
-    'record-details': () => <RecordDetailsScreen key={state.editingRecordId} />,
     additions: () => <Additions />,
     'addition-form': () => <AdditionForm key={state.editingAdditionId ?? 'new'} />,
     'addition-timing': () => <AdditionTiming key={state.editingAdditionId} />,

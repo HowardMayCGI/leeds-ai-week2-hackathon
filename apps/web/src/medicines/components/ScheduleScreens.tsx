@@ -64,7 +64,7 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
           {item.timing && row('common.whenTaken', <T k={`timings.${item.timing}`} />)}
           {item.instructions.length > 0 && row('common.instructions', <>{item.instructions.map(text => <span className="app-block" key={text}><ItemText item={item} text={text} /></span>)}</>)}
           {item.recordName && row('schedule.recordedAs', <RecordText text={item.recordName} />)}
-          {row('common.source', <T k={item.source === 'patient' ? 'common.addedByYou' : item.detailsFromPatient ? 'common.fromRecordAndYou' : 'common.fromRecord'} />)}
+          {row('common.source', <T k={item.source === 'patient' ? 'common.addedByYou' : 'common.fromRecord'} />)}
         </dl>
         {untranslated && <p className="app-untranslated"><T k="common.inEnglish" /></p>}
       </div>
@@ -148,6 +148,15 @@ export function Timeline({ proposal }: { proposal: OkProposal }) {
           <p className="nhsuk-body"><T k="proposal.notDailyBody" /></p>
           <ul className="app-timeline__doses">
             {proposal.notDaily.map(key => <Dose key={key} item={byKey.get(key)!} notes={[]} items={items} />)}
+          </ul>
+        </section>
+      )}
+      {(proposal.unscheduled ?? []).length > 0 && (
+        <section className="app-when-needed" aria-labelledby="unscheduled-title">
+          <h2 className="nhsuk-heading-m" id="unscheduled-title"><T k="proposal.unscheduledTitle" /></h2>
+          <p className="nhsuk-body"><T k="proposal.unscheduledBody" /></p>
+          <ul className="app-timeline__doses">
+            {proposal.unscheduled.map(key => <Dose key={key} item={byKey.get(key)!} notes={[]} items={items} />)}
           </ul>
         </section>
       )}

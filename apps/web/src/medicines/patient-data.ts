@@ -2,7 +2,7 @@ import {
   isMedicationsResponse, isMedicineListResponse, isPatientListResponse,
   type PatientSummary,
 } from '@hackathon/api-contract';
-import { medicineOptions, toRecordMedicine, type MedicineOption, type RecordMedicine } from '@hackathon/medicines';
+import { medicineOptions, toRecordMedicine, withDemoPrescription, type MedicineOption, type RecordMedicine } from '@hackathon/medicines';
 
 async function getJson<T>(path: string, valid: (value: unknown) => value is T, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { cache: 'no-store', signal });
@@ -32,6 +32,7 @@ export async function fetchPatientData(nhsNumber: string, signal?: AbortSignal):
     getJson(`/api/patients/${encodeURIComponent(nhsNumber)}/medications`, isMedicationsResponse, signal),
     getJson('/api/medicines', isMedicineListResponse, signal),
   ]);
-  const record = medications.medications.map(toRecordMedicine).sort((a, b) => a.medicine.name.localeCompare(b.medicine.name) || a.medicine.recordName.localeCompare(b.medicine.recordName));
+  // The test records leave out many doses; demonstration prescriptions fill them in, so the app never asks.
+  const record = medications.medications.map(withDemoPrescription).map(toRecordMedicine).sort((a, b) => a.medicine.name.localeCompare(b.medicine.name) || a.medicine.recordName.localeCompare(b.medicine.recordName));
   return { record, options: medicineOptions(medicines.medicines) };
 }
