@@ -1,10 +1,26 @@
 {
   "name": "api",
-  "implicitDependencies": ["api-contract"],
+  "implicitDependencies": ["api-contract", "medicines"],
   "targets": {
-    "dev": { "executor": "nx:run-commands", "continuous": true, "options": { "command": "node --import tsx --watch apps/api/src/dev.ts" } },
-    "build": { "executor": "nx:run-commands", "outputs": ["{workspaceRoot}/dist/apps/api"], "options": { "command": "node --import tsx apps/api/build.ts" } },
-    "typecheck": { "executor": "nx:run-commands", "options": { "command": "tsc -p apps/api/tsconfig.json" } },
-    "test": { "executor": "nx:run-commands", "options": { "command": "node --import tsx --test apps/api/src/*.test.ts packages/api-contract/src/*.test.ts" } }
+    "dev": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": { "command": "node --import tsx --watch apps/api/src/dev.ts" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/api"],
+      "options": { "command": "node --import tsx apps/api/build.ts" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc -p apps/api/tsconfig.json" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --import tsx --test apps/api/src/*.test.ts packages/api-contract/src/*.test.ts"
+      }
+    }
   }
 }

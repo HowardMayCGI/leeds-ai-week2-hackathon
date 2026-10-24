@@ -8,16 +8,16 @@ This is an original, deliberately incomplete demonstration dataset compiled from
 
 ## Entities and fields
 
-| Entity | Fields in this implementation | Purpose |
-| --- | --- | --- |
-| Ingredient | `id`, `name` | Normalise different strengths and brands to the same substance. IDs are local slugs, not SNOMED ingredient identifiers. |
-| Product | `code`, `system`, `name`, `ingredientIds`, `route` | Preserve the coded product and combination ingredients. Strength and formulation are retained in the supplied name. |
-| Patient medicine | Existing API `Medication`: product code/system, prescription ID, dose, frequency, PRN flag, instructions, prescription date | Identify the particular prescriptions involved. Active records are not confirmation of concurrent use. |
-| Interaction rule | `id`, ingredient pair, severity, mechanism, effect, patient guidance, structured management, source IDs | Define what can happen and what the scheduler or reviewer must do. |
-| Source | `id`, title, URL, access date | Trace an example to public prescribing information. |
-| Dataset | Version, compilation date, demo and clinical-validation flags | Identify precisely which rules were applied. |
-| Matched interaction | Rule plus unique match ID, `ruleId`, two full patient medicines | Join generic knowledge to a patient's record. |
-| Assessment response | Matches, sources, unchecked medicines, coverage notice, scheduler status and constraints | Keep clinical review separate from timing optimisation. |
+| Entity              | Fields in this implementation                                                                                               | Purpose                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Ingredient          | `id`, `name`                                                                                                                | Normalise different strengths and brands to the same substance. IDs are local slugs, not SNOMED ingredient identifiers. |
+| Product             | `code`, `system`, `name`, `ingredientIds`, `route`                                                                          | Preserve the coded product and combination ingredients. Strength and formulation are retained in the supplied name.     |
+| Patient medicine    | Existing API `Medication`: product code/system, prescription ID, dose, frequency, PRN flag, instructions, prescription date | Identify the particular prescriptions involved. Active records are not confirmation of concurrent use.                  |
+| Interaction rule    | `id`, ingredient pair, severity, mechanism, effect, patient guidance, structured management, source IDs                     | Define what can happen and what the scheduler or reviewer must do.                                                      |
+| Source              | `id`, title, URL, access date                                                                                               | Trace an example to public prescribing information.                                                                     |
+| Dataset             | Version, compilation date, demo and clinical-validation flags                                                               | Identify precisely which rules were applied.                                                                            |
+| Matched interaction | Rule plus unique match ID, `ruleId`, two full patient medicines                                                             | Join generic knowledge to a patient's record.                                                                           |
+| Assessment response | Matches, sources, unchecked medicines, coverage notice, scheduler status and constraints                                    | Keep clinical review separate from timing optimisation.                                                                 |
 
 An interaction is an attributed relationship between ingredients. Matching is unordered (A+B equals B+A), but its mechanism and management can be directional: verapamil raises digoxin exposure, not necessarily the reverse. Multiple strengths produce distinct prescription matches with the same `ruleId`. Coded products are matched by exact code **and** system; names are never fuzzy-matched.
 
@@ -51,18 +51,18 @@ The other management variants are `prescriber_review` (guidance, no spacing cons
 
 There are 36 products, 32 ingredients and 10 rules. All examples use ingredients from the supplied list.
 
-| Combination | Concern | Demo action / public source |
-| --- | --- | --- |
-| Levothyroxine + ferrous sulfate | Reduced thyroid medicine absorption | Four-hour separation; monitoring may still be needed. [Euthyrox label](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=bc3c6830-ba68-4ba3-9896-a12d0ad0b275). |
-| Warfarin + naproxen | Bleeding | Prescriber review; spacing does not resolve it. [CUH guidance](https://www.cuh.nhs.uk/patient-information/oral-anticoagulant-therapy-with-warfarin-phenindione-or-acencoumarol/). |
-| Warfarin + aspirin | Bleeding; sometimes intentional treatment | Confirm indication and monitoring. [CUH guidance](https://www.cuh.nhs.uk/patient-information/oral-anticoagulant-therapy-with-warfarin-phenindione-or-acencoumarol/). |
-| Clopidogrel + naproxen | Gastrointestinal bleeding | Review analgesia and bleeding risk. [Naproxen leaflet](https://www.medicines.org.uk/emc/files/pil.2099.pdf?filename=PIL.2099.pdf). |
-| Verapamil + atenolol | Additive slowing of heart rate/conduction | Prescriber review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e). |
-| Verapamil + metoprolol | Additive cardiac effects | Prescriber review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e). |
-| Verapamil + digoxin | Increased digoxin levels | Dose/level and renal-function review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e). |
-| Verapamil + tacrolimus | Increased tacrolimus exposure | Specialist review and levels. [EMA product information](https://www.ema.europa.eu/en/documents/product-information/envarsus-epar-product-information_en.pdf). |
-| Simvastatin + amlodipine | Dose-dependent muscle toxicity risk | Confirm simvastatin daily dose is no more than 20mg. [MHRA](https://www.gov.uk/drug-safety-update/simvastatin-dose-limitations-with-concomitant-amlodipine-or-diltiazem). |
-| Simvastatin + verapamil | Increased statin exposure | Confirm simvastatin daily dose is no more than 20mg. [UK SmPC](https://www.medicines.org.uk/emc/product/10666/smpc). |
+| Combination                     | Concern                                   | Demo action / public source                                                                                                                                                       |
+| ------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Levothyroxine + ferrous sulfate | Reduced thyroid medicine absorption       | Four-hour separation; monitoring may still be needed. [Euthyrox label](https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=bc3c6830-ba68-4ba3-9896-a12d0ad0b275).            |
+| Warfarin + naproxen             | Bleeding                                  | Prescriber review; spacing does not resolve it. [CUH guidance](https://www.cuh.nhs.uk/patient-information/oral-anticoagulant-therapy-with-warfarin-phenindione-or-acencoumarol/). |
+| Warfarin + aspirin              | Bleeding; sometimes intentional treatment | Confirm indication and monitoring. [CUH guidance](https://www.cuh.nhs.uk/patient-information/oral-anticoagulant-therapy-with-warfarin-phenindione-or-acencoumarol/).              |
+| Clopidogrel + naproxen          | Gastrointestinal bleeding                 | Review analgesia and bleeding risk. [Naproxen leaflet](https://www.medicines.org.uk/emc/files/pil.2099.pdf?filename=PIL.2099.pdf).                                                |
+| Verapamil + atenolol            | Additive slowing of heart rate/conduction | Prescriber review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e).                                          |
+| Verapamil + metoprolol          | Additive cardiac effects                  | Prescriber review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e).                                          |
+| Verapamil + digoxin             | Increased digoxin levels                  | Dose/level and renal-function review. [Verapamil label](https://www.dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=8f549319-bbd9-4255-89fb-94cb9372517e).                       |
+| Verapamil + tacrolimus          | Increased tacrolimus exposure             | Specialist review and levels. [EMA product information](https://www.ema.europa.eu/en/documents/product-information/envarsus-epar-product-information_en.pdf).                     |
+| Simvastatin + amlodipine        | Dose-dependent muscle toxicity risk       | Confirm simvastatin daily dose is no more than 20mg. [MHRA](https://www.gov.uk/drug-safety-update/simvastatin-dose-limitations-with-concomitant-amlodipine-or-diltiazem).         |
+| Simvastatin + verapamil         | Increased statin exposure                 | Confirm simvastatin daily dose is no more than 20mg. [UK SmPC](https://www.medicines.org.uk/emc/product/10666/smpc).                                                              |
 
 These examples illustrate review rather than an unconditional ban on concurrent treatment. Do not describe all alerts as “these medicines cannot be taken together”.
 
@@ -88,12 +88,12 @@ Review takes priority if both kinds occur; the response retains spacing constrai
 
 ## Demo patients and verification
 
-| NHS number | Synthetic patient | Example result |
-| --- | --- | --- |
-| `9991789243` | Raylene Loriann XXTESTPATIENT-Ledner | Verapamil with metoprolol and digoxin, plus simvastatin dose review. |
-| `9993689246` | Gene Orval XXTESTPATIENT-Witting | Clopidogrel with naproxen, plus simvastatin/amlodipine dose review. |
-| `9997111249` | Lilliana Kimbra XXTESTPATIENT-Lockman | Clopidogrel with naproxen. |
-| `9993679666` | Mitch XXTESTPATIENT-Trantow | No demo rules match; useful for the limited-coverage state. |
+| NHS number   | Synthetic patient                     | Example result                                                       |
+| ------------ | ------------------------------------- | -------------------------------------------------------------------- |
+| `9991789243` | Raylene Loriann XXTESTPATIENT-Ledner  | Verapamil with metoprolol and digoxin, plus simvastatin dose review. |
+| `9993689246` | Gene Orval XXTESTPATIENT-Witting      | Clopidogrel with naproxen, plus simvastatin/amlodipine dose review.  |
+| `9997111249` | Lilliana Kimbra XXTESTPATIENT-Lockman | Clopidogrel with naproxen.                                           |
+| `9993679666` | Mitch XXTESTPATIENT-Trantow           | No demo rules match; useful for the limited-coverage state.          |
 
 The indexed patients do not currently contain the levothyroxine/iron pair concurrently. That scenario is exercised directly in unit tests with the supplied product codes `39698911000001100` and `39107411000001105`, without altering source patient records. The tests also cover bleeding risks, PRN use, multiple strengths, dose limits, unknown coding systems, empty records, matching every rule, and all indexed patient products.
 

@@ -18,3 +18,7 @@ _Avoid_: Conflict, incompatibility
 **Administration preference**: A recommended way to take a medicine that is distinct from a mandatory administration requirement.
 
 **Interval anchor**: A known dose date or time that establishes when subsequent doses are due for an interval-based regimen.
+
+**Schedule proposal**: Suggested dose times derived from the selected medicines, confirmed instructions and a daily routine. A proposal is not a change to a prescription or clinical clearance.
+
+**Blocking warning**: A finding that prevents a schedule proposal, such as a combination needing medication review or requirements that cannot all be met.

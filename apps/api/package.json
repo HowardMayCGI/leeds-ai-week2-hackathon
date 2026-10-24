@@ -1,5 +1,8 @@
 {
   "name": "@hackathon/api",
   "private": true,
-  "dependencies": { "@hackathon/api-contract": "workspace:*" }
+  "dependencies": {
+    "@hackathon/api-contract": "workspace:*",
+    "@hackathon/medicines": "workspace:*"
+  }
 }

@@ -50,6 +50,9 @@ importers:
       '@hackathon/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@hackathon/medicines':
+        specifier: workspace:*
+        version: link:../../packages/medicines
 
   apps/web:
     dependencies:
