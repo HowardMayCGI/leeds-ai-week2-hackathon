@@ -15,8 +15,7 @@ export type Problem =
   | { code: 'no-suitable-time'; key: string }
   | { code: 'cannot-separate'; keys: [string, string]; hours: number }
   | { code: 'cannot-take-first'; keys: [first: string, then: string]; minutes: number }
-  | { code: 'too-complex' }
-  | { code: 'missing-details'; key: string };
+  | { code: 'too-complex' };
 
 export type Assignment = Record<string, number[]>;
 export type SchedulerResult = { status: 'ok'; times: Assignment } | { status: 'blocked'; problems: Problem[] };

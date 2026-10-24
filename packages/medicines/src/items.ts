@@ -1,6 +1,6 @@
 import type { Form, MedicineOption } from './catalogue';
 import type { Dose } from './dose';
-import { needsDetails, type RecordMedicine } from './record';
+import type { RecordMedicine } from './record';
 import { DEFAULT_MIN_INTERVAL_HOURS, rulesFor, timingConflict, type FoodTiming, type MealTiming, type TimingWhen } from './rules';
 import { MEALS, type Day, type Meal } from './routine';
 
@@ -27,12 +27,6 @@ export interface PatientAddition {
   instructions?: string;
 }
 
-/** The dose and frequency a patient gives for a record medicine whose record does not say. */
-export interface RecordDetails {
-  dose: Dose;
-  frequency: Frequency;
-}
-
 /** What the schedule shows about each included item, kept with the proposal and saved schedule. */
 export interface ItemSnapshot {
   key: string;
@@ -52,8 +46,6 @@ export interface ItemSnapshot {
   ingredients: string[];
   /** False for a patient addition we could not match, so no food or interaction rules were applied. */
   matched: boolean;
-  /** The patient told us the dose and frequency because the record did not have them. */
-  detailsFromPatient?: boolean;
   /** For an addition: when the patient said they take it. */
   timing?: FoodTiming;
   /** For an addition: the patient kept a timing that goes against the rules. */
@@ -90,18 +82,16 @@ const SWALLOWED: Form[] = ['tablet', 'capsule', 'oral-liquid'];
 // An item typed in without a medicine option has no form, so it is treated as swallowed.
 const swallowed = (item: ItemSnapshot) => !item.form || SWALLOWED.includes(item.form);
 
-export function recordSnapshot(medicine: RecordMedicine, details?: RecordDetails): ItemSnapshot {
+export function recordSnapshot(medicine: RecordMedicine): ItemSnapshot {
   const { frequency } = medicine;
-  const fromPatient = needsDetails(medicine) && details ? details : undefined;
   return {
     key: `record:${medicine.id}`, source: 'record', name: medicine.medicine.name, strength: medicine.medicine.strength,
     form: medicine.medicine.form, recordName: medicine.medicine.recordName,
-    dose: fromPatient?.dose ?? medicine.dose,
-    frequency: fromPatient?.frequency
-      ?? (frequency.kind === 'daily' ? FREQUENCY_FOR[frequency.timesPerDay] : frequency.kind === 'as-needed' ? 'as-needed' : frequency.kind === 'every-days' ? 'not-daily' : undefined),
-    everyDays: !fromPatient && frequency.kind === 'every-days' ? frequency.days : undefined,
+    dose: medicine.dose,
+    frequency: frequency.kind === 'daily' ? FREQUENCY_FOR[frequency.timesPerDay] : frequency.kind === 'as-needed' ? 'as-needed' : frequency.kind === 'every-days' ? 'not-daily' : undefined,
+    everyDays: frequency.kind === 'every-days' ? frequency.days : undefined,
     instructions: medicine.instructions, language: medicine.language,
-    ingredients: medicine.medicine.ingredients, matched: true, detailsFromPatient: Boolean(fromPatient),
+    ingredients: medicine.medicine.ingredients, matched: true,
   };
 }
 
@@ -130,34 +120,33 @@ const FOOD_FOR: Record<FoodTiming, Constraint['food'] | undefined> = { 'before-f
 
 /**
  * Splits included items into those given set times, those taken only when
- * needed, and those taken less often than every day. A record medicine still
- * missing its details is reported so the journey can ask for them first.
+ * needed, those taken less often than every day, and record medicines whose
+ * record does not say how often to take them, which get no times.
  */
-export function classify(record: RecordMedicine[], selectedIds: string[], additions: PatientAddition[], details: Record<string, RecordDetails> = {}) {
+export function classify(record: RecordMedicine[], selectedIds: string[], additions: PatientAddition[]) {
   const items: ItemSnapshot[] = [];
   const timed: Timed[] = [];
   const whenNeeded: string[] = [];
   const notDaily: string[] = [];
-  const missingDetails: string[] = [];
+  const unscheduled: string[] = [];
   const place = (snapshot: ItemSnapshot, extra: Omit<Timed, 'snapshot' | 'doses' | 'when'> = {}) => {
     if (snapshot.frequency === 'as-needed') whenNeeded.push(snapshot.key);
     else if (snapshot.frequency === 'not-daily') notDaily.push(snapshot.key);
     else if (snapshot.frequency) timed.push({ snapshot, doses: DOSES_PER_DAY[snapshot.frequency], when: [], ...extra });
-    else missingDetails.push(snapshot.key);
+    else unscheduled.push(snapshot.key);
   };
   for (const medicine of record) {
     if (!selectedIds.includes(medicine.id)) continue;
-    const snapshot = recordSnapshot(medicine, details[medicine.id]);
+    const snapshot = recordSnapshot(medicine);
     items.push(snapshot);
-    if (needsDetails(medicine) && !details[medicine.id]) missingDetails.push(snapshot.key);
-    else place(snapshot);
+    place(snapshot);
   }
   for (const addition of additions) {
     const snapshot = additionSnapshot(addition);
     items.push(snapshot);
     place(snapshot, { patientFood: FOOD_FOR[addition.timing], keepOwnTiming: addition.keepOwnTiming });
   }
-  return { items, timed, whenNeeded, notDaily, missingDetails };
+  return { items, timed, whenNeeded, notDaily, unscheduled };
 }
 
 const MEAL_FOR: Partial<Record<TimingWhen, Meal>> = { ACM: 'breakfast', ACD: 'lunch', ACV: 'dinner', CM: 'breakfast', CD: 'lunch', CV: 'dinner' };
