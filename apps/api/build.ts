@@ -1,3 +1,4 @@
+import { cpSync } from 'node:fs';
 import { build } from 'esbuild';
 
 build({
@@ -8,4 +9,4 @@ build({
   target: 'node24',
   format: 'cjs',
   sourcemap: true,
-}).catch(() => process.exit(1));
+}).then(() => cpSync('test_data', 'dist/apps/api/test_data', { recursive: true })).catch(() => process.exit(1));
