@@ -36,9 +36,10 @@ export function checkAssignment(constraints: Constraint[], day: Day, times: Reco
     if (constraint.minIntervalMinutes) {
       add(constraint.key, 'interval', doses.every((minute, i) => i === 0 || minute - doses[i - 1] >= constraint.minIntervalMinutes));
     }
-    for (const { key, hours } of constraint.separations) {
+    for (const { key, hours, order } of constraint.separations) {
       const other = times[key] ?? [];
-      add(constraint.key, 'separation', doses.every(a => other.every(b => Math.abs(a - b) >= hours * 60)));
+      const apart = (a: number, b: number) => (order === 'before' ? b - a : order === 'after' ? a - b : Math.abs(a - b));
+      add(constraint.key, 'separation', doses.every(a => other.every(b => apart(a, b) >= hours * 60)));
     }
   }
   return checks;

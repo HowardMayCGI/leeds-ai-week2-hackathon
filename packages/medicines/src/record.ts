@@ -1,86 +1,73 @@
-import type { Form } from './catalogue';
-import type { Dose } from './dose';
-import type { TimingWhen } from './rules';
+import { toMedicineOption, type MedicineOption, type SourceMedicine } from './catalogue';
+import { toDoseUnit, unitForForm, type Dose } from './dose';
+
+/** How often the record says to take a medicine, read from FHIR `Timing.repeat`. */
+export type RecordFrequency =
+  | { kind: 'daily'; timesPerDay: number }
+  | { kind: 'as-needed' }
+  | { kind: 'every-days'; days: number }
+  /** Doses a set number of hours apart, which needs checking before it can be timed. */
+  | { kind: 'every-hours'; hours: number }
+  | { kind: 'missing' };
 
 /**
- * A medicine supplied by the patient's record. Text fields keep the record's
+ * A current medicine from the patient's record. Instructions keep the record's
  * own wording and language; they are shown read-only and never translated.
- * `dosage` is the structured form the scheduler uses.
  */
 export interface RecordMedicine {
   id: string;
-  productId?: string;
-  name: string;
-  /** The size of one tablet, capsule or measure, as recorded, such as "500mg". */
-  strength?: string;
-  form: Form;
-  dose: Dose;
-  frequencyText: string;
-  instructionText?: string;
+  medicine: MedicineOption;
+  /** Missing when the record has no structured dose. */
+  dose?: Dose;
+  frequency: RecordFrequency;
+  instructions: string[];
   language: string;
-  dosage: { timesPerDay: number; when?: TimingWhen[]; asNeeded?: boolean };
+  prescribedOn?: string;
 }
 
-/** A synthetic patient record. Not a real person or medical advice. */
-export const PATIENT_RECORD: RecordMedicine[] = [
-  {
-    id: 'rec-levothyroxine',
-    productId: 'levothyroxine-50mcg-tablet',
-    name: 'Levothyroxine',
-    strength: '50 micrograms',
-    form: 'tablet',
-    dose: { quantity: 1, unit: 'tablet' },
-    frequencyText: 'Once a day',
-    instructionText: 'Take in the morning on an empty stomach, at least 30 minutes before breakfast',
+/** A current medicine as the patient data API returns it. */
+export interface SourceMedication extends SourceMedicine {
+  id: string;
+  dose?: { value: number; unit?: string };
+  frequency?: { frequency: number; period: number; periodUnit: string };
+  asNeeded: boolean;
+  instructions: string[];
+  prescribedOn?: string;
+}
+
+const HOURS_PER_UNIT: Record<string, number> = { h: 1, d: 24, wk: 24 * 7 };
+
+export function recordFrequency(source: SourceMedication): RecordFrequency {
+  if (source.asNeeded) return { kind: 'as-needed' };
+  const repeat = source.frequency;
+  const unitHours = repeat && HOURS_PER_UNIT[repeat.periodUnit];
+  if (!repeat || !unitHours || repeat.frequency < 1 || repeat.period <= 0) return { kind: 'missing' };
+  const hoursApart = (repeat.period * unitHours) / repeat.frequency;
+  if (repeat.periodUnit === 'h') return { kind: 'every-hours', hours: hoursApart };
+  if (hoursApart > 24 && repeat.frequency === 1) return { kind: 'every-days', days: hoursApart / 24 };
+  const timesPerDay = (24 / hoursApart);
+  return Number.isInteger(timesPerDay) && timesPerDay >= 1 && timesPerDay <= 4 ? { kind: 'daily', timesPerDay } : { kind: 'missing' };
+}
+
+// SNOMED CT display names end in a semantic tag, such as "Every six hours (qualifier value)".
+const SEMANTIC_TAG = /\s*\((qualifier value|finding|procedure|regime\/therapy)\)$/i;
+
+export function toRecordMedicine(source: SourceMedication): RecordMedicine {
+  const medicine = toMedicineOption(source);
+  const unit = toDoseUnit(source.dose?.unit) ?? unitForForm(medicine.form);
+  return {
+    id: source.id,
+    medicine,
+    dose: source.dose && source.dose.value > 0 ? { quantity: source.dose.value, unit } : undefined,
+    frequency: recordFrequency(source),
+    instructions: source.instructions.map(text => text.replace(SEMANTIC_TAG, '')),
     language: 'en',
-    dosage: { timesPerDay: 1, when: ['ACM'] },
-  },
-  {
-    id: 'rec-metformin',
-    productId: 'metformin-500mg-tablet',
-    name: 'Metformin',
-    strength: '500mg',
-    form: 'tablet',
-    dose: { quantity: 1, unit: 'tablet' },
-    frequencyText: 'Twice a day',
-    instructionText: 'Take with or just after food',
-    language: 'en',
-    dosage: { timesPerDay: 2, when: ['C'] },
-  },
-  {
-    id: 'rec-amlodipine',
-    productId: 'amlodipine-5mg-tablet',
-    name: 'Amlodipine',
-    strength: '5mg',
-    form: 'tablet',
-    dose: { quantity: 1, unit: 'tablet' },
-    frequencyText: 'Once a day',
-    instructionText: 'Take at the same time each day',
-    language: 'en',
-    dosage: { timesPerDay: 1 },
-  },
-  {
-    id: 'rec-atorvastatin',
-    productId: 'atorvastatin-20mg-tablet',
-    name: 'Atorvastatin',
-    strength: '20mg',
-    form: 'tablet',
-    dose: { quantity: 1, unit: 'tablet' },
-    frequencyText: 'Once a day',
-    instructionText: 'Take in the evening',
-    language: 'en',
-    dosage: { timesPerDay: 1, when: ['EVE'] },
-  },
-  {
-    id: 'rec-paracetamol',
-    productId: 'paracetamol-500mg-tablet',
-    name: 'Paracetamol',
-    strength: '500mg',
-    form: 'tablet',
-    dose: { quantity: 1, quantityMax: 2, unit: 'tablet' },
-    frequencyText: 'Up to 4 times a day when needed',
-    instructionText: 'Leave at least 4 hours between doses. Do not take more than 8 tablets in 24 hours',
-    language: 'en',
-    dosage: { timesPerDay: 4, asNeeded: true },
-  },
-];
+    prescribedOn: source.prescribedOn,
+  };
+}
+
+/** True when the patient must tell us the dose or how often they take it before it can be scheduled. */
+export function needsDetails(medicine: RecordMedicine): boolean {
+  const { kind } = medicine.frequency;
+  return kind === 'missing' || kind === 'every-hours' || (kind === 'daily' && !medicine.dose);
+}

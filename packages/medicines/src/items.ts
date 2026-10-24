@@ -1,24 +1,36 @@
-import { findProduct, formatStrength, ingredientCodes } from './catalogue';
+import type { Form, MedicineOption } from './catalogue';
 import type { Dose } from './dose';
-import type { RecordMedicine } from './record';
-import { ADMINISTRATION_RULES, DEFAULT_MIN_INTERVAL_HOURS, type TimingWhen } from './rules';
+import { needsDetails, type RecordMedicine } from './record';
+import { DEFAULT_MIN_INTERVAL_HOURS, rulesFor, timingConflict, type FoodTiming, type MealTiming, type TimingWhen } from './rules';
 import { MEALS, type Day, type Meal } from './routine';
 
-export const FREQUENCIES = ['once-daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'as-needed'] as const;
+export const FREQUENCIES = ['once-daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'not-daily', 'as-needed'] as const;
 export type Frequency = (typeof FREQUENCIES)[number];
-const DOSES_PER_DAY: Record<Exclude<Frequency, 'as-needed'>, number> = { 'once-daily': 1, 'twice-daily': 2, 'three-times-daily': 3, 'four-times-daily': 4 };
+type DailyFrequency = Exclude<Frequency, 'as-needed' | 'not-daily'>;
+const DOSES_PER_DAY: Record<DailyFrequency, number> = { 'once-daily': 1, 'twice-daily': 2, 'three-times-daily': 3, 'four-times-daily': 4 };
+const FREQUENCY_FOR: Record<number, DailyFrequency> = { 1: 'once-daily', 2: 'twice-daily', 3: 'three-times-daily', 4: 'four-times-daily' };
 
 /** A medicine or supplement the patient added. It is never written to the clinical record. */
 export interface PatientAddition {
   id: string;
-  /** Set when the patient chose a catalogue match; absent for an unlinked manual entry. */
-  productId?: string;
+  /** Set when the patient chose a suggestion; absent for a manual entry we could not match. */
+  medicine?: MedicineOption;
   name: string;
-  /** Size of one tablet, capsule or measure. From the product when matched, otherwise as entered. */
+  /** Size of one tablet, capsule or measure. From the suggestion when matched, otherwise as entered. */
   strength: string;
   dose: Dose;
   frequency: Frequency;
+  /** When the patient takes it, relative to food. */
+  timing: FoodTiming;
+  /** The patient kept a timing that goes against the medicine's instructions. */
+  keepOwnTiming?: boolean;
   instructions?: string;
+}
+
+/** The dose and frequency a patient gives for a record medicine whose record does not say. */
+export interface RecordDetails {
+  dose: Dose;
+  frequency: Frequency;
 }
 
 /** What the schedule shows about each included item, kept with the proposal and saved schedule. */
@@ -27,17 +39,25 @@ export interface ItemSnapshot {
   source: 'record' | 'patient';
   name: string;
   strength?: string;
-  dose: Dose;
-  /** Record wording, shown as supplied. */
-  frequencyText?: string;
-  /** Patient additions use a coded frequency so it can be shown in any language. */
+  form?: Form;
+  /** The product description in the record, for a record medicine or a matched addition. */
+  recordName?: string;
+  dose?: Dose;
   frequency?: Frequency;
-  instructionText?: string;
-  /** Language of record-supplied text. */
+  /** For a record medicine taken every few days. */
+  everyDays?: number;
+  /** Record instructions in the record's language, or the patient's own words. */
+  instructions: string[];
   language?: string;
-  productId?: string;
+  ingredients: string[];
   /** False for a patient addition we could not match, so no food or interaction rules were applied. */
   matched: boolean;
+  /** The patient told us the dose and frequency because the record did not have them. */
+  detailsFromPatient?: boolean;
+  /** For an addition: when the patient said they take it. */
+  timing?: FoodTiming;
+  /** For an addition: the patient kept a timing that goes against the rules. */
+  timingFlag?: { chosen: MealTiming; recommended: MealTiming };
 }
 
 export interface Constraint {
@@ -50,87 +70,129 @@ export interface Constraint {
   meals: Meal[];
   emptyStomach: { beforeMinutes: number; afterMinutes: number };
   minIntervalMinutes: number;
-  separations: { key: string; hours: number }[];
+  separations: Separation[];
   /** A `when` code that refers to a meal the patient does not eat. */
   missingMeal?: Meal;
+  /** The rule asks for the evening, shown as a note on the dose. */
+  evening?: boolean;
+  /** Minutes this must come before any other medicine that is swallowed. */
+  beforeOthersMinutes?: number;
 }
 
-export function recordSnapshot(medicine: RecordMedicine): ItemSnapshot {
+/** Doses kept apart from another item's doses: either way round, or with this item before or after it. */
+export interface Separation {
+  key: string;
+  hours: number;
+  order?: 'before' | 'after';
+}
+
+const SWALLOWED: Form[] = ['tablet', 'capsule', 'oral-liquid'];
+// An item typed in without a medicine option has no form, so it is treated as swallowed.
+const swallowed = (item: ItemSnapshot) => !item.form || SWALLOWED.includes(item.form);
+
+export function recordSnapshot(medicine: RecordMedicine, details?: RecordDetails): ItemSnapshot {
+  const { frequency } = medicine;
+  const fromPatient = needsDetails(medicine) && details ? details : undefined;
   return {
-    key: `record:${medicine.id}`, source: 'record', name: medicine.name, strength: medicine.strength,
-    dose: medicine.dose, frequencyText: medicine.frequencyText, instructionText: medicine.instructionText,
-    language: medicine.language, productId: medicine.productId, matched: true,
+    key: `record:${medicine.id}`, source: 'record', name: medicine.medicine.name, strength: medicine.medicine.strength,
+    form: medicine.medicine.form, recordName: medicine.medicine.recordName,
+    dose: fromPatient?.dose ?? medicine.dose,
+    frequency: fromPatient?.frequency
+      ?? (frequency.kind === 'daily' ? FREQUENCY_FOR[frequency.timesPerDay] : frequency.kind === 'as-needed' ? 'as-needed' : frequency.kind === 'every-days' ? 'not-daily' : undefined),
+    everyDays: !fromPatient && frequency.kind === 'every-days' ? frequency.days : undefined,
+    instructions: medicine.instructions, language: medicine.language,
+    ingredients: medicine.medicine.ingredients, matched: true, detailsFromPatient: Boolean(fromPatient),
   };
 }
 
 export function additionSnapshot(addition: PatientAddition): ItemSnapshot {
-  const product = findProduct(addition.productId);
+  const medicine = addition.medicine;
+  const conflict = medicine && addition.keepOwnTiming ? timingConflict(medicine.ingredients, addition.timing) : undefined;
   return {
-    key: `patient:${addition.id}`, source: 'patient', name: addition.name,
-    strength: product ? formatStrength(product) || undefined : addition.strength || undefined,
-    dose: addition.dose, frequency: addition.frequency, instructionText: addition.instructions || undefined,
-    productId: product?.id, matched: Boolean(product),
+    key: `patient:${addition.id}`, source: 'patient', name: medicine?.name ?? addition.name,
+    strength: medicine ? medicine.strength : addition.strength || undefined,
+    form: medicine?.form, recordName: medicine?.recordName,
+    dose: addition.dose, frequency: addition.frequency, instructions: addition.instructions ? [addition.instructions] : [],
+    ingredients: medicine?.ingredients ?? [], matched: Boolean(medicine), timing: addition.timing, timingFlag: conflict,
   };
 }
 
-interface Timed { snapshot: ItemSnapshot; doses: number; when: TimingWhen[] }
+interface Timed {
+  snapshot: ItemSnapshot;
+  doses: number;
+  when: TimingWhen[];
+  /** The patient's own timing, used when there is no rule or they chose to keep it. */
+  patientFood?: Constraint['food'];
+  keepOwnTiming?: boolean;
+}
+
+const FOOD_FOR: Record<FoodTiming, Constraint['food'] | undefined> = { 'before-food': 'empty-stomach', 'with-food': 'with-food', any: undefined, 'not-sure': undefined };
 
 /**
- * Splits included items into those given set times and those taken only when
- * needed. Every daily item gets times. An unmatched addition has no rules to
- * look up, so it is timed by its frequency alone.
+ * Splits included items into those given set times, those taken only when
+ * needed, and those taken less often than every day. A record medicine still
+ * missing its details is reported so the journey can ask for them first.
  */
-export function classify(record: RecordMedicine[], selectedIds: string[], additions: PatientAddition[]) {
+export function classify(record: RecordMedicine[], selectedIds: string[], additions: PatientAddition[], details: Record<string, RecordDetails> = {}) {
   const items: ItemSnapshot[] = [];
   const timed: Timed[] = [];
   const whenNeeded: string[] = [];
+  const notDaily: string[] = [];
+  const missingDetails: string[] = [];
+  const place = (snapshot: ItemSnapshot, extra: Omit<Timed, 'snapshot' | 'doses' | 'when'> = {}) => {
+    if (snapshot.frequency === 'as-needed') whenNeeded.push(snapshot.key);
+    else if (snapshot.frequency === 'not-daily') notDaily.push(snapshot.key);
+    else if (snapshot.frequency) timed.push({ snapshot, doses: DOSES_PER_DAY[snapshot.frequency], when: [], ...extra });
+    else missingDetails.push(snapshot.key);
+  };
   for (const medicine of record) {
     if (!selectedIds.includes(medicine.id)) continue;
-    const snapshot = recordSnapshot(medicine);
+    const snapshot = recordSnapshot(medicine, details[medicine.id]);
     items.push(snapshot);
-    if (medicine.dosage.asNeeded) whenNeeded.push(snapshot.key);
-    else timed.push({ snapshot, doses: medicine.dosage.timesPerDay, when: medicine.dosage.when ?? [] });
+    if (needsDetails(medicine) && !details[medicine.id]) missingDetails.push(snapshot.key);
+    else place(snapshot);
   }
   for (const addition of additions) {
     const snapshot = additionSnapshot(addition);
     items.push(snapshot);
-    if (addition.frequency === 'as-needed') whenNeeded.push(snapshot.key);
-    else timed.push({ snapshot, doses: DOSES_PER_DAY[addition.frequency], when: [] });
+    place(snapshot, { patientFood: FOOD_FOR[addition.timing], keepOwnTiming: addition.keepOwnTiming });
   }
-  return { items, timed, whenNeeded };
+  return { items, timed, whenNeeded, notDaily, missingDetails };
 }
 
 const MEAL_FOR: Partial<Record<TimingWhen, Meal>> = { ACM: 'breakfast', ACD: 'lunch', ACV: 'dinner', CM: 'breakfast', CD: 'lunch', CV: 'dinner' };
 
 export function buildConstraints(timed: Timed[], day: Day): Constraint[] {
-  const ingredientsByKey = new Map(timed.map(({ snapshot }) => {
-    const product = findProduct(snapshot.productId);
-    return [snapshot.key, product ? ingredientCodes(product) : []];
-  }));
-  return timed.map(({ snapshot, doses, when }) => {
-    const ingredients = ingredientsByKey.get(snapshot.key)!;
-    const rules = ingredients.map(code => ADMINISTRATION_RULES[code]).filter(Boolean);
+  return timed.map(({ snapshot, doses, when, patientFood, keepOwnTiming }) => {
+    const ingredients = snapshot.ingredients;
+    const rules = rulesFor(ingredients);
+    const ruleFood = rules.some(rule => rule.food === 'empty-stomach') ? 'empty-stomach' : rules.some(rule => rule.food === 'with-food') ? 'with-food' : undefined;
+    // The rules decide, unless the patient chose to keep their own timing; with no rule the patient's timing is used.
+    const food = (keepOwnTiming ? patientFood ?? ruleFood : ruleFood ?? patientFood) ?? 'any';
     const constraint: Constraint = {
       key: snapshot.key,
       doses,
       window: [day.wake, day.sleep],
-      food: rules.some(rule => rule.food === 'empty-stomach') ? 'empty-stomach' : rules.some(rule => rule.food === 'with-food') ? 'with-food' : 'any',
+      food,
       meals: MEALS.filter(meal => day.meals[meal] !== undefined),
       emptyStomach: rules.find(rule => rule.emptyStomach)?.emptyStomach ?? { beforeMinutes: 30, afterMinutes: 120 },
       minIntervalMinutes: (DEFAULT_MIN_INTERVAL_HOURS[doses] ?? 0) * 60,
       separations: [],
+      beforeOthersMinutes: rules.find(rule => rule.beforeOtherMedicines)?.beforeOtherMedicines,
     };
 
     const narrow = (from: number, to: number) => {
       constraint.window = [Math.max(constraint.window[0], from), Math.min(constraint.window[1], to)];
     };
+    // A kept patient timing replaces the rule's meal timing too, so only its time-of-day codes still apply.
+    const ruleWhen = rules.flatMap(rule => rule.when ?? []).filter(code => !keepOwnTiming || !MEAL_FOR[code]);
     const withMeals: Meal[] = [];
-    for (const code of when) {
+    for (const code of [...when, ...ruleWhen]) {
       const meal = MEAL_FOR[code];
       if (code === 'C') constraint.food = constraint.food === 'empty-stomach' ? 'empty-stomach' : 'with-food';
       else if (code === 'MORN') narrow(day.wake, day.wake + 240);
       else if (code === 'WAKE') narrow(day.wake, day.wake + 30);
-      else if (code === 'EVE') narrow(day.sleep - 360, day.sleep);
+      else if (code === 'EVE') { narrow(day.sleep - 360, day.sleep); constraint.evening = true; }
       else if (code === 'HS') narrow(day.sleep - 60, day.sleep);
       else if (meal && code.startsWith('AC')) {
         constraint.food = 'empty-stomach';
@@ -151,16 +213,22 @@ export function buildConstraints(timed: Timed[], day: Day): Constraint[] {
     // Separation rules apply in either direction, so collect both sides.
     for (const other of timed) {
       if (other.snapshot.key === snapshot.key) continue;
-      const otherIngredients = ingredientsByKey.get(other.snapshot.key)!;
+      const otherIngredients = other.snapshot.ingredients;
       let hours = 0;
       for (const [mine, theirs] of [[ingredients, otherIngredients], [otherIngredients, ingredients]]) {
-        for (const code of mine) {
-          for (const rule of ADMINISTRATION_RULES[code]?.separateFrom ?? []) {
-            if (theirs.some(ingredient => rule.ingredients.includes(ingredient))) hours = Math.max(hours, rule.hours);
+        for (const rule of rulesFor(mine)) {
+          for (const separation of rule.separateFrom ?? []) {
+            if (theirs.some(ingredient => separation.ingredients.includes(ingredient))) hours = Math.max(hours, separation.hours);
           }
         }
       }
       if (hours) constraint.separations.push({ key: other.snapshot.key, hours });
+      const theirFirst = rulesFor(otherIngredients).find(rule => rule.beforeOtherMedicines)?.beforeOtherMedicines;
+      if (constraint.beforeOthersMinutes && swallowed(other.snapshot)) {
+        constraint.separations.push({ key: other.snapshot.key, hours: constraint.beforeOthersMinutes / 60, order: 'before' });
+      } else if (theirFirst && swallowed(snapshot)) {
+        constraint.separations.push({ key: other.snapshot.key, hours: theirFirst / 60, order: 'after' });
+      }
     }
     return constraint;
   });

@@ -3,7 +3,7 @@
  * finds dose times that meet every constraint and keep the day simple. It
  * never relaxes a constraint: if no assignment exists it says why instead.
  */
-import type { Constraint } from './items';
+import type { Constraint, Separation } from './items';
 import { MEALS, type Day, type Meal } from './routine';
 
 const SEARCH_NODE_LIMIT = 200_000;
@@ -14,7 +14,9 @@ export type Problem =
   | { code: 'not-enough-time'; key: string; doses: number; hours: number }
   | { code: 'no-suitable-time'; key: string }
   | { code: 'cannot-separate'; keys: [string, string]; hours: number }
-  | { code: 'too-complex' };
+  | { code: 'cannot-take-first'; keys: [first: string, then: string]; minutes: number }
+  | { code: 'too-complex' }
+  | { code: 'missing-details'; key: string };
 
 export type Assignment = Record<string, number[]>;
 export type SchedulerResult = { status: 'ok'; times: Assignment } | { status: 'blocked'; problems: Problem[] };
@@ -66,8 +68,9 @@ function doseSets(constraint: Constraint, day: Day): number[][] {
   return sets;
 }
 
-function separated(a: number[], b: number[], hours: number): boolean {
-  return a.every(x => b.every(y => Math.abs(x - y) >= hours * 60));
+function separated(mine: number[], theirs: number[], { hours, order }: Separation): boolean {
+  const gap = hours * 60;
+  return mine.every(x => theirs.every(y => (order === 'before' ? y - x : order === 'after' ? x - y : Math.abs(x - y)) >= gap));
 }
 
 function spacingPenalty(times: number[]): number {
@@ -97,6 +100,8 @@ function lessThan(a: number[], b: number[]): boolean {
 
 function search(constraints: Constraint[], sets: number[][][], day: Day) {
   const order = constraints.map((_, i) => i).sort((i, j) => sets[i].length - sets[j].length || constraints[i].key.localeCompare(constraints[j].key));
+  const events = new Set([day.wake, day.sleep, ...Object.values(day.meals)]);
+  const candidates = sets.map(options => [...new Set(options.flat())]);
   let best: Assignment | null = null;
   let bestCost: number[] | null = null;
   let nodes = 0;
@@ -104,17 +109,35 @@ function search(constraints: Constraint[], sets: number[][][], day: Day) {
   const assignment: Assignment = {};
   const used = new Map<number, number>();
 
+  // At least this many separate times: those used so far, plus the new times the neediest remaining medicine must add.
+  const lowerBound = (depth: number) => {
+    let extra = 0;
+    for (let d = depth; d < order.length; d++) {
+      const i = order[d];
+      const free = candidates[i].filter(minute => used.has(minute)).length;
+      extra = Math.max(extra, constraints[i].doses - free);
+    }
+    return used.size + extra;
+  };
+  // Try times already in the schedule first, then routine events, so a simple schedule is found early.
+  const added = (times: number[]) => times.filter(minute => !used.has(minute)).length;
+  const offEvent = (times: number[]) => times.filter(minute => !events.has(minute)).length;
+
   const visit = (depth: number) => {
     if (++nodes > SEARCH_NODE_LIMIT) { limitHit = true; return; }
-    if (bestCost && used.size > bestCost[0]) return;
+    if (bestCost && lowerBound(depth) > bestCost[0]) return;
     if (depth === order.length) {
       const total = cost(assignment, day);
       if (!bestCost || lessThan(total, bestCost)) { bestCost = total; best = structuredClone(assignment); }
       return;
     }
     const constraint = constraints[order[depth]];
-    for (const times of sets[order[depth]]) {
-      const fits = constraint.separations.every(({ key, hours }) => !assignment[key] || separated(times, assignment[key], hours));
+    const ranked = sets[order[depth]].map(times => ({ times, added: added(times), offEvent: offEvent(times) }))
+      .sort((a, b) => a.added - b.added || a.offEvent - b.offEvent);
+    // Ranking takes work too, so it counts towards the limit.
+    nodes += ranked.length >> 4;
+    for (const { times } of ranked) {
+      const fits = constraint.separations.every(separation => !assignment[separation.key] || separated(times, assignment[separation.key], separation));
       if (!fits) continue;
       assignment[constraint.key] = times;
       for (const minute of times) used.set(minute, (used.get(minute) ?? 0) + 1);
@@ -157,9 +180,10 @@ export function schedule(constraints: Constraint[], day: Day): SchedulerResult {
   for (let i = 0; i < constraints.length; i++) {
     for (let j = i + 1; j < constraints.length; j++) {
       const rule = constraints[i].separations.find(separation => separation.key === constraints[j].key);
-      if (rule && !search([constraints[i], constraints[j]], [sets[i], sets[j]], day).best) {
-        problems.push({ code: 'cannot-separate', keys: [constraints[i].key, constraints[j].key], hours: rule.hours });
-      }
+      if (!rule || search([constraints[i], constraints[j]], [sets[i], sets[j]], day).best) continue;
+      const keys: [string, string] = [constraints[i].key, constraints[j].key];
+      if (!rule.order) problems.push({ code: 'cannot-separate', keys, hours: rule.hours });
+      else problems.push({ code: 'cannot-take-first', keys: rule.order === 'before' ? keys : [keys[1], keys[0]], minutes: rule.hours * 60 });
     }
   }
   return { status: 'blocked', problems: problems.length ? problems : [{ code: 'too-complex' }] };
