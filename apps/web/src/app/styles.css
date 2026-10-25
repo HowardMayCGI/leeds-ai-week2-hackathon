@@ -122,29 +122,6 @@ body {
   text-transform: uppercase;
 }
 
-.joke-demo {
-  max-width: 340px;
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--app-ink);
-}
-
-.joke-demo .nhsuk-button {
-  margin-bottom: 4px;
-}
-
-.joke-demo #joke-demo-result > p {
-  margin: 16px 0 0;
-}
-
-.joke-demo__joke {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
 .showcase-control {
   min-width: 0;
   margin: 0;
@@ -590,11 +567,6 @@ body {
     border: 0;
     border-radius: 0;
     background: none;
-  }
-
-  .joke-demo {
-    max-width: none;
-    margin: 0 16px 12px;
   }
 
   .showcase-control {

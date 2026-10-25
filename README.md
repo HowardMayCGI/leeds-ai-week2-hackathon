@@ -77,9 +77,9 @@ pnpm nx run-many -t dev -p web api
 
 Open **http://127.0.0.1:3000**. The API listens on loopback port `3001`; Next.js proxies `/api/*` to it. Both servers watch for changes. Stop them together with Ctrl+C. Everyday development requires no AWS credentials or deployed resources.
 
-### OpenAI joke demo
+### OpenAI
 
-The home page has a **Have a laugh** section. Select **Tell me a joke** to request a short, family-friendly joke. It calls `POST /api/joke` on the existing API, which uses the backend-only `@hackathon/chatgpt` package and official `openai` SDK's Responses API. Nothing is requested until the button is selected. The browser shows progress, announces the result and offers a retry if the request fails.
+The AI features use OpenAI when `OPENAI_API_KEY` is set (see [AI help](docs/ai-features.md)). `POST /api/joke` remains as a quick check that the key works; it uses the backend-only `@hackathon/chatgpt` package and the official `openai` SDK's Responses API, and is no longer shown on the page.
 
 Add these variables to the root `.env` file (see [.env.example](.env.example)); preserve any existing values in that file:
 
@@ -98,7 +98,7 @@ To check the local endpoint while both servers are running:
 curl --fail-with-body -X POST http://127.0.0.1:3000/api/joke
 ```
 
-Without a key the joke endpoint returns `503`; other API features keep working. Upstream failures return a generic `502` without exposing SDK error details. Unit and browser tests use mocked OpenAI responses and require no key or paid API calls.
+Without a key the joke endpoint returns `503`; other API features keep working. Upstream failures return a generic `502` without exposing SDK error details. Unit tests use mocked OpenAI responses and require no key or paid API calls.
 
 For AWS, configure the key once per stack using Pulumi's encrypted configuration. With the stack's `PULUMI_CONFIG_PASSPHRASE` available in your shell, run this from the repository root and enter the key at the hidden prompt:
 

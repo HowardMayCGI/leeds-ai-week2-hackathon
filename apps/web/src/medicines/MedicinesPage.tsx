@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AiStatusResponse, PatientSummary } from '@hackathon/api-contract';
 import { AppChrome } from '../app/app-chrome';
 import { Showcase } from '../app/showcase';
-import { JokeDemo } from '../app/joke-demo';
 import { AI_OFF, fetchAiStatus } from './ai-client';
 import { DEFAULT_LANGUAGE, isLanguage, languageInfo, LANGUAGES, translate, type Language } from './i18n';
 import { MedicinesApp } from './MedicinesApp';
@@ -81,7 +80,6 @@ export function MedicinesPage() {
   return (
     <Showcase
       title="Schedule my medicines"
-      demo={<JokeDemo />}
       description={<>Fitted around your day.</>}
       detail="Tell the app when you usually wake up, eat and go to sleep. It suggests a daily schedule for your medicines that follows the instructions for each one, and can remind you when it is time to take them."
       status={ai.known ? <AiStatus status={ai.value} /> : undefined}
