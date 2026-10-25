@@ -109,6 +109,32 @@ test('the web page chooses the patient whose record the app shows', async ({ pag
   await expect(patient).toHaveValue('9997111249');
 });
 
+test('the web page presents the pitch as slides beside the app', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Present our pitch' }).click();
+  const pitch = page.getByRole('dialog');
+  await expect(pitch.getByRole('heading', { level: 2 })).toHaveText('A conversation on a flight to Sicily');
+  await expect(pitch.getByRole('button', { name: 'Previous' })).toBeHidden();
+  await expectAccessible(page);
+
+  await pitch.getByRole('button', { name: 'Next' }).click();
+  await expect(pitch.getByRole('heading', { level: 2 })).toHaveText('More medicines, harder routines');
+  await page.keyboard.press('ArrowRight');
+  await expect(pitch).toContainText('Slide 3 of 6');
+  await page.keyboard.press('ArrowLeft');
+  await expect(pitch).toContainText('Slide 2 of 6');
+  for (let slide = 3; slide <= 6; slide++) await page.keyboard.press('ArrowRight');
+  await expect(pitch).toContainText('Slide 6 of 6');
+  await pitch.getByRole('button', { name: 'Start the demo' }).click();
+  await expect(pitch).toBeHidden();
+
+  // Reopening starts from the beginning, and Escape closes it.
+  await page.getByRole('button', { name: 'Present our pitch' }).click();
+  await expect(pitch).toContainText('Slide 1 of 6');
+  await page.keyboard.press('Escape');
+  await expect(pitch).toBeHidden();
+});
+
 test('shows an error with a retry when the record cannot be loaded', async ({ page }) => {
   let failing = true;
   await page.route('**/api/patients/*/medications', route => (failing ? route.fulfill({ status: 503, body: '{}' }) : route.fallback()));

@@ -1,12 +1,100 @@
-# leeds-ai-week2-hackathon
+# Schedule my medicines
 
-Leeds AI Week2 Hackathon repository
+**A daily medicine schedule, fitted around your day, inside the NHS App.**
+
+### ▶ Try it: [d3c8ids0dcqe7e.cloudfront.net](https://d3c8ids0dcqe7e.cloudfront.net)
+
+On a desktop browser the app appears in a phone frame. Choose a synthetic patient on the left, then tap **Schedule my medicines** in the app. **Present our pitch** opens the short slide deck we used on stage.
+
+Team **Double Helix** · [AI in Healthcare Hackathon](https://leeds-ai-hackathon.devpost.com/), Leeds AI Society, Helix, University of Leeds, 24–25 October 2026
+
+> Concept prototype built with synthetic patient data. It is not an NHS-approved or NHS App-integrated service and must not be used for clinical decisions.
+
+![The problem: 10+ medicines each with their own rules, and patients asking unchecked chatbots. Our approach: the NHS App combines your prescriptions, your day and rules from NHS guidance, then a scheduler and independent checker. The result: a timeline of your day with each medicine at the right time, reminders and pharmacist review.](docs/images/schedule-my-medicines.svg)
+
+## Where the idea came from
+
+A few weeks before the hackathon, on a flight to Sicily, one of our team sat next to a 72-year-old man. They got talking about many things, including AI. He explained that he takes 10 different medicines, and it was hard to know when to take them: some must be taken with meals, some can't be taken with others. His solution was to ask ChatGPT to create a personal schedule for which medicines to take when.
+
+It was a great idea. But it relies on a patient being confident enough to try it, typing their prescriptions in correctly, and trusting an answer that nobody has checked. We asked: **why limit this to enterprising individuals?** The NHS App already knows a patient's prescriptions. A schedule could be a feature of the app, available to everyone, built on NHS guidance and with a pharmacist in the loop.
+
+## The problem
+
+- **People take more medicines than ever.** In England, prescription items per person per year rose from **9.5 in 1994 to 19.9 in 2019**, a **109% increase** ([DHSC, National Overprescribing Review, 2021](https://www.gov.uk/government/publications/national-overprescribing-review-report)).
+- **Polypharmacy is common.** Taking five or more medicines at once is called polypharmacy. It is especially common in older people and people with several long-term conditions. Taking several medicines is not a problem in itself, but it creates practical and safety challenges.
+- **Every medicine has its own rules.** Some must be taken on an empty stomach, some with food, some in the evening, and some must be spaced hours apart from others (levothyroxine and iron, for example). Some are taken weekly, not daily.
+- **Routines are hard to get right and keep right.** Patients forget what to take and when, and the routine changes every time a prescription does. Missed, doubled or badly timed doses can mean medicines don't work as intended or cause more side effects.
+- **People are already turning to general-purpose AI**, with no check on whether the answer is correct. One 2026 study found GPT-4o identified the interacting drug pair only **54.7%** of the time on its benchmark ([abstract](https://pubmed.ncbi.nlm.nih.gov/42717660/)).
+
+## Why the NHS App
+
+- **39.3 million** registered users and **7.78 million** repeat prescription orders a month (NHS App statistics, September 2026). The people who need this are already there.
+- **It knows your prescriptions**, so patients confirm their medicines instead of retyping them.
+- **No new app** for patients to find, download, learn and trust.
+- **Built with the [NHS App design system](https://design-system.nhsapp.service.nhs.uk/)**, so it looks and behaves like the rest of the app and reuses accessible, tested components. "Schedule my medicines" names the task in the words patients use.
+
+## What we built
+
+A working, deployed prototype of a new **Prescriptions → Schedule my medicines** feature, in the style of the NHS App:
+
+1. **Tell us about your day**: when you wake, eat and go to sleep (a FHIR `Questionnaire`).
+2. **Confirm your medicines** from your (synthetic) record. Where the record is missing a dose or frequency, the app asks for it.
+3. **Add anything missing**, such as over-the-counter medicines and supplements, with fuzzy search by brand or generic name. The app warns about duplicate active ingredients and about timing choices that go against guidance (such as naproxen before food).
+4. **Get a proposed schedule**: a timeline of your day showing which medicines to take at each time, using as few separate times as possible. Food, timing and spacing rules come from NHS sources, and each rule links to its source.
+5. **Save it, turn on reminders**, and request a **pharmacist review**. Anything uncertain, such as a patient keeping their own timing or a medicine not on our rules list, is flagged for the pharmacist.
+
+**If no valid schedule exists, the app explains why rather than bending a rule.** An example is naproxen with food twice a day when the patient only eats once. Every proposal is re-verified by an independent checker before it is shown.
+
+The app runs in **English, Polish and Urdu** (right to left), and automated WCAG 2.1 AA accessibility checks run in the browser tests.
+
+## How AI helps, and where we deliberately don't use it
+
+**AI where it helps, rules where it matters.**
+
+|                                        |                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **AI showed the need**                 | A patient used ChatGPT to plan his medicines. That is real demand, but the answer was unchecked and depended on him knowing to ask.                                                                                                                                                                                                  |
+| **AI helped us build it**              | We used AI tools throughout the weekend. They helped us research NHS, SPS, NICE and MHRA guidance ([research notes](docs/medication-planner-research.md)), turn guidance into structured rules with sources, and design, code and test the app. Without them, a team of our size could not have built and deployed this in 24 hours. |
+| **Deterministic where safety matters** | Scheduling known constraints is an optimisation problem, not a guessing game. The schedule is produced by explainable rules and re-verified by an independent checker, so every time can be traced to a rule and a source. The same input always gives the same output.                                                              |
+| **AI next**                            | Explaining medicines and schedules in plain language; reading free-text prescription instructions into structured doses; answering "can I move this?" questions. Each would be confirmed by the patient or pharmacist before it affects the schedule.                                                                                |
+
+This follows our research: published work such as [MEDIC (Nature Medicine, 2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11186789/) shows LLMs working well when they are bounded by domain rules and guardrails. Unchecked general models make medication errors.
+
+## Responsible use of data
+
+- **No real patient data.** The demo patients are synthetic [Synthea](https://synthetichealth.github.io/synthea/) FHIR R4 records. They were chosen from 1,000 synthetic patients because they have long medicine lists and messy, realistic records (missing doses, as-needed and non-daily medicines). See [how they were selected](test_data/README.md).
+- **Bias we know about.** Synthea models a US population and US prescribing. We converted medicine names to UK names, but the medicine mix, demographics and conditions are not representative of NHS patients. A real service would need evaluation across age, ethnicity, language, disability and digital confidence.
+- **Data minimisation.** The prototype only reads medicines and basic demographics. Saved schedules and preferences stay in the browser's local storage. There is no account, no tracking and no server-side store of patient answers.
+- **Never changes a prescription.** It only arranges the times of what was prescribed. It does not judge whether a prescription is appropriate (that is a clinician's medication review).
+- **Consent and governance in a real service.** Health data is special-category data. A live version would need a lawful basis, a DPIA, DCB0129/DCB0160 clinical safety assurance, DTAC, and an assessment of whether it is a medical device under MHRA guidance (influencing treatment timing may make it one). See [our research notes](docs/medication-planner-research.md).
+
+## Limitations and what's next
+
+- **Limited rules coverage.** Our timing and interaction rules are a small, sourced demonstration set, not a complete clinical knowledge base. A real service would license one (such as dm+d with FDB or Stockley's) and have a pharmacist approve the rules.
+- **Not connected to the real NHS App or GP record.** NHS App integration has its own onboarding and standards process.
+- **Next steps:** pharmacist sign-off of schedules in the app; API persistence; plain-language AI explanations; usability testing with older patients and carers; evaluation against prescription fidelity, missed or extra doses and timing violations.
+
+## Team
+
+Team **Double Helix**:
+
+- David Roussel
+- Howard May
+- Devamm Patel
+
+## AI tools we used
+
+Declared as the hackathon rules require: AI coding assistants (including GitHub Copilot) for research, code, tests and documentation; Figma Make for the [initial design concept](figma-make-concept/). Pre-existing work: before the event (22–23 October) we set up this repository, the AWS hosting (CloudFront, S3, API Gateway and Lambda via Pulumi) and a placeholder random-number app to prove deployment. The Schedule my medicines idea, design and code were built during the hackathon. All patient data is synthetic.
+
+---
+
+# Technical documentation
 
 ## Schedule my medicines (proof of concept)
 
 The home page (`/`) is the **Schedule my medicines** journey agreed in the 24 October design session, in the style of the NHS App. It uses NHS.UK frontend and NHS App frontend (`nhsapp-frontend`) components, the test patient records in `test_data/` (served by the API) and proof-of-concept timing rules; it is not for clinical use.
 
-The page has two parts. The **web page** introduces the app and holds the view options: the patient whose record the app shows, the app language (English, Polish or Urdu), the app height (a fixed phone screen where only the content scrolls, with NHS App bottom navigation, or full length) and **Start again as a new user**. The **app** is everything inside the phone.
+The page has two parts. The **web page** introduces the app and holds the view options: the patient whose record the app shows, the app language (English, Polish or Urdu), the app height (a fixed phone screen where only the content scrolls, with NHS App bottom navigation, or full length) and **Start again as a new user**. **Present our pitch** opens a six-slide pitch deck in a modal dialog (arrow keys move between slides, Escape closes it); the slides are in `apps/web/src/medicines/Pitch.tsx`. The **app** is everything inside the phone.
 
 **Prescriptions → Introduction → Routine (2 screens) → Select medicines → How do you take it? (only for record medicines with no dose or frequency) → Add anything missing (with a timing check) → Check answers → Proposed schedule → Save → Reminders.** Returning users go straight to their saved schedule, where they can view dose details, change their routine or medicines (creating a new proposal that only replaces the saved one when saved), manage the single reminder switch and request a pharmacist review.
 

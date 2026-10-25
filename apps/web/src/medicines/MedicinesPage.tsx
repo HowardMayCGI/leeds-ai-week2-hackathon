@@ -6,6 +6,7 @@ import { AppChrome } from '../app/app-chrome';
 import { Showcase } from '../app/showcase';
 import { DEFAULT_LANGUAGE, isLanguage, languageInfo, LANGUAGES, translate, type Language } from './i18n';
 import { MedicinesApp } from './MedicinesApp';
+import { Pitch } from './Pitch';
 import { displayName, fetchPatientData, fetchPatients, type PatientData } from './patient-data';
 import { clearDevice, loadLanguage, loadPatient, storeLanguage, storePatient } from './state';
 
@@ -77,6 +78,7 @@ export function MedicinesPage() {
       title="Schedule my medicines"
       description={<>Fitted around your day.</>}
       detail="Tell the app when you usually wake up, eat and go to sleep. It suggests a daily schedule for your medicines that follows the instructions for each one, and can remind you when it is time to take them."
+      actions={<Pitch />}
       controls={(
         <>
           <div className="showcase-control">

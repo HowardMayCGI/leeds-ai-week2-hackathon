@@ -24,10 +24,12 @@ function storeHeight(mode: HeightMode) {
   try { window.localStorage.setItem(HEIGHT_KEY, mode); } catch { /* a per-visit preference is fine */ }
 }
 
-export function Showcase({ title, description, detail, controls, children }: {
+export function Showcase({ title, description, detail, actions, controls, children }: {
   title: ReactNode;
   description: ReactNode;
   detail?: ReactNode;
+  /** Shown below the introduction, such as a button to present the pitch. */
+  actions?: ReactNode;
   /** Extra web page controls, shown with the height option. */
   controls?: ReactNode;
   children: ReactNode;
@@ -48,6 +50,7 @@ export function Showcase({ title, description, detail, controls, children }: {
           <div className="showcase-intro__rule" />
           <p className="showcase-intro__description">{description}</p>
           {detail && <p className="showcase-intro__detail">{detail}</p>}
+          {actions && <div className="showcase-intro__actions">{actions}</div>}
         </div>
         <section className="showcase-controls" aria-labelledby="view-options-title">
           <h2 className="showcase-controls__title" id="view-options-title">View options</h2>
