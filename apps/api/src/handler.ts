@@ -1,6 +1,7 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { NHS_NUMBER_PATTERN, type RandomNumberResponse } from "@hackathon/api-contract";
+import { NHS_NUMBER_PATTERN, type JokeResponse, type RandomNumberResponse } from "@hackathon/api-contract";
+import { ChatGptConfigurationError, createChatGptClient } from "@hackathon/chatgpt";
 import {
   createFilePatientRepository,
   defaultDataDirectory,
@@ -23,6 +24,7 @@ export interface ApiRequest {
 interface HandlerOptions {
   originSecret: string | undefined;
   generateNumber?: () => number;
+  generateJoke?: () => Promise<string>;
   patients?: PatientRepository;
 }
 
@@ -61,6 +63,21 @@ export async function handleRequest(
   // Fail closed if deployment configuration is missing, too.
   if (!matchesSecret(request.headers[ORIGIN_HEADER], options.originSecret)) {
     return json(403, { message: "Forbidden" });
+  }
+  if (request.path === "/api/joke") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    try {
+      // Only a fixed prompt is sent to OpenAI; request bodies and patient data are never used.
+      const joke = await (options.generateJoke ?? generateJoke)();
+      const response: JokeResponse = { joke };
+      return json(200, response);
+    } catch (error) {
+      if (error instanceof ChatGptConfigurationError) {
+        return json(503, { message: "The joke demo is not configured yet." });
+      }
+      // SDK error details can contain credentials or upstream data. Keep them out of logs/responses.
+      return json(502, { message: "We could not get a joke right now. Please try again." });
+    }
   }
   if (request.path === "/api/schedules") {
     if (request.method !== "POST") return methodNotAllowed("POST");
@@ -125,6 +142,15 @@ export async function handleRequest(
 }
 
 let repository: PatientRepository | undefined;
+let chatGpt: ReturnType<typeof createChatGptClient> | undefined;
+function generateJoke(): Promise<string> {
+  chatGpt ??= createChatGptClient();
+  return chatGpt.generateText(
+    "Tell me one short, family-friendly joke.",
+    "Reply in English with only the joke, including its punchline, in plain text and at most 60 words. Keep it kind and suitable for children. Avoid medical advice, jokes about illness or patients, politics, sexual content, violence and insults.",
+  );
+}
+
 function defaultRepository(): PatientRepository {
   return (repository ??= createFilePatientRepository(defaultDataDirectory()));
 }

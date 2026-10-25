@@ -24,6 +24,7 @@
 @use 'nhsuk-frontend/dist/nhsuk/components/textarea';
 
 // NHS App components and icons, built on NHS.UK frontend
+@use 'nhsapp-frontend/dist/nhsapp/components/button' as nhsapp-button;
 @use 'nhsapp-frontend/dist/nhsapp/styles/icon/icons' as nhsapp-icons;
 @use 'nhsapp-frontend/dist/nhsapp/components/card' as nhsapp-card;
 @use 'nhsapp-frontend/dist/nhsapp/components/timeline' as nhsapp-timeline;

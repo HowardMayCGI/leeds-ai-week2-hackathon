@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@hackathon/api-contract": "workspace:*",
+    "@hackathon/chatgpt": "workspace:*",
     "@hackathon/medicines": "workspace:*"
   }
 }

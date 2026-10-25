@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isMedicationsResponse, isMedicineListResponse, isPatientListResponse, isRandomNumberResponse } from './index';
+import { isJokeResponse, isMedicationsResponse, isMedicineListResponse, isPatientListResponse, isRandomNumberResponse } from './index';
+
+test('recognises jokes and rejects empty or malformed responses', () => {
+  assert.equal(isJokeResponse({ joke: 'A joke.' }), true);
+  for (const value of [null, undefined, {}, 'joke', { joke: 42 }, { joke: '' }, { joke: '  ' }]) {
+    assert.equal(isJokeResponse(value), false);
+  }
+});
 
 test('accepts the contract boundaries and rejects malformed API responses', () => {
   for (const number of [1, 42, 100]) assert.equal(isRandomNumberResponse({ number }), true);

@@ -14,6 +14,9 @@ const policyRegistered = new Promise<Resource>((resolve) => {
   resolvePolicy = resolve;
 });
 const stack = requireStack(process.env.TEST_STACK ?? "staging");
+// Deliberately different values ensure deployments use stack config, not the local API environment.
+process.env.OPENAI_API_KEY = "ignored-environment-key";
+process.env.OPENAI_MODEL = "ignored-environment-model";
 pulumi.runtime.setMocks(
   {
     newResource(args) {
@@ -40,6 +43,13 @@ pulumi.runtime.setMocks(
   "leeds-ai-week2-hackathon",
   stack,
   true,
+);
+pulumi.runtime.setAllConfig(
+  {
+    "leeds-ai-week2-hackathon:openaiApiKey": "test-only-openai-key",
+    "leeds-ai-week2-hackathon:openaiModel": "gpt-6-luna",
+  },
+  ["leeds-ai-week2-hackathon:openaiApiKey"],
 );
 
 test(
@@ -84,9 +94,14 @@ test(
     ]);
     assert.equal(apiOrigin.customOriginConfig.originProtocolPolicy, "https-only");
     const lambda = find("aws:lambda/function:Function");
+    assert.ok(pulumi.runtime.isRpcSecret(lambda.environment));
+    const lambdaEnvironment = pulumi.runtime.unwrapRpcSecret(lambda.environment);
     assert.equal(lambda.runtime, "nodejs24.x");
     assert.equal(lambda.name, `leeds-random-${stack}`);
-    assert.equal(lambda.environment.variables.ORIGIN_SECRET, apiOrigin.customHeaders[0].value);
+    assert.equal(lambdaEnvironment.variables.ORIGIN_SECRET, apiOrigin.customHeaders[0].value);
+    assert.equal(lambdaEnvironment.variables.OPENAI_API_KEY, "test-only-openai-key");
+    assert.equal(lambdaEnvironment.variables.OPENAI_MODEL, "gpt-6-luna");
+    assert.equal(lambda.timeout, 25);
     const executionRole = find("aws:iam/role:Role");
     assert.equal(executionRole.name, `leeds-random-${stack}-api`);
     assert.equal(executionRole.path, runtimeRolePath);
