@@ -8,12 +8,8 @@ import type {
 } from "@hackathon/api-contract";
 import {
   ADMINISTRATION_RULES,
-  CATALOGUE_VERSION,
   RULES_VERSION,
-  findProduct,
   formatClockTime,
-  formatStrength,
-  ingredientCodes,
   parseClockTime,
   planDaily,
   toDay,
@@ -21,6 +17,12 @@ import {
   type DailyConstraint,
   type DailyRelation,
 } from "@hackathon/medicines";
+import {
+  CATALOGUE_VERSION,
+  findProduct,
+  formatStrength,
+  ingredientCodes,
+} from "./legacy-catalogue";
 import { checkInteractions, interactionDataset } from "./interactions";
 import { administrationDataset } from "./schedule-inputs";
 
