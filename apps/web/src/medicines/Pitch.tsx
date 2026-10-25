@@ -20,7 +20,7 @@ const SLIDES: Slide[] = [
             “I take 10 different medicines. Some must be taken with meals, some can’t be taken with
             others. So I asked ChatGPT to make me a schedule.”
           </p>
-          <footer>A 72-year-old fellow passenger</footer>
+          <footer>A 72-year-old man</footer>
         </blockquote>
         <p className="pitch-lead">
           A great idea. But why should a safe daily routine depend on being enterprising enough to
