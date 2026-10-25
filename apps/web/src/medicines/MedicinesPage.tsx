@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { PatientSummary } from '@hackathon/api-contract';
+import type { AiStatusResponse, PatientSummary } from '@hackathon/api-contract';
 import { AppChrome } from '../app/app-chrome';
 import { Showcase } from '../app/showcase';
+import { AI_OFF, fetchAiStatus } from './ai-client';
 import { DEFAULT_LANGUAGE, isLanguage, languageInfo, LANGUAGES, translate, type Language } from './i18n';
 import { MedicinesApp } from './MedicinesApp';
 import { Pitch } from './Pitch';
@@ -22,10 +23,14 @@ export function MedicinesPage() {
   const [attempt, setAttempt] = useState(0);
   const [visit, setVisit] = useState(0);
   const [status, setStatus] = useState('');
+  const [ai, setAi] = useState<{ known: boolean; value: AiStatusResponse }>({ known: false, value: AI_OFF });
 
   useEffect(() => {
     const preferred = loadLanguage();
     if (preferred) setLang(preferred);
+    const controller = new AbortController();
+    fetchAiStatus(controller.signal).then(value => { if (!controller.signal.aborted) setAi({ known: true, value }); });
+    return () => controller.abort();
   }, []);
 
   // The patient list, then the remembered patient or the first one.
@@ -79,6 +84,7 @@ export function MedicinesPage() {
       description={<>Fitted around your day.</>}
       detail="Tell the app when you usually wake up, eat and go to sleep. It suggests a daily schedule for your medicines that follows the instructions for each one, and can remind you when it is time to take them."
       actions={<Pitch />}
+      status={ai.known ? <AiStatus status={ai.value} /> : undefined}
       controls={(
         <>
           <div className="showcase-control">
@@ -104,10 +110,25 @@ export function MedicinesPage() {
       )}
     >
       {summary && data.status === 'ready' && data.value.patient === patient
-        ? <MedicinesApp key={`${patient}-${visit}`} lang={lang} patient={summary} record={data.value.record.record} options={data.value.record.options} />
+        ? <MedicinesApp key={`${patient}-${visit}`} lang={lang} patient={summary} record={data.value.record.record} options={data.value.record.options} ai={ai.value} />
         : <AppStatus lang={lang} failed={patients.status === 'error' || data.status === 'error'} onRetry={retry} />}
     </Showcase>
   );
+}
+
+/** How AI help is running, for people looking at the web page. */
+function AiStatus({ status }: { status: AiStatusResponse }) {
+  if (status.mode === 'live') {
+    return (
+      <>
+        <strong>AI help is on.</strong> {status.model ?? 'Claude'} reads medicine labels and descriptions, fills in the usual day, explains the schedule and answers questions about it. The app checks every AI answer against the schedule, and the patient confirms anything that changes it.
+      </>
+    );
+  }
+  if (status.mode === 'test') {
+    return <><strong>AI help is in test mode.</strong> Answers come from built-in examples, not an AI model, so every photo reads as the same example medicine.</>;
+  }
+  return <><strong>AI help is off.</strong> Everything else in the app works as normal.</>;
 }
 
 /** What the app shows while its data loads, or if it cannot be loaded. */

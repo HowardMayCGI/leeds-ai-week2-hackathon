@@ -1,11 +1,11 @@
 {
   "name": "api",
-  "implicitDependencies": ["api-contract", "medicines"],
+  "implicitDependencies": ["api-contract", "chatgpt", "medicines"],
   "targets": {
     "dev": {
       "executor": "nx:run-commands",
       "continuous": true,
-      "options": { "command": "node --import tsx --watch apps/api/src/dev.ts" }
+      "options": { "command": "node --env-file-if-exists=.env --import tsx --watch apps/api/src/dev.ts" }
     },
     "build": {
       "executor": "nx:run-commands",

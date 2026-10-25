@@ -1,12 +1,14 @@
+import type { AskAnswer } from '@hackathon/api-contract';
 import {
-  createProposal, initialAnswers, needsDetails, toRoutine,
-  type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse, type RecordDetails, type RecordMedicine,
+  createProposal, initialAnswers, toRoutine,
+  type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse, type RecordMedicine,
 } from '@hackathon/medicines';
+import type { FactSource } from './facts';
 import { isLanguage, type Language } from './i18n';
 
 export type Screen =
-  | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'record-details' | 'additions' | 'addition-form' | 'addition-timing'
-  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation'
+  | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'additions' | 'addition-form' | 'addition-timing'
+  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation' | 'ask'
   | 'messages' | 'profile';
 
 /** Inputs to one proposal. Language independent, so switching language never changes them. */
@@ -15,8 +17,6 @@ export interface Draft {
   selected: string[];
   /** The patient chose "None of these" for their record medicines. */
   noneSelected: boolean;
-  /** How the patient takes record medicines whose record has no dose or frequency, by record id. */
-  recordDetails: Record<string, RecordDetails>;
   additions: PatientAddition[];
 }
 
@@ -39,6 +39,28 @@ export interface ChangeFlow {
   origin: Screen;
 }
 
+/** AI explanations of a schedule's times, kept for this visit only. */
+export interface Explanations {
+  /** The doses explained, so explanations are never shown against different times. */
+  signature: string;
+  /** The app language they were asked for, and the language they came back in. */
+  requested: Language;
+  language: Language;
+  /** Explanation text by dose, keyed by `${key}@${minute}`. */
+  texts: Record<string, string>;
+  doseCount: number;
+  hidden?: boolean;
+}
+
+/** A question about the saved schedule and its checked answer, kept for this visit only. */
+export interface AskEntry {
+  id: string;
+  question: string;
+  answer: AskAnswer;
+  language: Language;
+  sources: Record<string, FactSource>;
+}
+
 export interface State {
   screen: Screen;
   draft: Draft;
@@ -47,29 +69,24 @@ export interface State {
   proposal?: Proposal;
   changeFlow?: ChangeFlow;
   editingAdditionId?: string;
-  /** The record medicine whose details the patient is giving. */
-  editingRecordId?: string;
   saved?: SavedSchedule;
+  explanations?: Explanations;
+  asked: AskEntry[];
 }
 
-export function emptyDraft(): Draft {
-  return { answers: initialAnswers(), selected: [], noneSelected: false, recordDetails: {}, additions: [] };
+/** A new draft. Routine answers start from what the app already knows about the patient's day, if anything. */
+export function emptyDraft(routine: Answers = {}): Draft {
+  return { answers: { ...initialAnswers(), ...routine }, selected: [], noneSelected: false, additions: [] };
 }
 
-export function initialState(): State {
-  return { screen: 'prescriptions', draft: emptyDraft(), updating: false };
+export function initialState(routine?: Answers): State {
+  return { screen: 'prescriptions', draft: emptyDraft(routine), updating: false, asked: [] };
 }
 
 export function proposalFor(draft: Draft, record: RecordMedicine[]): Proposal | undefined {
   const routine = toRoutine(draft.answers);
   if (!routine) return undefined;
-  return createProposal({ routine, record, selectedRecordIds: draft.selected, additions: draft.additions, recordDetails: draft.recordDetails });
-}
-
-/** The next selected record medicine the patient still needs to tell us about, in record order. */
-export function nextPendingDetails(draft: Draft, record: RecordMedicine[], after?: string): string | undefined {
-  const start = after ? record.findIndex(medicine => medicine.id === after) + 1 : 0;
-  return record.slice(start).find(medicine => draft.selected.includes(medicine.id) && needsDetails(medicine) && !draft.recordDetails[medicine.id])?.id;
+  return createProposal({ routine, record, selectedRecordIds: draft.selected, additions: draft.additions });
 }
 
 // ---------------------------------------------------------------------------

@@ -17,6 +17,9 @@ import {
 const stack = requireStack(pulumi.getStack());
 const prefix = `leeds-random-${stack}`;
 const tags = { Project: "leeds-ai-week2-hackathon", Environment: stack };
+const config = new pulumi.Config();
+const openAiApiKey = config.getSecret("openaiApiKey");
+const openAiModel = config.get("openaiModel")?.trim();
 const webDirectory = path.resolve(__dirname, "../apps/web/out");
 const apiDirectory = path.resolve(__dirname, "../dist/apps/api");
 if (
@@ -76,6 +79,19 @@ const logging = new aws.iam.RolePolicy("api-logging", {
     }),
   ),
 });
+// AI help uses OpenAI when the stack has an openaiApiKey secret, and otherwise
+// Claude in Amazon Bedrock (the bedrock-mantle endpoint) in this stack's region,
+// which must also be enabled in Bedrock model access.
+// `pulumi config set aiProvider off` turns AI help off.
+const aiProvider = config.get("aiProvider") ?? (openAiApiKey ? "openai" : "bedrock");
+const aiModelId = config.get("aiModelId") ?? "anthropic.claude-haiku-5-5";
+const bedrock = new aws.iam.RolePolicy("api-bedrock", {
+  role: role.id,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: ["bedrock-mantle:CreateInference"], Resource: "*" }],
+  }),
+});
 const lambda = new aws.lambda.Function(
   "api",
   {
@@ -84,15 +100,23 @@ const lambda = new aws.lambda.Function(
     handler: "index.handler",
     role: role.arn,
     code: new pulumi.asset.FileArchive(apiDirectory),
-    memorySize: 128,
-    timeout: 5,
+    // AI answers take a few seconds and photos are read in memory. API Gateway waits up to 30 seconds.
+    memorySize: 512,
+    timeout: 29,
     environment: {
-      variables: { ORIGIN_SECRET: originSecret.result, NODE_OPTIONS: "--enable-source-maps" },
+      variables: {
+        ORIGIN_SECRET: originSecret.result,
+        NODE_OPTIONS: "--enable-source-maps",
+        ...(openAiApiKey ? { OPENAI_API_KEY: openAiApiKey } : {}),
+        ...(openAiModel ? { OPENAI_MODEL: openAiModel } : {}),
+        AI_PROVIDER: aiProvider,
+        AI_MODEL_ID: aiModelId,
+      },
     },
     loggingConfig: { logFormat: "JSON", logGroup: logs.name },
     tags,
   },
-  { dependsOn: [logging] },
+  { dependsOn: [logging, bedrock] },
 );
 
 const api = new aws.apigatewayv2.Api("api", { protocolType: "HTTP", tags });

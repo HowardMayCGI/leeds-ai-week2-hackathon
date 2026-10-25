@@ -6,8 +6,6 @@ export type RecordFrequency =
   | { kind: 'daily'; timesPerDay: number }
   | { kind: 'as-needed' }
   | { kind: 'every-days'; days: number }
-  /** Doses a set number of hours apart, which needs checking before it can be timed. */
-  | { kind: 'every-hours'; hours: number }
   | { kind: 'missing' };
 
 /**
@@ -43,7 +41,8 @@ export function recordFrequency(source: SourceMedication): RecordFrequency {
   const unitHours = repeat && HOURS_PER_UNIT[repeat.periodUnit];
   if (!repeat || !unitHours || repeat.frequency < 1 || repeat.period <= 0) return { kind: 'missing' };
   const hoursApart = (repeat.period * unitHours) / repeat.frequency;
-  if (repeat.periodUnit === 'h') return { kind: 'every-hours', hours: hoursApart };
+  // "Every 4 hours" is given up to 4 times across the waking day, as for "4 times a day".
+  if (repeat.periodUnit === 'h') return { kind: 'daily', timesPerDay: Math.max(1, Math.min(4, Math.floor(24 / hoursApart))) };
   if (hoursApart > 24 && repeat.frequency === 1) return { kind: 'every-days', days: hoursApart / 24 };
   const timesPerDay = (24 / hoursApart);
   return Number.isInteger(timesPerDay) && timesPerDay >= 1 && timesPerDay <= 4 ? { kind: 'daily', timesPerDay } : { kind: 'missing' };
@@ -64,10 +63,4 @@ export function toRecordMedicine(source: SourceMedication): RecordMedicine {
     language: 'en',
     prescribedOn: source.prescribedOn,
   };
-}
-
-/** True when the patient must tell us the dose or how often they take it before it can be scheduled. */
-export function needsDetails(medicine: RecordMedicine): boolean {
-  const { kind } = medicine.frequency;
-  return kind === 'missing' || kind === 'every-hours' || (kind === 'daily' && !medicine.dose);
 }

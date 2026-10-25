@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PatientSummary } from '@hackathon/api-contract';
+import type { AiStatusResponse, PatientSummary } from '@hackathon/api-contract';
 import type { MedicineOption, RecordMedicine } from '@hackathon/medicines';
 import type { MessageKey, Language, Params, Translation } from './i18n';
 import type { ChangeFlow, Draft, Screen, State } from './state';
@@ -14,6 +14,8 @@ export interface Journey {
   record: RecordMedicine[];
   /** Medicines from all patient records, for search suggestions. */
   options: MedicineOption[];
+  /** Whether AI help is available. Every AI feature is hidden when it is off. */
+  ai: AiStatusResponse;
   t: (key: MessageKey, params?: Params) => string;
   tr: (key: MessageKey, params?: Params) => Translation;
   time: (value: string) => string;

@@ -1,84 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from '@playwright/test';
+import {
+  addMedicine, app, CARRI, continueButton, doseTimes, enterRoutine, enterTime, expectAccessible, GENE, heading, LILLIANA, openFor,
+  saveFirstSchedule, startJourney, timelineAt,
+} from './journey';
 
 // Walkthrough checks from the agreed meds-scheduler design (24 October 2026),
 // using the patient records served by the local API from test_data/.
-
-async function expectAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-  expect(results.violations).toEqual([]);
-}
-
-const LILLIANA = 'Lilliana Kimbra Lockman';
-const GENE = 'Gene Orval Witting';
-
-const app = (page: Page) => page.locator('.app-root');
-const heading = (page: Page) => page.getByRole('heading', { level: 1 });
-const continueButton = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true });
-const doseTimes = (page: Page) => page.locator('.app-timeline__item--doses .app-time');
-const timelineAt = (page: Page, time: string) => page.locator('.nhsapp-timeline__item').filter({ has: page.locator('.app-timeline__time', { hasText: new RegExp(`^${time}`) }) });
-
-/** Enters a 12-hour time: hour, minutes and am or pm. */
-async function enterTime(page: Page, linkId: string, hour: string, minutes: string, period: 'am' | 'pm') {
-  await page.locator(`#${linkId}`).fill(hour);
-  await page.locator(`#${linkId}-minutes`).fill(minutes);
-  await page.locator(`#${linkId}-${period}`).check();
-}
-
-/** Opens the web page, chooses the patient and waits for their record to load. */
-async function openFor(page: Page, patient = LILLIANA) {
-  await page.goto('/');
-  await page.getByLabel('Patient').selectOption({ label: patient });
-  await expect(page.getByRole('link', { name: /Schedule my medicines/ })).toBeVisible();
-}
-
-async function startJourney(page: Page, patient = LILLIANA) {
-  await openFor(page, patient);
-  await page.getByRole('link', { name: /Schedule my medicines/ }).click();
-  await expect(heading(page)).toContainText('Organise your medicines around your day');
-  await page.getByRole('button', { name: 'Get started' }).click();
-}
-
-async function enterRoutine(page: Page, { skipLunch = false } = {}) {
-  await enterTime(page, 'wake-time', '7', '00', 'am');
-  await enterTime(page, 'sleep-time', '10', '30', 'pm');
-  await continueButton(page).click();
-  await enterTime(page, 'breakfast-time', '8', '00', 'am');
-  if (skipLunch) await page.locator('#lunch-skipped').check();
-  else await enterTime(page, 'lunch-time', '1', '00', 'pm');
-  await enterTime(page, 'dinner-time', '6', '30', 'pm');
-  await continueButton(page).click();
-}
-
-/** Answers "How do you take it?" for a record medicine with no dose or frequency. */
-async function tellUs(page: Page, name: string, frequency = 'Once a day') {
-  await expect(heading(page)).toContainText(`How do you take ${name}?`);
-  await page.getByLabel('How much do you take each time?').fill('1');
-  await page.getByRole('radio', { name: frequency, exact: true }).check();
-  await continueButton(page).click();
-}
-
-/** Adds a medicine found by search. Suggestions come from every patient's record. */
-async function addMedicine(page: Page, search: string, option: RegExp, timing: string, frequency = 'Once a day') {
-  await page.getByRole('button', { name: /^Add (another|a) medicine or supplement$/ }).click();
-  await page.getByRole('combobox', { name: 'Name of medicine or supplement' }).fill(search);
-  await page.getByRole('listbox').getByRole('option', { name: option }).click();
-  await page.getByLabel('Amount').fill('1');
-  await page.getByRole('radio', { name: frequency, exact: true }).check();
-  await page.getByRole('radio', { name: timing }).check();
-  await page.getByRole('button', { name: 'Add to my list' }).click();
-}
-
-async function saveFirstSchedule(page: Page, patient = LILLIANA) {
-  await startJourney(page, patient);
-  await enterRoutine(page);
-  for (const name of [/^Lisinopril/, /^Oxycodone/]) await page.getByRole('checkbox', { name }).check();
-  await continueButton(page).click();
-  await page.getByRole('button', { name: 'I have nothing to add' }).click();
-  await page.getByRole('button', { name: 'Create my schedule' }).click();
-  await page.getByRole('button', { name: 'Save my schedule' }).click();
-  await expect(page.getByRole('heading', { name: 'Your schedule has been saved' })).toBeVisible();
-}
 
 test('the web page chooses the patient whose record the app shows', async ({ page }) => {
   await page.goto('/');
@@ -96,6 +23,11 @@ test('the web page chooses the patient whose record the app shows', async ({ pag
   await enterRoutine(page);
   await expect(page.getByRole('checkbox', { name: /^Insulin lispro \(Humalog\)/ })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /^Oxycodone/ })).toHaveCount(0);
+
+  // The app is the NHS App; the web page around it says this is a concept.
+  await expect(app(page).getByRole('img', { name: 'NHS App' })).toBeVisible();
+  await expect(page.locator('.showcase-notice')).toContainText('It is not a live NHS service');
+  await expect(app(page)).not.toContainText(/concept|demo|hackathon/i);
 
   // Another patient's record replaces it, and the profile shows who is signed in.
   await patient.selectOption({ label: LILLIANA });
@@ -148,12 +80,13 @@ test('shows an error with a retry when the record cannot be loaded', async ({ pa
   await expect(page.getByRole('link', { name: /Schedule my medicines/ })).toBeVisible();
 });
 
-test('completes the first-time journey, asking for details the record does not have and checking added medicines', async ({ page }) => {
-  await startJourney(page);
+test('asks about the usual day when the app does not know it, checking each answer', async ({ page }) => {
+  await startJourney(page, CARRI);
   await expectAccessible(page);
 
   // Questions come from the FHIR Questionnaire. Times are entered as hour, minutes and am or pm.
   await expect(heading(page)).toContainText('Your waking and sleeping times');
+  await expect(page.locator('#wake-time')).toHaveValue('');
   await expect(page.getByText('12pm is midday and 12am is midnight').first()).toBeVisible();
   await page.locator('#wake-time').fill('7');
   await continueButton(page).click();
@@ -176,13 +109,32 @@ test('completes the first-time journey, asking for details the record does not h
   await expect(page.locator('#lunch-time')).toHaveCount(0);
   await continueButton(page).click();
   await expect(summary).toContainText('Enter the time you usually have your evening meal');
-  await page.locator('#lunch-skipped').uncheck();
-  await enterTime(page, 'lunch-time', '1', '00', 'pm');
   await enterTime(page, 'dinner-time', '6', '30', 'pm');
   await expectAccessible(page);
   await continueButton(page).click();
+  await expect(heading(page)).toContainText('Which medicines do you want to include?');
+});
 
-  // The patient's record, all unchecked, with what the record says and what it is missing.
+test('completes the first-time journey with the usual day filled in, never asking about prescribed medicines', async ({ page }) => {
+  await startJourney(page);
+  await expectAccessible(page);
+
+  // Lilliana's usual day is already filled in, so each routine page only needs Continue.
+  await expect(heading(page)).toContainText('Your waking and sleeping times');
+  await expect(page.locator('#wake-time')).toHaveValue('7');
+  await expect(page.locator('#wake-time-am')).toBeChecked();
+  await expect(page.locator('#sleep-time')).toHaveValue('10');
+  await expect(page.locator('#sleep-time-minutes')).toHaveValue('30');
+  await expect(page.locator('#sleep-time-pm')).toBeChecked();
+  await continueButton(page).click();
+  await expect(page.locator('#breakfast-time')).toHaveValue('8');
+  await expect(page.locator('#lunch-time')).toHaveValue('1');
+  await expect(page.locator('#dinner-time-minutes')).toHaveValue('30');
+  await expectAccessible(page);
+  await continueButton(page).click();
+
+  // The patient's record, all unchecked, with the dose and how often for every medicine.
+  const summary = page.locator('.nhsuk-error-summary');
   const checkboxes = page.getByRole('checkbox');
   await expect(checkboxes).toHaveCount(14);
   for (const box of await checkboxes.all()) await expect(box).not.toBeChecked();
@@ -190,8 +142,9 @@ test('completes the first-time journey, asking for details the record does not h
   await expect(oxycodone).toContainText('1 capsule (10mg)');
   await expect(oxycodone).toContainText('4 times a day');
   await expect(oxycodone).toContainText('Every six hours');
-  await expect(page.locator('body')).not.toContainText('qualifier value');
-  await expect(page.locator('.nhsuk-checkboxes__item').filter({ hasText: 'Alendronic acid' })).toContainText('We will ask you how you take this');
+  await expect(page.locator('.nhsuk-checkboxes__item').filter({ hasText: 'Alendronic acid' })).toContainText('1 tablet (10mg)');
+  await expect(page.locator('.nhsuk-checkboxes__item').filter({ hasText: 'Glyceryl trinitrate' })).toContainText('Only when needed');
+  await expect(page.locator('body')).not.toContainText(/qualifier value|not recorded|We will ask/);
   await continueButton(page).click();
   await expect(summary).toContainText('Select the medicines you want to include, or select none of these');
   await page.getByRole('checkbox', { name: /^Lisinopril/ }).check();
@@ -200,14 +153,6 @@ test('completes the first-time journey, asking for details the record does not h
   await expectAccessible(page);
   for (const name of [/^Alendronic acid/, /^Lisinopril/, /^Oxycodone/, /^Simvastatin/]) await page.getByRole('checkbox', { name }).check();
   await continueButton(page).click();
-
-  // Each checked medicine the record has no dose or frequency for is asked about, in turn.
-  await expect(heading(page)).toContainText('How do you take Alendronic acid?');
-  await continueButton(page).click();
-  await expect(summary).toContainText('Enter how much you take each time');
-  await expectAccessible(page);
-  await tellUs(page, 'Alendronic acid');
-  await tellUs(page, 'Simvastatin');
 
   // Search suggests medicines from every patient's record, by brand or generic name.
   await expect(heading(page)).toContainText('Add anything missing');
@@ -255,12 +200,9 @@ test('completes the first-time journey, asking for details the record does not h
   await expectAccessible(page);
   await continueButton(page).click();
 
-  // Check answers shows every answer, including what the patient told us about record medicines.
+  // Check answers shows every answer, with the record's dose and frequency for each medicine.
   await expect(heading(page)).toContainText('Check your answers');
-  const details = page.locator('.nhsuk-summary-list').filter({ hasText: 'Alendronic acid' }).last();
-  await expect(page.getByRole('heading', { name: 'What you told us about medicines from your record' })).toBeVisible();
-  await expect(details).toContainText('Simvastatin');
-  await expect(page.getByRole('link', { name: 'Change how you take Alendronic acid' })).toBeVisible();
+  await expect(page.locator('.nhsuk-summary-list').nth(1)).toContainText('Simvastatin 20mg1 tablet (20mg), Once a day');
   await expectAccessible(page);
   await page.getByRole('button', { name: 'Create my schedule' }).click();
 
@@ -287,8 +229,18 @@ test('completes the first-time journey, asking for details the record does not h
   await expect(reminderSwitch).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('.app-reminder-status')).toContainText('Waiting for permission');
   await page.getByRole('button', { name: 'Allow notifications' }).click();
-  const prompt = page.getByRole('dialog', { name: '“LAI App” would like to send you notifications' });
+  // The device prompt covers the phone screen only, never the web page around it.
+  const prompt = page.getByRole('alertdialog', { name: '“NHS App” would like to send you notifications' });
+  await expect(prompt).toBeFocused();
+  const phone = await page.locator('.phone-screen').boundingBox();
+  const box = await prompt.boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(phone!.x);
+  expect(box!.y).toBeGreaterThanOrEqual(phone!.y);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(phone!.x + phone!.width);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(phone!.y + phone!.height);
+  await expectAccessible(page);
   await prompt.getByRole('button', { name: 'Allow', exact: true }).click();
+  await expect(prompt).toBeHidden();
   await expect(page.locator('.app-reminder-status')).toContainText('Reminders are on');
   await page.getByRole('button', { name: 'View my schedule' }).click();
   await expect(heading(page)).toHaveText(/Your medicine schedule/);
@@ -332,7 +284,6 @@ test('every answer can be changed from check answers, returning straight there',
   await enterRoutine(page, { skipLunch: true });
   for (const name of [/^Alendronic acid/, /^Lisinopril/]) await page.getByRole('checkbox', { name }).check();
   await continueButton(page).click();
-  await tellUs(page, 'Alendronic acid');
   await addMedicine(page, 'iron', /Ferrous sulfate/, 'It does not matter');
   await continueButton(page).click();
   const lists = page.locator('.nhsuk-summary-list');
@@ -350,18 +301,10 @@ test('every answer can be changed from check answers, returning straight there',
   await continueButton(page).click();
   await expect(lists.first()).toContainText('12:30pm');
 
-  await page.getByRole('link', { name: 'Change how you take Alendronic acid' }).click();
-  await expect(page.getByLabel('How much do you take each time?')).toHaveValue('1');
-  await page.getByRole('radio', { name: 'Less often than once a day' }).check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(heading(page)).toContainText('Check your answers');
-  await expect(page.getByText('Less often than once a day')).toBeVisible();
-
-  // A newly checked medicine with missing details is asked about before returning.
+  // A prescribed medicine is included without asking how it is taken.
   await page.getByRole('link', { name: 'Change the medicines you did not include' }).click();
   await page.getByRole('checkbox', { name: /^Simvastatin/ }).check();
   await continueButton(page).click();
-  await tellUs(page, 'Simvastatin');
   await expect(heading(page)).toContainText('Check your answers');
   await expect(lists.nth(1)).toContainText('Simvastatin 20mg');
 
@@ -451,24 +394,22 @@ test('the web page sets the app language, with right-to-left Urdu inside the app
   await expect(heading(page)).toHaveText('نسخے');
 });
 
-test('the app is a fixed-height phone screen with bottom navigation, or full length', async ({ page }) => {
+test('the app is a fixed-height phone screen with bottom navigation', async ({ page }) => {
   await openFor(page);
   const main = page.locator('.app-main');
   const nav = page.getByRole('navigation', { name: 'Main menu' });
   await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('radio', { name: 'Phone screen' })).toBeChecked();
+  // There is no full-length option: the app is always the phone screen.
+  await expect(page.getByRole('radio')).toHaveCount(0);
+  await expect(page.getByText('App height')).toHaveCount(0);
 
   await page.getByRole('link', { name: /Schedule my medicines/ }).click();
   const screen = await page.locator('.phone-screen').boundingBox();
-  expect(screen!.height).toBeLessThanOrEqual(844);
+  // The screen keeps an iPhone's proportions (393 by 852 points).
+  expect(screen!.height / screen!.width).toBeCloseTo(852 / 393, 1);
   expect(await main.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
   const navBox = await nav.boundingBox();
   expect(navBox!.y + navBox!.height).toBeLessThanOrEqual(screen!.y + screen!.height);
-
-  await page.getByRole('radio', { name: 'Full length' }).check();
-  expect(await main.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(false);
-  await page.reload();
-  await expect(page.getByRole('radio', { name: 'Full length' })).toBeChecked();
 
   await nav.getByRole('link', { name: 'Messages' }).click();
   await expect(heading(page)).toHaveText('Messages');

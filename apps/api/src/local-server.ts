@@ -1,6 +1,9 @@
 import { createServer } from "node:http";
-import { handleRequest, ORIGIN_HEADER } from "./handler";
-import { MAX_SCHEDULE_BODY_BYTES } from "./schedule-validation";
+import { createAiService } from "./ai/service";
+import { handleRequest, MAX_REQUEST_BODY_BYTES, ORIGIN_HEADER } from "./handler";
+
+// Locally, AI features run in test mode unless AI_PROVIDER says otherwise.
+const ai = createAiService(process.env, "test");
 
 export function createLocalServer() {
   return createServer(async (request, response) => {
@@ -10,7 +13,7 @@ export function createLocalServer() {
       for await (const chunk of request) {
         const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
         size += buffer.length;
-        if (size <= MAX_SCHEDULE_BODY_BYTES) chunks.push(buffer);
+        if (size <= MAX_REQUEST_BODY_BYTES) chunks.push(buffer);
       }
     } catch {
       response.writeHead(400, { "content-type": "application/json", "cache-control": "no-store" });
@@ -27,11 +30,11 @@ export function createLocalServer() {
           "content-type": request.headers["content-type"],
         },
         body:
-          size > MAX_SCHEDULE_BODY_BYTES
-            ? " ".repeat(MAX_SCHEDULE_BODY_BYTES + 1)
+          size > MAX_REQUEST_BODY_BYTES
+            ? " ".repeat(MAX_REQUEST_BODY_BYTES + 1)
             : Buffer.concat(chunks).toString("utf8"),
       },
-      { originSecret: "local-development" },
+      { originSecret: "local-development", ai },
     );
     response.writeHead(result.statusCode ?? 500, result.headers as Record<string, string>);
     response.end(result.body);

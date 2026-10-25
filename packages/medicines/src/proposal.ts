@@ -1,5 +1,5 @@
 import { checkAssignment, type Check } from './checker';
-import { buildConstraints, classify, type Constraint, type ItemSnapshot, type PatientAddition, type RecordDetails } from './items';
+import { buildConstraints, classify, type Constraint, type ItemSnapshot, type PatientAddition } from './items';
 import type { RecordMedicine } from './record';
 import { MEALS, toDay, type Day, type Meal, type Routine } from './routine';
 import { RULES_VERSION } from './rules';
@@ -32,6 +32,8 @@ interface ProposalBase {
   whenNeeded: string[];
   /** Items taken less often than every day, which have no daily times. */
   notDaily: string[];
+  /** Record medicines whose record does not say how often to take them, which have no times. */
+  unscheduled: string[];
   rulesVersion: string;
 }
 
@@ -44,8 +46,6 @@ export interface ProposalInputs {
   record: RecordMedicine[];
   selectedRecordIds: string[];
   additions: PatientAddition[];
-  /** Dose and frequency the patient gave for record medicines whose record does not say. */
-  recordDetails?: Record<string, RecordDetails>;
 }
 
 function notesFor(minute: number, constraint: Constraint, day: Day, times: Record<string, number[]>): DoseNote[] {
@@ -68,9 +68,8 @@ function notesFor(minute: number, constraint: Constraint, day: Day, times: Recor
 /** Builds a proposal from confirmed inputs. A blocked proposal explains why and is never saveable. */
 export function createProposal(inputs: ProposalInputs): Proposal {
   const day = toDay(inputs.routine);
-  const { items, timed, whenNeeded, notDaily, missingDetails } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions, inputs.recordDetails);
-  const base: ProposalBase = { routine: inputs.routine, items, whenNeeded, notDaily, rulesVersion: RULES_VERSION };
-  if (missingDetails.length) return { ...base, status: 'blocked', problems: missingDetails.map(key => ({ code: 'missing-details', key })) };
+  const { items, timed, whenNeeded, notDaily, unscheduled } = classify(inputs.record, inputs.selectedRecordIds, inputs.additions);
+  const base: ProposalBase = { routine: inputs.routine, items, whenNeeded, notDaily, unscheduled, rulesVersion: RULES_VERSION };
   const constraints = buildConstraints(timed, day);
   const result = schedule(constraints, day);
   if (result.status === 'blocked') return { ...base, status: 'blocked', problems: result.problems };
