@@ -2,7 +2,7 @@
 
 **A daily medicine schedule, fitted around your day, inside the NHS App.**
 
-### ▶ Try it: [d3c8ids0dcqe7e.cloudfront.net](https://d3c8ids0dcqe7e.cloudfront.net)
+### ▶ Try it: [d3c8ids0dcqe7e.cloudfront.net](https://d2s11spb9096vx.cloudfront.net/)
 
 On a desktop browser the app appears in a phone frame. Choose a synthetic patient on the left, then tap **Schedule my medicines** in the app. **Present our pitch** opens the short slide deck we used on stage.
 
