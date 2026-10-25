@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" font-family="Arial, Helvetica, sans-serif" role="img" aria-labelledby="title desc">
+  <title id="title">Schedule my medicines: from confusing medicine rules to a daily schedule in the NHS App</title>
+  <desc id="desc">On the left, ten or more medicines each come with their own rules, such as before breakfast, with food or four hours from iron, and patients turn to unchecked chatbots. In the middle, the NHS App combines prescriptions from the patient's record, their daily routine and rules from NHS guidance; a scheduler and an independent checker produce a proposal. On the right, a phone shows a timeline of the day with each medicine at a time that fits its rules, reminders, and a pharmacist review for anything uncertain.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#005eb8"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="520" rx="18" fill="#f0f4f5"/>
+
+  <!-- 1. The problem -->
+  <text x="30" y="44" font-size="13" font-weight="700" fill="#005eb8" letter-spacing="1.2">1 · THE PROBLEM</text>
+  <text x="30" y="72" font-size="22" font-weight="700" fill="#212b32">10+ medicines a day,</text>
+  <text x="30" y="98" font-size="22" font-weight="700" fill="#212b32">each with its own rules</text>
+
+  <rect x="30" y="118" width="280" height="250" rx="14" fill="#fff" stroke="#d8dde0"/>
+  <g stroke="#212b32" stroke-width="1.5">
+    <g transform="translate(66 146)"><rect x="-14" y="-6" width="28" height="12" rx="6" fill="#fff"/><path d="M0 -6h8a6 6 0 0 1 0 12h-8z" fill="#ffb81c"/></g>
+    <g transform="translate(108 146)"><circle r="8" fill="#fff"/><path d="M-5 0h10"/></g>
+    <g transform="translate(150 146) rotate(-20)"><rect x="-14" y="-6" width="28" height="12" rx="6" fill="#fff"/><path d="M0 -6h8a6 6 0 0 1 0 12h-8z" fill="#41b6e6"/></g>
+    <g transform="translate(192 146)"><circle r="8" fill="#fff"/><path d="M-5 0h10"/></g>
+    <g transform="translate(234 146) rotate(25)"><rect x="-14" y="-6" width="28" height="12" rx="6" fill="#fff"/><path d="M0 -6h8a6 6 0 0 1 0 12h-8z" fill="#ae2573"/></g>
+    <g transform="translate(274 146)"><circle r="8" fill="#ffb81c"/><path d="M-5 0h10"/></g>
+  </g>
+
+  <g font-size="13" fill="#212b32" text-anchor="middle">
+    <rect x="48" y="172" width="132" height="28" rx="14" fill="#e8f1fa"/>
+    <text x="114" y="191">Before breakfast</text>
+    <rect x="188" y="172" width="104" height="28" rx="14" fill="#e8f1fa"/>
+    <text x="240" y="191">With food</text>
+    <rect x="48" y="208" width="160" height="28" rx="14" fill="#fff4cc"/>
+    <text x="128" y="227">4 hours from iron</text>
+    <rect x="216" y="208" width="76" height="28" rx="14" fill="#e8f1fa"/>
+    <text x="254" y="227">Evening</text>
+    <rect x="48" y="244" width="244" height="28" rx="14" fill="#fff4cc"/>
+    <text x="170" y="263">30 minutes before other tablets</text>
+    <rect x="48" y="280" width="112" height="28" rx="14" fill="#e8f1fa"/>
+    <text x="104" y="299">Once a week</text>
+    <rect x="168" y="280" width="124" height="28" rx="14" fill="#fde8e7"/>
+    <text x="230" y="299">Not with antacids</text>
+  </g>
+  <text x="48" y="338" font-size="14" fill="#4c6272">…and it all changes whenever</text>
+  <text x="48" y="356" font-size="14" fill="#4c6272">a prescription changes.</text>
+
+  <rect x="30" y="384" width="280" height="64" rx="14" fill="#fff" stroke="#d5281b" stroke-dasharray="5 4"/>
+  <circle cx="58" cy="416" r="14" fill="#fde8e7"/>
+  <text x="58" y="421" font-size="15" font-weight="700" fill="#d5281b" text-anchor="middle">?</text>
+  <text x="82" y="410" font-size="14" font-weight="700" fill="#212b32">Today: ask a chatbot</text>
+  <text x="82" y="430" font-size="13" fill="#4c6272">If you think to, and unchecked</text>
+
+  <path d="M318 250H350" stroke="#005eb8" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- 2. Our approach -->
+  <text x="362" y="44" font-size="13" font-weight="700" fill="#005eb8" letter-spacing="1.2">2 · IN THE NHS APP</text>
+  <text x="362" y="72" font-size="22" font-weight="700" fill="#212b32">Schedule my</text>
+  <text x="362" y="98" font-size="22" font-weight="700" fill="#212b32">medicines</text>
+
+  <g font-size="14">
+    <rect x="362" y="118" width="240" height="56" rx="12" fill="#fff" stroke="#d8dde0"/>
+    <rect x="362" y="118" width="6" height="56" fill="#005eb8"/>
+    <text x="380" y="141" font-weight="700" fill="#212b32">Your prescriptions</text>
+    <text x="380" y="161" font-size="13" fill="#4c6272">From your record, plus extras</text>
+
+    <rect x="362" y="184" width="240" height="56" rx="12" fill="#fff" stroke="#d8dde0"/>
+    <rect x="362" y="184" width="6" height="56" fill="#005eb8"/>
+    <text x="380" y="207" font-weight="700" fill="#212b32">Your day</text>
+    <text x="380" y="227" font-size="13" fill="#4c6272">When you wake, eat and sleep</text>
+
+    <rect x="362" y="250" width="240" height="56" rx="12" fill="#fff" stroke="#d8dde0"/>
+    <rect x="362" y="250" width="6" height="56" fill="#005eb8"/>
+    <text x="380" y="273" font-weight="700" fill="#212b32">Rules from NHS guidance</text>
+    <text x="380" y="293" font-size="13" fill="#4c6272">Food, timing and spacing, sourced</text>
+  </g>
+
+  <path d="M482 310V332" stroke="#005eb8" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="362" y="340" width="240" height="108" rx="12" fill="#005eb8"/>
+  <g fill="#fff" text-anchor="middle">
+    <text x="482" y="367" font-size="15" font-weight="700">Scheduler</text>
+    <text x="482" y="386" font-size="13">fewest times a day, never bends a rule</text>
+    <text x="482" y="418" font-size="15" font-weight="700">Independent checker</text>
+    <text x="482" y="437" font-size="13">re-verifies before it is shown</text>
+  </g>
+  <path d="M392 398H572" stroke="#ffffff" stroke-opacity=".35"/>
+
+  <path d="M610 290H642" stroke="#005eb8" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- 3. The result -->
+  <text x="654" y="44" font-size="13" font-weight="700" fill="#005eb8" letter-spacing="1.2">3 · YOUR SCHEDULE</text>
+
+  <rect x="654" y="58" width="276" height="446" rx="34" fill="#20252b"/>
+  <rect x="664" y="68" width="256" height="426" rx="26" fill="#fff"/>
+  <rect x="756" y="76" width="72" height="16" rx="8" fill="#20252b"/>
+  <text x="684" y="124" font-size="18" font-weight="700" fill="#212b32">Your medicines today</text>
+
+  <path d="M694 150V430" stroke="#d8dde0" stroke-width="2"/>
+  <g font-size="12">
+    <circle cx="694" cy="150" r="6" fill="#fff" stroke="#4c6272" stroke-width="2"/>
+    <text x="710" y="154" font-weight="700" fill="#212b32">7:00am · Wake up</text>
+    <rect x="708" y="162" width="200" height="38" rx="6" fill="#e8f1fa"/>
+    <text x="716" y="178" font-weight="700" fill="#212b32">Levothyroxine</text>
+    <text x="716" y="193" fill="#4c6272">Empty stomach, before food</text>
+
+    <circle cx="694" cy="220" r="6" fill="#005eb8"/>
+    <text x="710" y="224" font-weight="700" fill="#212b32">8:00am · Breakfast</text>
+    <rect x="708" y="232" width="200" height="38" rx="6" fill="#e8f1fa"/>
+    <text x="716" y="248" font-weight="700" fill="#212b32">Metformin, Naproxen</text>
+    <text x="716" y="263" fill="#4c6272">With food</text>
+
+    <circle cx="694" cy="290" r="6" fill="#005eb8"/>
+    <text x="710" y="294" font-weight="700" fill="#212b32">1:00pm · Lunch</text>
+    <rect x="708" y="302" width="200" height="38" rx="6" fill="#e8f1fa"/>
+    <text x="716" y="318" font-weight="700" fill="#212b32">Ferrous sulfate</text>
+    <text x="716" y="333" fill="#4c6272">4+ hours after levothyroxine</text>
+
+    <circle cx="694" cy="360" r="6" fill="#005eb8"/>
+    <text x="710" y="364" font-weight="700" fill="#212b32">6:30pm · Dinner</text>
+    <rect x="708" y="372" width="200" height="38" rx="6" fill="#e8f1fa"/>
+    <text x="716" y="388" font-weight="700" fill="#212b32">Metformin, Naproxen</text>
+    <text x="716" y="403" fill="#4c6272">With food</text>
+
+    <circle cx="694" cy="430" r="6" fill="#fff" stroke="#4c6272" stroke-width="2"/>
+    <text x="710" y="434" font-weight="700" fill="#212b32">10:30pm · Go to sleep</text>
+    <text x="710" y="450" fill="#4c6272">Simvastatin, in the evening</text>
+  </g>
+
+  <rect x="680" y="460" width="100" height="24" rx="12" fill="#e6f2eb"/>
+  <text x="730" y="476" font-size="12" font-weight="700" fill="#007f3b" text-anchor="middle">Reminders on</text>
+  <rect x="788" y="460" width="120" height="24" rx="12" fill="#fff4cc"/>
+  <text x="848" y="476" font-size="12" font-weight="700" fill="#212b32" text-anchor="middle">Pharmacist review</text>
+</svg>

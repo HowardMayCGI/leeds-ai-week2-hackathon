@@ -28,10 +28,12 @@ function usePhoneScale() {
 /** Where the app shows device prompts, so they cover the phone screen and nothing else. */
 export const PHONE_OVERLAY_ID = 'phone-overlay';
 
-export function Showcase({ title, description, detail, status, controls, demo, children }: {
+export function Showcase({ title, description, detail, actions, status, controls, demo, children }: {
   title: ReactNode;
   description: ReactNode;
   detail?: ReactNode;
+  /** Shown below the introduction, such as a button to present the pitch. */
+  actions?: ReactNode;
   /** A note about how the app is running, such as whether AI help is on. */
   status?: ReactNode;
   /** Web page controls, such as the patient and language. */
@@ -50,6 +52,7 @@ export function Showcase({ title, description, detail, status, controls, demo, c
           <div className="showcase-intro__rule" />
           <p className="showcase-intro__description">{description}</p>
           {detail && <p className="showcase-intro__detail">{detail}</p>}
+          {actions && <div className="showcase-intro__actions">{actions}</div>}
         </div>
         <p className="showcase-notice">
           <strong>Concept only.</strong> A proposed NHS App feature made for Leeds AI Week 2026. It is not a live NHS service and uses test patient records, not real people.
