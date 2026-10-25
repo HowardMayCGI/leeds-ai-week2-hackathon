@@ -110,11 +110,11 @@ const SLIDES: Slide[] = [
         <ol className="pitch-flow">
           <li>
             <strong>Your medicines</strong>
-            <span>Confirm what you take from your record, and add anything missing</span>
+            <span>Confirm what you take from your record. Add extras from a photo of the box</span>
           </li>
           <li>
             <strong>Your day</strong>
-            <span>When you wake, eat and go to sleep</span>
+            <span>When you wake, eat and sleep, in your own words if you like</span>
           </li>
           <li>
             <strong>The rules</strong>
@@ -140,30 +140,31 @@ const SLIDES: Slide[] = [
     title: "AI where it helps, rules where it matters",
     body: (
       <>
-        <div className="pitch-columns">
+        <div className="pitch-columns pitch-columns--four">
           <div className="pitch-card">
-            <h3>It researched the problem</h3>
-            <p>Validated against NHS, NICE and MHRA guidance and published evidence.</p>
+            <h3>Snap the box</h3>
+            <p>Add a medicine from a photo of its box or label, or by describing it.</p>
           </div>
           <div className="pitch-card">
-            <h3>It wrote all the code</h3>
-            <p>The NHS App-style app, the API, the AWS deployment and every test.</p>
+            <h3>Describe your day</h3>
+            <p>“I get up at 7 and skip lunch” fills in your routine, for you to check.</p>
           </div>
           <div className="pitch-card">
-            <h3>It made the data</h3>
-            <p>
-              UK medicine names and doses for UK Synthea patients, and sample interaction data where
-              the real datasets need a licence.
-            </p>
+            <h3>Why at this time?</h3>
+            <p>A plain-English reason under each dose, from the rules the scheduler used.</p>
+          </div>
+          <div className="pitch-card">
+            <h3>Ask a question</h3>
+            <p>Answers about your saved schedule, showing the facts they are based on.</p>
           </div>
         </div>
         <p className="pitch-lead">
-          But no AI decides your schedule. Explainable rules and an independent checker do: in one
-          study a general LLM found the interacting drug pair only 54.7% of the time.
+          AI fills in forms and explains. It never chooses a time: rules and an independent checker
+          do. In one study a general LLM found the interacting drug pair only 54.7% of the time.
         </p>
         <p className="pitch-source">
-          Next: AI to explain medicines in plain language, always confirmed by the patient or
-          pharmacist.
+          Behind the app, AI also researched the problem, wrote all the code and tests, and made our
+          UK test data.
         </p>
       </>
     ),
@@ -177,6 +178,11 @@ const SLIDES: Slide[] = [
           <li>
             <strong>Synthetic patients only</strong>: realistic UK records from Synthea, no real
             patient data.
+          </li>
+          <li>
+            <strong>Guarded AI</strong>: no name or NHS number sent; answers checked against the
+            schedule’s facts; emergencies get fixed NHS 999 and 111 advice; labelled “Written by
+            AI”.
           </li>
           <li>
             <strong>Never changes a prescription</strong>: it only times what was prescribed.

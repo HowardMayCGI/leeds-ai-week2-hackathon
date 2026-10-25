@@ -37,11 +37,11 @@ It was a great idea. But it relies on a patient being confident enough to try it
 
 A working, deployed prototype of a new **Prescriptions → Schedule my medicines** feature, in the style of the NHS App:
 
-1. **Tell us about your day**: when you wake, eat and go to sleep (a FHIR `Questionnaire`).
+1. **Tell us about your day**: when you wake, eat and go to sleep (a FHIR `Questionnaire`), or describe it in your own words and let AI fill in the answers for you to check.
 2. **Confirm your medicines** from your (synthetic) record. Where the record is missing a dose or frequency, the app asks for it.
-3. **Add anything missing**, such as over-the-counter medicines and supplements, with fuzzy search by brand or generic name. The app warns about duplicate active ingredients and about timing choices that go against guidance (such as naproxen before food).
-4. **Get a proposed schedule**: a timeline of your day showing which medicines to take at each time, using as few separate times as possible. Food, timing and spacing rules come from NHS sources, and each rule links to its source.
-5. **Save it, turn on reminders**, and request a **pharmacist review**. Anything uncertain, such as a patient keeping their own timing or a medicine not on our rules list, is flagged for the pharmacist.
+3. **Add anything missing**, such as over-the-counter medicines and supplements, with fuzzy search by brand or generic name, or by taking a photo of the box or label for AI to read. The app warns about duplicate active ingredients and about timing choices that go against guidance (such as naproxen before food).
+4. **Get a proposed schedule**: a timeline of your day showing which medicines to take at each time, using as few separate times as possible. Food, timing and spacing rules come from NHS sources, and each rule links to its source. AI adds a plain-English "Why at this time" under each dose, and rule-based interaction warnings show alongside.
+5. **Save it, turn on reminders**, **ask questions** about your schedule, and request a **pharmacist review**. Anything uncertain, such as a patient keeping their own timing or a medicine not on our rules list, is flagged for the pharmacist.
 
 **If no valid schedule exists, the app explains why rather than bending a rule.** An example is naproxen with food twice a day when the patient only eats once. Every proposal is re-verified by an independent checker before it is shown.
 
@@ -49,7 +49,7 @@ The app runs in **English, Polish and Urdu** (right to left), and automated WCAG
 
 ## How we used AI
 
-**AI where it helps, rules where it matters.** AI wrote every line of code in this repository and did much of the research and data preparation. The team set the direction, made the design and safety decisions, and reviewed and tested the results. Inside the product, the schedule itself comes from explainable rules rather than a language model.
+**AI where it helps, rules where it matters.** AI wrote every line of code in this repository and did much of the research and data preparation. The team set the direction, made the design and safety decisions, and reviewed and tested the results. Inside the product, AI helps patients fill in forms and understand their schedule, but the schedule itself always comes from explainable rules.
 
 ### AI built it
 
@@ -61,19 +61,28 @@ The app runs in **English, Polish and Urdu** (right to left), and automated WCAG
 | **Sample medicine datasets** | Full interaction and administration datasets (such as the BNF, Stockley's and FDB) are commercial and need a licence. AI compiled small sample datasets from public sources instead. Each rule links to its source, and every dataset is labelled as an incomplete demonstration ([interactions](apps/api/src/data/demo-interactions.json), [administration](apps/api/src/data/demo-administration.json), [model](docs/drug-interactions.md)). |
 | **Design**                   | Figma Make produced the [initial design concept](figma-make-concept/), which we then rebuilt with the NHS App design system.                                                                                                                                                                                                                                                                                                                   |
 
+### AI in the app
+
+Four features use a language model at runtime: OpenAI (`gpt-6-luna`) or Claude on Amazon Bedrock. Full details are in [AI help in Schedule my medicines](docs/ai-features.md).
+
+| Feature                         | What AI does                                                                                                                         | How it is kept safe                                                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add a medicine from a photo** | Reads the name, strength, form, dose, how often and food timing from a photo of the box or label, or from the patient's description. | Only fills in form fields for the patient to check. The name is matched by the app's own search, not by AI, and the usual timing and same-ingredient checks still apply.                       |
+| **Describe your usual day**     | Reads wake, meal and sleep times, or a skipped meal, from the patient's own words.                                                   | Fills in the routine questions for the patient to check; the Questionnaire's validation still applies.                                                                                         |
+| **Why at this time?**           | Writes a short plain-English reason under each dose.                                                                                 | Only given the facts the scheduler used. Any explanation with a number not in those facts, a link, markup or a safety claim is dropped. Labelled "Written by AI".                              |
+| **Ask about your schedule**     | Answers one question at a time about the saved schedule.                                                                             | Emergencies and requests for medical advice get fixed NHS 999, 111 or "speak to your pharmacist" wording before any model sees them. Answers cite the facts they use and pass the same checks. |
+
 ### Deterministic where safety matters
 
-Scheduling known constraints is an optimisation problem, not a guessing game. When the app runs, no language model is involved. The schedule comes from explainable rules and is re-verified by an independent checker, so every time can be traced back to a rule and its source, and the same input always gives the same output. If the rules can't all be met, the app says so rather than guessing.
+AI fills in forms and explains, but it never chooses a time. Scheduling known constraints is an optimisation problem, not a guessing game. The schedule comes from explainable rules and is re-verified by an independent checker, so every time can be traced back to a rule and its source, and the same input always gives the same output. Interaction warnings use rules, not AI, and "no match" is never shown as safe. If AI is off, slow or fails a check, the app shows its own wording and the patient fills in the form as before.
 
-This follows our research. General models make medication errors: in one 2026 study, GPT-4o identified the interacting drug pair only 54.7% of the time. Published work such as [MEDIC (Nature Medicine, 2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11186789/) shows language models working well when they are bounded by domain rules and guardrails.
+This follows our research. General models make medication errors: in one 2026 study, GPT-4o identified the interacting drug pair only 54.7% of the time. Published work such as [MEDIC (Nature Medicine, 2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11186789/) shows language models working well when they are bounded by domain rules and guardrails, which is how we use them.
 
 ### AI next
 
-- Explaining medicines and schedules in plain language.
-- Reading free-text prescription instructions into structured doses.
-- Answering "can I move this dose?" questions.
-
-Each would be confirmed by the patient or a pharmacist before it affects the schedule.
+- Reading free-text prescription instructions from the record into structured doses, confirmed by a pharmacist.
+- Answering "can I move this dose?" questions by proposing a change for the scheduler to check, rather than answering directly.
+- Measuring explanation and answer quality with pharmacists and patients, and running the model in the UK.
 
 ## Responsible use of data
 
@@ -81,6 +90,7 @@ Each would be confirmed by the patient or a pharmacist before it affects the sch
 - **Licensed data respected.** We did not copy commercial medicine databases. Our sample interaction and administration rules were compiled by AI from public sources, with each source cited.
 - **Bias and accuracy we know about.** The UK Synthea fork models an English population, but synthetic records are not a substitute for real-world diversity. The AI conversion of medicine names and doses and the AI-compiled sample rules have not been clinically validated. A real service would use dm+d and a licensed knowledge base, with pharmacist sign-off. It would also need evaluation across age, ethnicity, language, disability and digital confidence.
 - **Data minimisation.** The prototype only reads medicines and basic demographics. Saved schedules and preferences stay in the browser's local storage. There is no account, no tracking and no server-side store of patient answers.
+- **What the AI sees.** The patient's name, NHS number and date of birth are never sent to the model: only a resized photo or the patient's own description, and short facts about the schedule (times, medicine names and rule reasons). The model is told never to repeat personal details that a pharmacy label may show. OpenAI is called with `store: false`, and the API logs only the task, outcome and timing, never the patient's words, photo or schedule. A real service would need a UK-hosted model and an explicit consent step before a photo is sent.
 - **Never changes a prescription.** It only arranges the times of what was prescribed. It does not judge whether a prescription is appropriate (that is a clinician's medication review).
 - **Consent and governance in a real service.** Health data is special-category data. A live version would need a lawful basis, a DPIA, DCB0129/DCB0160 clinical safety assurance, DTAC, and an assessment of whether it is a medical device under MHRA guidance (influencing treatment timing may make it one). See [our research notes](docs/medication-planner-research.md).
 
@@ -88,7 +98,8 @@ Each would be confirmed by the patient or a pharmacist before it affects the sch
 
 - **Limited, unvalidated rules coverage.** Our timing and interaction rules are small AI-compiled sample sets from public sources, not a complete or clinically validated knowledge base. A real service would license one (such as FDB or Stockley's, with dm+d for medicine identity) and have a pharmacist approve the rules.
 - **Not connected to the real NHS App or GP record.** NHS App integration has its own onboarding and standards process.
-- **Next steps:** pharmacist sign-off of schedules in the app; API persistence; plain-language AI explanations; usability testing with older patients and carers; evaluation against prescription fidelity, missed or extra doses and timing violations.
+- **AI quality not yet measured.** The AI answers pass automated checks, but they have not been evaluated with pharmacists or patients.
+- **Next steps:** pharmacist sign-off of schedules in the app; API persistence; evaluation of the AI features; usability testing with older patients and carers; evaluation against prescription fidelity, missed or extra doses and timing violations.
 
 ## Team
 
@@ -102,7 +113,7 @@ Team **Double Helix**:
 
 As the hackathon rules require:
 
-- **AI:** all code, infrastructure and tests were written by AI coding agents, including GitHub Copilot. AI was also used for research, the UK medicine name and dose conversion, the sample interaction and administration datasets, and documentation. Figma Make was used for the initial design concept. See [How we used AI](#how-we-used-ai).
+- **AI:** all code, infrastructure and tests were written by AI coding agents, including GitHub Copilot. At runtime the app uses OpenAI (`gpt-6-luna`) or Claude on Amazon Bedrock for the four AI features. AI was also used for research, the UK medicine name and dose conversion, the sample interaction and administration datasets, and documentation. Figma Make was used for the initial design concept. See [How we used AI](#how-we-used-ai).
 - **Pre-existing work:** before the event (22–23 October) we set up this repository, the AWS hosting (CloudFront, S3, API Gateway and Lambda via Pulumi) and a placeholder random-number app to prove deployment. The Schedule my medicines idea, design and code were built during the hackathon.
 - **Data:** all patient data is synthetic.
 
@@ -124,7 +135,7 @@ The page has two parts. The **web page** introduces the app and holds the view o
 | `apps/web/src/medicines`           | The web page and client-side journey, English/Polish/Urdu interface catalogues and right-to-left styling. It reads `/api/patients`, `/api/patients/{nhsNumber}/medications` and `/api/medicines`.                                                                                                                                                                                                                                                     |
 | `apps/api`                         | Reads `test_data/`. `/api/medicines` lists every distinct medicine across all patients, which search suggests from.                                                                                                                                                                                                                                                                                                                                   |
 | `apps/web/e2e/medicines.spec.ts`   | Browser walkthrough of the design doc's checks, with axe accessibility scans in English and Urdu.                                                                                                                                                                                                                                                                                                                                                     |
-| `apps/api/src/ai`                  | AI help: OpenAI (`gpt-6-luna`) or Claude on Amazon Bedrock, built-in test stand-ins, prompts, JSON schemas and the checks every answer must pass. See [AI help](docs/ai-features.md).                                                                                                                                                                                                                                                                                |
+| `apps/api/src/ai`                  | AI help: OpenAI (`gpt-6-luna`) or Claude on Amazon Bedrock, built-in test stand-ins, prompts, JSON schemas and the checks every answer must pass. See [AI help](docs/ai-features.md).                                                                                                                                                                                                                                                                 |
 | `apps/web/e2e/ai-features.spec.ts` | Browser tests for the AI features and interaction warnings in test mode, including failures and AI turned off.                                                                                                                                                                                                                                                                                                                                        |
 
 Behaviour worth knowing:

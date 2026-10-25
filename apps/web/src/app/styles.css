@@ -765,6 +765,16 @@ body {
   gap: 16px;
 }
 
+.pitch-columns--four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 900px) {
+  .pitch-columns--four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .pitch-card {
   padding: 22px;
   border: 1px solid var(--app-border);
