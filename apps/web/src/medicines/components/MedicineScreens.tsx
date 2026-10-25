@@ -2,12 +2,12 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import {
-  DOSE_UNITS, FOOD_TIMINGS, FREQUENCIES, needsDetails, parseQuantity, recommendedTiming, searchMedicines, timingConflict, unitForForm,
-  type DoseUnit, type FoodTiming, type Frequency, type MedicineOption, type PatientAddition, type RecordMedicine, type SearchResult,
+  DOSE_UNITS, FOOD_TIMINGS, FREQUENCIES, parseQuantity, recommendedTiming, searchMedicines, timingConflict, unitForForm,
+  type DoseUnit, type FoodTiming, type FormAnswers, type Frequency, type MedicineOption, type PatientAddition, type RecordMedicine, type SearchResult,
 } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { Language, MessageKey } from '../i18n';
-import { nextPendingDetails } from '../state';
+import { MedicineReader } from './Readers';
 import {
   BackLink, Button, Caption, DoseAmount, Entered, ErrorMessage, ErrorSummary, InsetText, Latin, LinkButton, NavLink, PageHeading,
   RecordText, T, Tag, TName, UntranslatedNote, WarningCallout,
@@ -29,7 +29,6 @@ export function RecordFrequencyText({ medicine }: { medicine: RecordMedicine }) 
     case 'daily': return <T k={`frequencies.${(['once-daily', 'twice-daily', 'three-times-daily', 'four-times-daily'] as const)[frequency.timesPerDay - 1]}`} />;
     case 'as-needed': return <T k="frequencies.as-needed" />;
     case 'every-days': return <T k="record.everyDays" params={{ count: frequency.days }} />;
-    case 'every-hours': return <T k="record.everyHours" params={{ count: frequency.hours }} />;
     case 'missing': return <T k="record.frequencyMissing" />;
   }
 }
@@ -38,7 +37,7 @@ const numberText = (value: number, lang: Language) => new Intl.NumberFormat(lang
 
 /** NHS checkboxes for the record's medicines, with an exclusive "None of these" option. */
 export function SelectMedicines() {
-  const { state, record, go, updateDraft, next, back, t } = useJourney();
+  const { state, record, updateDraft, next, back, t } = useJourney();
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const { selected, noneSelected } = state.draft;
@@ -58,10 +57,7 @@ export function SelectMedicines() {
   const submit = () => {
     setAttempt(count => count + 1);
     if (!selected.length && !noneSelected) { setError(true); return; }
-    // Ask about each ticked medicine the record cannot be scheduled from, before moving on.
-    const pending = nextPendingDetails(state.draft, record);
-    if (pending) go('record-details', { editingRecordId: pending });
-    else next('medicines', 'additions');
+    next('medicines', 'additions');
   };
   const firstId = record.length ? `medicine-${record[0].id}` : 'medicine-none';
   return (
@@ -94,7 +90,6 @@ export function SelectMedicines() {
                     </span>
                     <span className="app-record-hint__line"><RecordFrequencyText medicine={medicine} /></span>
                     {medicine.instructions.map(text => <span className="app-record-hint__line" key={text}><RecordText text={text} language={medicine.language} /></span>)}
-                    {needsDetails(medicine) && <span className="app-record-hint__line app-record-hint__ask"><T k="record.willAsk" /></span>}
                   </div>
                 </div>
               );
@@ -114,7 +109,7 @@ export function SelectMedicines() {
   );
 }
 
-/** Radios for how often, shared by the record details and add medicine forms. */
+/** Radios for how often a patient takes a medicine they added. */
 function FrequencyRadios({ id, value, onChange, error }: { id: string; value?: Frequency; onChange: (frequency: Frequency) => void; error?: boolean }) {
   return (
     <div className={`nhsuk-form-group${error ? ' nhsuk-form-group--error' : ''}`}>
@@ -132,76 +127,6 @@ function FrequencyRadios({ id, value, onChange, error }: { id: string; value?: F
         </div>
       </fieldset>
     </div>
-  );
-}
-
-/**
- * "How do you take it?" for a ticked record medicine whose record has no
- * dose or frequency. One medicine per page, in record order.
- */
-export function RecordDetailsScreen() {
-  const { state, record, go, updateDraft, next, t, lang } = useJourney();
-  const medicine = record.find(item => item.id === state.editingRecordId);
-  const saved = medicine ? state.draft.recordDetails[medicine.id] : undefined;
-  const startDose = saved?.dose ?? medicine?.dose;
-  const [quantity, setQuantity] = useState(startDose ? numberText(startDose.quantity, lang) : '');
-  const [frequency, setFrequency] = useState<Frequency | undefined>(saved?.frequency);
-  const [errors, setErrors] = useState<('quantity' | 'frequency')[]>([]);
-  const [attempt, setAttempt] = useState(0);
-  if (!medicine) return null;
-  const unit: DoseUnit = medicine.dose?.unit ?? unitForForm(medicine.medicine.form);
-  const fromCheck = state.changeFlow?.end === 'record-details';
-
-  const save = () => {
-    const amount = parseQuantity(quantity);
-    const found = [...(amount === null ? ['quantity' as const] : []), ...(!frequency ? ['frequency' as const] : [])];
-    setErrors(found);
-    setAttempt(count => count + 1);
-    if (found.length) return;
-    const draft = { ...state.draft, recordDetails: { ...state.draft.recordDetails, [medicine.id]: { dose: { quantity: amount!, unit }, frequency: frequency! } } };
-    updateDraft(() => draft);
-    if (fromCheck) { go('check', { changeFlow: undefined, editingRecordId: undefined }); return; }
-    const pending = nextPendingDetails(draft, record, medicine.id) ?? nextPendingDetails(draft, record);
-    if (pending) go('record-details', { editingRecordId: pending });
-    else next('medicines', 'additions');
-  };
-  const leave = () => go(fromCheck ? 'check' : 'medicines', { editingRecordId: undefined, ...(fromCheck ? { changeFlow: undefined } : {}) });
-  const reason = medicine.frequency.kind === 'every-hours' ? 'recordDetails.everyHours' : !medicine.dose && medicine.frequency.kind === 'daily' ? 'recordDetails.doseMissing' : 'recordDetails.missing';
-  const errorText = (field: 'quantity' | 'frequency') => t(`addForm.errors.${field}`);
-
-  return (
-    <>
-      <BackLink onClick={leave} />
-      <ErrorSummary attempt={attempt} errors={errors.map(field => ({ href: field === 'quantity' ? '#details-quantity' : '#details-frequency', text: errorText(field) }))} />
-      <PageHeading caption={<Caption />}><TName k="recordDetails.title" name={medicine.medicine.name} /></PageHeading>
-      <InsetText>
-        <p><T k={reason} params={medicine.frequency.kind === 'every-hours' ? { count: medicine.frequency.hours } : undefined} /></p>
-      </InsetText>
-      <dl className="nhsuk-summary-list app-compact-summary">
-        <div className="nhsuk-summary-list__row">
-          <dt className="nhsuk-summary-list__key"><T k="schedule.recordedAs" /></dt>
-          <dd className="nhsuk-summary-list__value"><RecordText text={medicine.medicine.recordName} language={medicine.language} /></dd>
-        </div>
-        {medicine.instructions.length > 0 && (
-          <div className="nhsuk-summary-list__row">
-            <dt className="nhsuk-summary-list__key"><T k="common.instructions" /></dt>
-            <dd className="nhsuk-summary-list__value">{medicine.instructions.map(text => <RecordText key={text} text={text} language={medicine.language} />)}</dd>
-          </div>
-        )}
-      </dl>
-      <div className={`nhsuk-form-group${errors.includes('quantity') ? ' nhsuk-form-group--error' : ''}`}>
-        <label className="nhsuk-label nhsuk-label--s" htmlFor="details-quantity"><T k="addForm.doseLegend" /></label>
-        <div className="nhsuk-hint" id="details-quantity-hint"><T k="addForm.quantityHint" /></div>
-        {errors.includes('quantity') && <ErrorMessage id="details-quantity-error">{errorText('quantity')}</ErrorMessage>}
-        <div className="nhsuk-input-wrapper">
-          <input className={`nhsuk-input nhsuk-input--width-3${errors.includes('quantity') ? ' nhsuk-input--error' : ''}`} id="details-quantity" type="text" inputMode="decimal" autoComplete="off" dir="ltr"
-            value={quantity} aria-describedby={`details-quantity-hint${errors.includes('quantity') ? ' details-quantity-error' : ''}`} onChange={event => setQuantity(event.target.value)} />
-          <div className="nhsuk-input-wrapper__suffix" aria-hidden="true"><T k={`unitNames.${unit}`} /></div>
-        </div>
-      </div>
-      <FrequencyRadios id="details-frequency" value={frequency} onChange={setFrequency} error={errors.includes('frequency')} />
-      <Button onClick={save}><T k={fromCheck ? 'addForm.saveEdit' : 'common.continue'} /></Button>
-    </>
   );
 }
 
@@ -354,6 +279,26 @@ export function AdditionForm() {
   const fieldError = (field: FormField) => (errors.includes(field) ? <ErrorMessage id={`${FIELD_IDS[field]}-error`}>{errorText(field)}</ErrorMessage> : null);
   const groupClass = (field: FormField) => `nhsuk-form-group${errors.includes(field) ? ' nhsuk-form-group--error' : ''}`;
 
+  // A reading fills in the whole form, so nothing from an earlier reading or medicine is left behind.
+  // Anything it could not read is left blank and listed for the patient to answer.
+  const fill = (answers: FormAnswers) => {
+    setForm({
+      query: answers.query ?? '',
+      medicine: answers.medicine,
+      manual: Boolean(answers.manual),
+      manualName: answers.manual?.name ?? '',
+      strength: answers.manual?.strength ?? '',
+      unit: answers.manual?.unit,
+      quantity: answers.quantity !== undefined ? numberText(answers.quantity, lang) : '',
+      frequency: answers.frequency,
+      timing: answers.timing,
+      instructions: answers.instructions ?? '',
+    });
+    setErrors([]);
+    setOpen(Boolean(answers.query));
+    setActive(-1);
+  };
+
   const choose = (result: SearchResult) => {
     change({ medicine: result.option, query: '', manual: false });
     setOpen(false);
@@ -421,6 +366,7 @@ export function AdditionForm() {
       <BackLink onClick={() => go(leave, { editingAdditionId: undefined })} />
       <ErrorSummary attempt={attempt} errors={errors.map(field => ({ href: `#${FIELD_IDS[field]}`, text: errorText(field) }))} />
       <PageHeading caption={<Caption />}><T k={editing ? 'addForm.titleEdit' : 'addForm.titleAdd'} /></PageHeading>
+      {!editing && <MedicineReader onFilled={fill} />}
 
       {medicine ? (
         <div className="nhsuk-form-group">

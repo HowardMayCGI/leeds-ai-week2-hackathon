@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { toMedicineOption } from './catalogue';
 import { checkAssignment } from './checker';
-import { buildConstraints, classify, type PatientAddition, type RecordDetails } from './items';
+import { buildConstraints, classify, type PatientAddition } from './items';
 import { createProposal, dayTimeline, groupByTime, type Proposal } from './proposal';
 import { toRecordMedicine, type SourceMedication } from './record';
 import { toDay, type Routine } from './routine';
@@ -13,7 +13,7 @@ const daily = (frequency: number, period = 1) => ({ frequency, period, periodUni
 const tablet = { value: 1, unit: 'tablet' };
 const source = (id: string, name: string, changes: Partial<SourceMedication> = {}): SourceMedication => ({ id, code: id, name, asNeeded: false, instructions: [], ...changes });
 
-// A record shaped like the patient data: some complete, some missing details.
+// A record shaped like the patient data, with one medicine whose record does not say how often.
 const RECORD = [
   source('levo', 'Levothyroxine sodium 75microgram tablets', { dose: tablet, frequency: daily(1) }),
   source('lisinopril', 'lisinopril 10 MG Oral Tablet', { dose: tablet, frequency: daily(1) }),
@@ -21,10 +21,10 @@ const RECORD = [
   source('oxy', 'Oxycodone 10mg capsules', { dose: { value: 1, unit: 'capsule' }, frequency: daily(4) }),
   source('patch', 'Fentanyl 25micrograms/hour transdermal patches', { dose: { value: 1, unit: 'patch' }, frequency: daily(1, 3) }),
   source('salbutamol', 'Salbutamol 100micrograms/dose inhaler CFC free', { asNeeded: true }),
-  source('alendronic', 'Alendronic acid 10mg tablets'),
+  source('alendronic', 'Alendronic acid 10mg tablets', { dose: tablet, frequency: daily(1) }),
+  source('clopidogrel', 'Clopidogrel 75mg tablets'),
 ].map(toRecordMedicine);
 const ALL = RECORD.map(medicine => medicine.id);
-const DETAILS: Record<string, RecordDetails> = { alendronic: { dose: { quantity: 1, unit: 'tablet' }, frequency: 'once-daily' } };
 
 const naproxen = toMedicineOption({ code: '1217387008', name: 'Naproxen 250mg tablets' });
 const iron = toMedicineOption({ code: '39107411000001105', name: 'Ferrous sulfate 325mg modified-release tablets' });
@@ -39,7 +39,7 @@ function times(proposal: Proposal) {
 const doseTimes = (proposal: Proposal, key: string) => (proposal.status === 'ok' ? proposal.doses.filter(dose => dose.key === key).map(dose => dose.time) : []);
 
 test('creates a schedule around the usual day that follows each medicine\'s rules', () => {
-  const proposal = createProposal({ routine, record: RECORD, selectedRecordIds: ALL, additions: [], recordDetails: DETAILS });
+  const proposal = createProposal({ routine, record: RECORD, selectedRecordIds: ALL, additions: [] });
   // Alendronic acid goes first, on an empty stomach, and other tablets come at least 30 minutes later.
   assert.deepEqual(doseTimes(proposal, 'record:alendronic'), ['07:00']);
   assert.deepEqual(doseTimes(proposal, 'record:levo'), ['07:30']);
@@ -58,13 +58,10 @@ test('creates a schedule around the usual day that follows each medicine\'s rule
   assert.ok(simvastatin?.notes.some(note => note.code === 'in-evening' || note.code === 'at-bedtime'));
 });
 
-test('waits for the patient\'s details before scheduling a medicine the record has no frequency for', () => {
-  const blocked = createProposal({ routine, record: RECORD, selectedRecordIds: ['alendronic'], additions: [] });
-  assert.equal(blocked.status, 'blocked');
-  assert.deepEqual(blocked.status === 'blocked' && blocked.problems, [{ code: 'missing-details', key: 'record:alendronic' }]);
-  const ok = createProposal({ routine, record: RECORD, selectedRecordIds: ['alendronic'], additions: [], recordDetails: DETAILS });
-  assert.deepEqual(times(ok), ['07:00 record:alendronic']);
-  assert.equal(ok.items[0].detailsFromPatient, true);
+test('a record medicine with no frequency is listed without times, and never blocks the schedule', () => {
+  const proposal = createProposal({ routine, record: RECORD, selectedRecordIds: ['clopidogrel', 'lisinopril'], additions: [] });
+  assert.deepEqual(times(proposal), ['07:00 record:lisinopril']);
+  assert.deepEqual(proposal.unscheduled, ['record:clopidogrel']);
 });
 
 test('only medicines the patient checked are included', () => {
@@ -183,7 +180,7 @@ test('every proposal across many routines either passes all checks or explains w
     const wake = 300 + random(300);
     const meal = (offset: number) => (random(5) === 0 ? null : formatClockTime(wake + offset + random(60)));
     const candidate: Routine = { wake: formatClockTime(wake), sleep: formatClockTime(wake + 900 + random(240)), meals: { breakfast: meal(30), lunch: meal(330), dinner: meal(660) } };
-    const proposal = createProposal({ routine: candidate, record: RECORD, selectedRecordIds: ALL, additions: additions.slice(0, random(4)), recordDetails: DETAILS });
+    const proposal = createProposal({ routine: candidate, record: RECORD, selectedRecordIds: ALL, additions: additions.slice(0, random(4)) });
     if (proposal.status === 'ok') assert.ok(proposal.checks.every(check => check.pass));
     else assert.ok(proposal.problems.length > 0);
   }
@@ -191,6 +188,6 @@ test('every proposal across many routines either passes all checks or explains w
 
 test('says so when there is no time to take alendronic acid before other tablets', () => {
   const late = { ...routine, wake: '07:30' as const };
-  const proposal = createProposal({ routine: late, record: RECORD, selectedRecordIds: ['alendronic', 'levo'], additions: [], recordDetails: DETAILS });
+  const proposal = createProposal({ routine: late, record: RECORD, selectedRecordIds: ['alendronic', 'levo'], additions: [] });
   assert.deepEqual(proposal.status === 'blocked' && proposal.problems, [{ code: 'cannot-take-first', keys: ['record:alendronic', 'record:levo'], minutes: 30 }]);
 });

@@ -364,3 +364,232 @@ export interface ScheduleValidationError {
   message: string;
   errors: { path: string; message: string }[];
 }
+
+/** A medicine the patient has chosen for their schedule, checked against the interaction rules by its code. */
+export interface SelectedMedicine {
+  /** The app's own key for the medicine, returned unchanged in each match. */
+  id: string;
+  name: string;
+  code?: string;
+  system?: string;
+}
+
+export interface SelectionInteractionsRequest {
+  medicines: SelectedMedicine[];
+}
+
+/** Interaction matches for the medicines in a schedule. No matches never means the combination is safe. */
+export interface SelectionInteractionsResponse {
+  datasetVersion: string;
+  clinicallyValidated: false;
+  coverage: "limited_demo_rules";
+  interactions: {
+    id: string;
+    ruleId: string;
+    severity: InteractionRule["severity"];
+    action: InteractionManagement["action"];
+    /** For separate_doses: the minimum gap between the two medicines' doses. */
+    minimumGapMinutes?: number;
+    effect: string;
+    patientGuidance: string;
+    medicineIds: [string, string];
+    sourceIds: string[];
+  }[];
+  /** Medicines the rules could not check, such as ones typed in by the patient. */
+  uncheckedIds: string[];
+  sources: InteractionDataset["sources"];
+}
+
+export function isSelectionInteractionsResponse(value: unknown): value is SelectionInteractionsResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const response = value as SelectionInteractionsResponse;
+  return (
+    typeof response.datasetVersion === "string" &&
+    Array.isArray(response.interactions) &&
+    Array.isArray(response.uncheckedIds) &&
+    Array.isArray(response.sources) &&
+    response.interactions.every(
+      (interaction) =>
+        typeof interaction?.id === "string" &&
+        typeof interaction.patientGuidance === "string" &&
+        Array.isArray(interaction.medicineIds) &&
+        interaction.medicineIds.length === 2,
+    )
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AI assistance. The model only ever suggests: code checks every answer before
+// it is returned, and the patient confirms anything that changes their
+// schedule. "test" mode answers with built-in stand-ins and calls no model.
+// ---------------------------------------------------------------------------
+
+export type AiMode = "live" | "test" | "off";
+export const AI_LANGUAGES = ["en", "pl", "ur"] as const;
+export type AiLanguage = (typeof AI_LANGUAGES)[number];
+
+export interface AiStatusResponse {
+  mode: AiMode;
+  /** The model behind live answers, such as "Claude Haiku 5.5 on Amazon Bedrock". */
+  model?: string;
+}
+
+export const MEDICINE_READING_FORMS = [
+  "tablet",
+  "capsule",
+  "oral-liquid",
+  "inhaler",
+  "spray",
+  "patch",
+  "injection",
+  "other",
+] as const;
+
+/**
+ * A medicine read from a photo of its box or pharmacy label, or from the
+ * patient's own description. Fields that could not be read are left out; the
+ * patient checks and completes every field before it is used.
+ */
+export interface MedicineReading {
+  /** False when no medicine could be read, such as for a blurred photo. */
+  found: boolean;
+  /** Generic name as printed, such as "Ferrous sulfate". */
+  name?: string;
+  brand?: string;
+  /** Strength of one tablet, capsule or measure as printed, such as "200mg". */
+  strength?: string;
+  form?: (typeof MEDICINE_READING_FORMS)[number];
+  /** How many to take each time, such as 1; amountMax is set for "1 or 2". */
+  amount?: number;
+  amountMax?: number;
+  /** 1 to 4 doses a day. */
+  timesPerDay?: number;
+  asNeeded?: boolean;
+  lessThanDaily?: boolean;
+  timing?: "before-food" | "with-food";
+  /** Any other direction from the label, in its own words. */
+  instructions?: string;
+}
+
+export interface MedicineReadingRequest {
+  /** What the patient typed, such as "vitamin D 1000 units once a day". */
+  description?: string;
+  /** A photo, base64 encoded without a data: prefix. */
+  image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string };
+}
+
+export interface MedicineReadingResponse {
+  reading: MedicineReading;
+  mode: Exclude<AiMode, "off">;
+}
+
+/**
+ * Times read from a description of the patient's usual day, as 24-hour
+ * "HH:MM". A meal set to null is one the patient does not eat; anything not
+ * mentioned is left out, never guessed.
+ */
+export interface RoutineReading {
+  wake?: string;
+  sleep?: string;
+  breakfast?: string | null;
+  lunch?: string | null;
+  dinner?: string | null;
+}
+
+export interface RoutineReadingRequest {
+  text: string;
+}
+
+export interface RoutineReadingResponse {
+  routine: RoutineReading;
+  mode: Exclude<AiMode, "off">;
+}
+
+/** Something the app knows about the patient's schedule, in English. Facts are all the AI may use. */
+export interface ScheduleFact {
+  id: string;
+  text: string;
+}
+
+export interface ExplainRequest {
+  language: AiLanguage;
+  /** Facts that apply to every dose, such as the patient's routine. */
+  facts: ScheduleFact[];
+  doses: { id: string; facts: ScheduleFact[] }[];
+}
+
+export interface ExplainResponse {
+  /** One explanation per dose that passed the checks; a dose that failed them is left out. */
+  explanations: { id: string; text: string }[];
+  /** The language of the explanations: English when test mode cannot translate. */
+  language: AiLanguage;
+  mode: Exclude<AiMode, "off">;
+}
+
+export interface AskRequest {
+  language: AiLanguage;
+  question: string;
+  facts: ScheduleFact[];
+}
+
+export type AskAnswer =
+  | { kind: "answer"; text: string; factIds: string[] }
+  /** The app shows its own wording for these, never the model's. */
+  | { kind: "cannot-answer"; reason: "medical-advice" | "outside-schedule" }
+  | { kind: "emergency" };
+
+export interface AskResponse {
+  answer: AskAnswer;
+  /** The language of the answer text: English when test mode cannot translate. */
+  language: AiLanguage;
+  mode: Exclude<AiMode, "off">;
+}
+
+export const AI_LIMITS = {
+  /** A photo of up to about 3 MB once base64 encoded. */
+  imageBase64Chars: 4_000_000,
+  descriptionChars: 300,
+  routineChars: 600,
+  questionChars: 300,
+  facts: 200,
+  factChars: 400,
+} as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const isAiLanguage = (value: unknown): value is AiLanguage => AI_LANGUAGES.includes(value as AiLanguage);
+
+export function isAiStatusResponse(value: unknown): value is AiStatusResponse {
+  return isRecord(value) && ["live", "test", "off"].includes(value.mode as string) && (value.model === undefined || typeof value.model === "string");
+}
+
+export function isMedicineReadingResponse(value: unknown): value is MedicineReadingResponse {
+  return isRecord(value) && isRecord(value.reading) && typeof value.reading.found === "boolean";
+}
+
+export function isRoutineReadingResponse(value: unknown): value is RoutineReadingResponse {
+  return (
+    isRecord(value) &&
+    isRecord(value.routine) &&
+    Object.entries(value.routine).every(
+      ([key, time]) => ["wake", "sleep", "breakfast", "lunch", "dinner"].includes(key) && (time === null || typeof time === "string"),
+    )
+  );
+}
+
+export function isExplainResponse(value: unknown): value is ExplainResponse {
+  return (
+    isRecord(value) &&
+    isAiLanguage(value.language) &&
+    Array.isArray(value.explanations) &&
+    value.explanations.every((entry) => isRecord(entry) && typeof entry.id === "string" && typeof entry.text === "string")
+  );
+}
+
+export function isAskResponse(value: unknown): value is AskResponse {
+  if (!isRecord(value) || !isAiLanguage(value.language) || !isRecord(value.answer)) return false;
+  const answer = value.answer;
+  if (answer.kind === "answer") return typeof answer.text === "string" && Array.isArray(answer.factIds) && answer.factIds.every((id) => typeof id === "string");
+  if (answer.kind === "cannot-answer") return answer.reason === "medical-advice" || answer.reason === "outside-schedule";
+  return answer.kind === "emergency";
+}

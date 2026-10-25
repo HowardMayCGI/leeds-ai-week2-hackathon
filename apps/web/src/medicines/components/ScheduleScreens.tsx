@@ -3,8 +3,10 @@
 import type { ReactNode } from 'react';
 import { buildResponse, dayTimeline, type DoseNote, type ItemSnapshot, type Problem, type Proposal, type RoutineEvent } from '@hackathon/medicines';
 import { useJourney } from '../context';
-import type { MessageKey } from '../i18n';
+import type { Language, MessageKey } from '../i18n';
 import type { SavedSchedule } from '../state';
+import { DoseExplanation, doseId, ExplainPanel, useExplanations } from './Explain';
+import { InteractionWarnings, useInteractions } from './Interactions';
 import { RemindersPanel, ReminderSummary } from './Reminders';
 import { BackLink, Button, Caption, DoseAmount, Entered, InsetText, Latin, NavLink, PageHeading, RecordText, T, Tag, Time, TName } from './ui';
 
@@ -64,7 +66,7 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
           {item.timing && row('common.whenTaken', <T k={`timings.${item.timing}`} />)}
           {item.instructions.length > 0 && row('common.instructions', <>{item.instructions.map(text => <span className="app-block" key={text}><ItemText item={item} text={text} /></span>)}</>)}
           {item.recordName && row('schedule.recordedAs', <RecordText text={item.recordName} />)}
-          {row('common.source', <T k={item.source === 'patient' ? 'common.addedByYou' : item.detailsFromPatient ? 'common.fromRecordAndYou' : 'common.fromRecord'} />)}
+          {row('common.source', <T k={item.source === 'patient' ? 'common.addedByYou' : 'common.fromRecord'} />)}
         </dl>
         {untranslated && <p className="app-untranslated"><T k="common.inEnglish" /></p>}
       </div>
@@ -72,7 +74,12 @@ function DoseDetails({ item }: { item: ItemSnapshot }) {
   );
 }
 
-function Dose({ item, notes, items }: { item: ItemSnapshot; notes: DoseNote[]; items: ItemSnapshot[] }) {
+function Dose({ item, notes, items, explanation }: {
+  item: ItemSnapshot;
+  notes: DoseNote[];
+  items: ItemSnapshot[];
+  explanation?: { text: string; language: Language };
+}) {
   return (
     <li className="app-dose">
       <h3 className="app-dose__name"><ItemName item={item} /></h3>
@@ -87,6 +94,7 @@ function Dose({ item, notes, items }: { item: ItemSnapshot; notes: DoseNote[]; i
         </div>
       )}
       {!item.matched && <p className="app-dose__reason"><T k="proposal.unmatched" /></p>}
+      {explanation && <DoseExplanation text={explanation.text} language={explanation.language} />}
       <DoseDetails item={item} />
     </li>
   );
@@ -105,6 +113,11 @@ export function Timeline({ proposal }: { proposal: OkProposal }) {
   const items = proposal.items;
   const byKey = new Map(items.map(item => [item.key, item]));
   const entries = dayTimeline(proposal.routine, proposal.doses);
+  const explanations = useExplanations(proposal);
+  const explanationFor = (dose: { key: string; minute: number }) => {
+    const text = explanations?.texts[doseId(dose)];
+    return text ? { text, language: explanations!.language } : undefined;
+  };
   return (
     <>
       {!proposal.doses.length && <p className="nhsuk-body"><T k="proposal.noTimes" /></p>}
@@ -125,7 +138,7 @@ export function Timeline({ proposal }: { proposal: OkProposal }) {
                 </h2>
                 {hasDoses && (
                   <ul className="app-timeline__doses">
-                    {entry.doses.map(dose => <Dose key={`${dose.key}-${dose.minute}`} item={byKey.get(dose.key)!} notes={dose.notes} items={items} />)}
+                    {entry.doses.map(dose => <Dose key={`${dose.key}-${dose.minute}`} item={byKey.get(dose.key)!} notes={dose.notes} items={items} explanation={explanationFor(dose)} />)}
                   </ul>
                 )}
               </div>
@@ -151,6 +164,15 @@ export function Timeline({ proposal }: { proposal: OkProposal }) {
           </ul>
         </section>
       )}
+      {(proposal.unscheduled ?? []).length > 0 && (
+        <section className="app-when-needed" aria-labelledby="unscheduled-title">
+          <h2 className="nhsuk-heading-m" id="unscheduled-title"><T k="proposal.unscheduledTitle" /></h2>
+          <p className="nhsuk-body"><T k="proposal.unscheduledBody" /></p>
+          <ul className="app-timeline__doses">
+            {proposal.unscheduled.map(key => <Dose key={key} item={byKey.get(key)!} notes={[]} items={items} />)}
+          </ul>
+        </section>
+      )}
     </>
   );
 }
@@ -170,6 +192,7 @@ function ProblemText({ problem, items }: { problem: Problem; items: ItemSnapshot
 export function ProposalScreen() {
   const { state, go, setState, startChange, lang } = useJourney();
   const proposal = state.proposal;
+  const interactions = useInteractions(proposal?.items ?? []);
   if (!proposal) return null;
   const changeRoutine = () => startChange({ start: 'waking-sleeping', end: 'meal-times', origin: 'proposal' });
 
@@ -210,7 +233,8 @@ export function ProposalScreen() {
         // The reminder preference and device permission carry over; a review request was for the old schedule.
         reminders: current.saved?.reminders ?? { enabled: true, permission: 'not-requested' },
       };
-      return { ...current, saved, screen: 'saved-confirmation', proposal: undefined, updating: false, changeFlow: undefined };
+      // Questions were about the old schedule, so they go with it.
+      return { ...current, saved, screen: 'saved-confirmation', proposal: undefined, updating: false, changeFlow: undefined, asked: [] };
     });
   };
 
@@ -222,6 +246,8 @@ export function ProposalScreen() {
       <p className="nhsuk-body"><T k="proposal.lede" /></p>
       {state.updating && <InsetText><p><T k="proposal.updateInset" /></p></InsetText>}
       <p className="nhsuk-body"><T k="proposal.basis" /></p>
+      <InteractionWarnings proposal={proposal} check={interactions.check} retry={interactions.retry} />
+      <ExplainPanel proposal={proposal} />
       <Timeline proposal={proposal} />
       <div className="app-actions">
         <Button onClick={save}><T k="proposal.save" /></Button>
@@ -252,8 +278,9 @@ export function SavedConfirmation() {
 }
 
 export function SavedScheduleScreen() {
-  const { state, date, setState, startChange } = useJourney();
+  const { state, date, setState, startChange, ai } = useJourney();
   const saved = state.saved;
+  const interactions = useInteractions(saved?.proposal.items ?? []);
   if (!saved) return null;
   const beginUpdate = (start: 'waking-sleeping' | 'medicines', end: 'meal-times' | 'additions') => {
     // Work on a copy; the saved schedule stays in use until a replacement is saved.
@@ -269,7 +296,19 @@ export function SavedScheduleScreen() {
       <PageHeading caption={<Caption />}><T k="savedSchedule.title" /></PageHeading>
       <p className="app-tags"><Tag colour="green"><T k="savedSchedule.tag" /></Tag> <span className="app-small-print"><T k="savedSchedule.savedOn" params={{ date: date(saved.savedAt) }} /></span></p>
       <p className="nhsuk-body"><T k="savedSchedule.useNow" /></p>
+      <InteractionWarnings proposal={saved.proposal} check={interactions.check} retry={interactions.retry} />
+      <ExplainPanel proposal={saved.proposal} />
       <Timeline proposal={saved.proposal} />
+
+      {ai.mode !== 'off' && (
+        <div className="nhsuk-card app-panel">
+          <div className="nhsuk-card__content">
+            <h2 className="nhsuk-card__heading nhsuk-heading-m"><T k="ask.cardTitle" /></h2>
+            <p className="nhsuk-card__description"><T k="ask.cardBody" /></p>
+            <p className="nhsuk-u-margin-bottom-0"><NavLink to="ask"><T k="ask.cardLink" /></NavLink></p>
+          </div>
+        </div>
+      )}
 
       <div className="nhsuk-card app-panel">
         <div className="nhsuk-card__content">

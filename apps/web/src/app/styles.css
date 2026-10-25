@@ -24,11 +24,11 @@ body {
   display: flex;
   min-height: 100svh;
   max-width: 1110px;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 72px;
   margin: 0 auto;
-  padding: 32px 48px;
+  padding: 24px 48px;
 }
 
 .showcase-intro {
@@ -79,12 +79,34 @@ body {
   line-height: 1.65;
 }
 
+.showcase-notice {
+  max-width: 360px;
+  margin: 24px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--app-blue);
+  background: #fff;
+  color: var(--app-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.showcase-status {
+  max-width: 360px;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid #768692;
+  background: #fff;
+  color: var(--app-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .showcase-controls {
   display: flex;
   flex-direction: column;
   gap: 18px;
   max-width: 340px;
-  margin-top: 36px;
+  margin-top: 28px;
   padding: 20px;
   border: 1px solid var(--app-border);
   border-radius: 12px;
@@ -98,29 +120,6 @@ body {
   font-weight: 700;
   letter-spacing: 1.1px;
   text-transform: uppercase;
-}
-
-.joke-demo {
-  max-width: 340px;
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--app-ink);
-}
-
-.joke-demo .nhsuk-button {
-  margin-bottom: 4px;
-}
-
-.joke-demo #joke-demo-result > p {
-  margin: 16px 0 0;
-}
-
-.joke-demo__joke {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
 }
 
 .showcase-control {
@@ -162,41 +161,6 @@ body {
   appearance: none;
 }
 
-.showcase-segmented__options {
-  display: flex;
-  padding: 3px;
-  border-radius: 8px;
-  background: var(--app-background);
-}
-
-.showcase-segmented__option {
-  position: relative;
-  flex: 1;
-}
-
-.showcase-segmented__option input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.showcase-segmented__option span {
-  display: block;
-  padding: 7px 10px;
-  border-radius: 6px;
-  color: var(--app-muted);
-  font-size: 15px;
-  text-align: center;
-}
-
-.showcase-segmented__option input:checked + span {
-  background: #fff;
-  box-shadow: 0 1px 3px #212b3233;
-  color: var(--app-ink);
-  font-weight: 700;
-}
-
 .showcase-button {
   width: 100%;
   min-height: 40px;
@@ -216,69 +180,108 @@ body {
 }
 
 .showcase-select:focus,
-.showcase-button:focus,
-.showcase-segmented__option input:focus-visible + span {
+.showcase-button:focus {
   outline: 4px solid #ffeb3b;
   outline-offset: 0;
   box-shadow: 0 0 0 2px #212b32 inset;
 }
 
+/*
+ * An iPhone 16 Pro: a 393 x 852 point screen with 55pt corners, a thin
+ * titanium-edged bezel, the Dynamic Island and the side buttons. When the
+ * window is shorter than the phone, the whole phone is zoomed down so it
+ * keeps its true proportions.
+ */
 .phone-frame {
   position: relative;
-  flex: 0 0 402px;
-  width: 402px;
-  padding: 10px;
-  border: 2px solid #40464d;
-  border-radius: 54px;
-  background: #20252b;
-  box-shadow: 0 30px 65px -30px #212b3259, 0 5px 12px #212b321a, inset 0 0 0 2px #111820;
+  flex: 0 0 auto;
+  width: calc(393px + 2 * 14px);
+  padding: 12px;
+  border: 2px solid #8b9096;
+  border-radius: 69px;
+  background: #16181b;
+  box-shadow: 0 30px 65px -30px #212b3259, 0 5px 12px #212b321a, inset 0 0 0 2px #3b4046;
+  zoom: var(--phone-scale, 1);
+  /* The whole phone stays in view while the web page scrolls */
+  position: sticky;
+  top: 24px;
 }
 
 .phone-frame::before,
-.phone-frame::after {
+.phone-frame::after,
+.phone-frame__power {
   position: absolute;
-  left: -4px;
+  left: -5px;
   width: 3px;
-  height: 44px;
   border-radius: 2px 0 0 2px;
-  background: #40464d;
+  background: #8b9096;
   content: '';
 }
 
+/* Volume up and down */
 .phone-frame::before {
-  top: 120px;
+  top: 196px;
+  height: 58px;
 }
 
 .phone-frame::after {
-  top: 180px;
+  top: 268px;
+  height: 58px;
+}
+
+/* Side button */
+.phone-frame__power {
+  right: -5px;
+  left: auto;
+  top: 230px;
+  height: 92px;
+  border-radius: 0 2px 2px 0;
 }
 
 .phone-screen {
+  position: relative;
   display: flex;
-  min-height: 788px;
+  width: 393px;
+  height: 852px;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 42px;
+  border-radius: 55px;
   background: var(--app-background);
 }
 
 .phone-status {
-  display: flex;
-  height: 48px;
+  display: grid;
+  height: 54px;
   flex-shrink: 0;
+  grid-template-columns: 1fr 126px 1fr;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 26px 0;
+  padding-top: 4px;
   background: #fff;
-  color: #111820;
-  font-size: 14px;
-  font-weight: 700;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.phone-status__time {
+  justify-self: center;
+  padding-left: 12px;
+  letter-spacing: -0.2px;
+}
+
+.phone-status__island {
+  width: 126px;
+  height: 37px;
+  border-radius: 19px;
+  background: #000;
 }
 
 .phone-status__icons {
   display: flex;
+  justify-self: center;
   align-items: center;
   gap: 6px;
+  padding-right: 10px;
 }
 
 .app-header {
@@ -300,19 +303,10 @@ body {
 }
 
 .app-brand__logo {
-  display: inline-flex;
-  width: 78px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
-  padding-right: 5px;
-  background: var(--app-blue);
-  color: #fff;
-  font-size: 34px;
-  font-style: italic;
-  font-weight: 900;
-  letter-spacing: -3px;
-  line-height: 1;
+  display: block;
+  width: 80px;
+  height: 32px;
+  color: var(--app-blue);
 }
 
 .app-brand__name {
@@ -462,39 +456,44 @@ body {
   line-height: 1.5;
 }
 
+/* Device prompts cover the phone screen, including its status bar, and nothing outside it. */
+.phone-overlay {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  pointer-events: none;
+}
+
+.phone-overlay:empty {
+  display: none;
+}
+
 .phone-home-indicator {
   display: flex;
   background: #fff;
-  height: 28px;
+  height: 34px;
   flex-shrink: 0;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+  padding-bottom: 8px;
 }
 
 .phone-home-indicator span {
-  width: 120px;
+  width: 139px;
   height: 5px;
-  border-radius: 4px;
-  background: var(--app-ink);
+  border-radius: 3px;
+  background: #000;
 }
 
-/* Fixed height: the phone screen stays one size and only the app content scrolls */
+/* The phone screen stays one size and only the app content scrolls */
 .app-root {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
 }
 
-.showcase--fixed .phone-screen {
-  height: min(844px, calc(100svh - 64px));
-  min-height: 600px;
-}
-
-.showcase--fixed .app-root {
-  min-height: 0;
-}
-
-.showcase--fixed .app-main {
+.app-main {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -507,7 +506,7 @@ body {
   }
 
   .showcase-intro {
-    max-width: 402px;
+    max-width: 421px;
   }
 
   .showcase-intro__eyebrow {
@@ -523,14 +522,10 @@ body {
 
   .showcase {
     display: flex;
-    min-height: 100svh;
+    height: 100svh;
     flex-direction: column;
     gap: 0;
     padding: 0;
-  }
-
-  .showcase--fixed {
-    height: 100svh;
   }
 
   .showcase-intro {
@@ -541,12 +536,24 @@ body {
   }
 
   .showcase-intro__text,
+  .showcase-status,
   .showcase-controls__title,
   .phone-status,
   .phone-home-indicator,
   .phone-frame::before,
-  .phone-frame::after {
+  .phone-frame::after,
+  .phone-frame__power {
     display: none;
+  }
+
+  .showcase-notice {
+    max-width: none;
+    margin: 0;
+    padding: max(6px, env(safe-area-inset-top)) 16px 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font-size: 12px;
   }
 
   .showcase-controls {
@@ -556,15 +563,10 @@ body {
     gap: 8px 12px;
     max-width: none;
     margin: 0;
-    padding: max(8px, env(safe-area-inset-top)) 16px 10px;
+    padding: 8px 16px 10px;
     border: 0;
     border-radius: 0;
     background: none;
-  }
-
-  .joke-demo {
-    max-width: none;
-    margin: 0 16px 12px;
   }
 
   .showcase-control {
@@ -588,20 +590,6 @@ body {
     color: #fff;
   }
 
-  .showcase-segmented__options {
-    background: #ffffff26;
-  }
-
-  .showcase-segmented__option span {
-    padding: 6px 8px;
-    color: #fff;
-    font-size: 14px;
-  }
-
-  .showcase-segmented__option input:checked + span {
-    color: var(--app-ink);
-  }
-
   .phone-frame {
     display: flex;
     flex: 1;
@@ -612,11 +600,13 @@ body {
     border-radius: 0;
     background: none;
     box-shadow: none;
+    zoom: 1;
+    position: static;
   }
 
-  .phone-screen,
-  .showcase--fixed .phone-screen {
+  .phone-screen {
     flex: 1;
+    width: auto;
     height: auto;
     min-height: 0;
     border-radius: 0;

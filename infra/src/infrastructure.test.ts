@@ -101,16 +101,22 @@ test(
     assert.equal(lambdaEnvironment.variables.ORIGIN_SECRET, apiOrigin.customHeaders[0].value);
     assert.equal(lambdaEnvironment.variables.OPENAI_API_KEY, "test-only-openai-key");
     assert.equal(lambdaEnvironment.variables.OPENAI_MODEL, "gpt-6-luna");
-    assert.equal(lambda.timeout, 25);
     const executionRole = find("aws:iam/role:Role");
     assert.equal(executionRole.name, `leeds-random-${stack}-api`);
     assert.equal(executionRole.path, runtimeRolePath);
     assert.equal(executionRole.permissionsBoundary, runtimeRoleBoundaryArn);
-    const runtimePolicy = JSON.parse(find("aws:iam/rolePolicy:RolePolicy").policy);
-    assert.deepEqual(runtimePolicy.Statement[0].Action, [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
+    // Logging, and Claude inference for AI help. Nothing else.
+    const runtimeActions = resources
+      .filter((resource) => resource.type === "aws:iam/rolePolicy:RolePolicy")
+      .flatMap((resource) => JSON.parse(resource.inputs.policy).Statement.map((statement: any) => statement.Action.join(" ")))
+      .sort();
+    assert.deepEqual(runtimeActions, [
+      "bedrock-mantle:CreateInference",
+      "logs:CreateLogStream logs:PutLogEvents",
     ]);
+    assert.equal(lambda.timeout, 29);
+    assert.equal(lambdaEnvironment.variables.AI_PROVIDER, "openai");
+    assert.equal(lambdaEnvironment.variables.AI_MODEL_ID, "anthropic.claude-haiku-5-5");
     assert.equal(find("aws:lambda/permission:Permission").sourceAccount, "322517362875");
     assert.equal(
       find("aws:cloudfront/originAccessControl:OriginAccessControl").signingBehavior,

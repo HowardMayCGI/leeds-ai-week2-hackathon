@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { MEALS, needsDetails, toRoutine } from '@hackathon/medicines';
+import { MEALS, toRoutine } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { ChangeFlow, Screen, State } from '../state';
 import { proposalFor } from '../state';
-import { BackLink, Button, Caption, DoseAmount, ErrorSummary, NavLink, PageHeading, T, Tag, Time, TName } from './ui';
+import { BackLink, Button, Caption, DoseAmount, ErrorSummary, NavLink, PageHeading, T, Tag, Time } from './ui';
 import { AdditionName, MedicineName, RecordFrequencyText, TimingValue } from './MedicineScreens';
 
 /** A summary list row. Every answer has a Change link that returns here when done. */
@@ -31,7 +31,6 @@ export function CheckAnswers() {
   const routine = toRoutine(draft.answers);
   const included = record.filter(medicine => draft.selected.includes(medicine.id));
   const excluded = record.filter(medicine => !draft.selected.includes(medicine.id));
-  const detailed = included.filter(medicine => needsDetails(medicine) && draft.recordDetails[medicine.id]);
 
   const create = () => {
     setAttempt(count => count + 1);
@@ -41,7 +40,6 @@ export function CheckAnswers() {
   };
 
   const changeAddition = (id?: string) => go('addition-form', { changeFlow: flow('addition-form'), editingAdditionId: id } satisfies Partial<State>);
-  const changeDetails = (id: string) => go('record-details', { changeFlow: flow('record-details'), editingRecordId: id } satisfies Partial<State>);
 
   const list = (items: { id: string; name: ReactNode }[]) => (items.length
     ? <ul className="nhsuk-list app-plain-list">{items.map(item => <li key={item.id}>{item.name}</li>)}</ul>
@@ -76,8 +74,8 @@ export function CheckAnswers() {
             name: <>
               <MedicineName name={medicine.medicine.name} strength={medicine.medicine.strength} /><br />
               <span className="app-secondary-text">
-                {medicine.dose && !draft.recordDetails[medicine.id] && <><DoseAmount dose={medicine.dose} strength={medicine.medicine.strength} />, </>}
-                {draft.recordDetails[medicine.id] ? <T k="check.toldUs" /> : <RecordFrequencyText medicine={medicine} />}
+                {medicine.dose && <><DoseAmount dose={medicine.dose} strength={medicine.medicine.strength} />, </>}
+                <RecordFrequencyText medicine={medicine} />
               </span>
             </>,
           })))}
@@ -86,23 +84,6 @@ export function CheckAnswers() {
           {list(excluded.map(medicine => ({ id: medicine.id, name: <MedicineName name={medicine.medicine.name} strength={medicine.medicine.strength} /> })))}
         </Row>
       </dl>
-
-      {detailed.length > 0 && (
-        <>
-          <h2 className="nhsuk-heading-m"><T k="check.details" /></h2>
-          <dl className="nhsuk-summary-list">
-            {detailed.map(medicine => {
-              const details = draft.recordDetails[medicine.id];
-              return (
-                <Row key={medicine.id} label={<MedicineName name={medicine.medicine.name} strength={medicine.medicine.strength} />} onChange={() => changeDetails(medicine.id)}
-                  hidden={<TName k="check.changeDetails" name={medicine.medicine.name} />}>
-                  <DoseAmount dose={details.dose} strength={medicine.medicine.strength} />, <T k={`frequencies.${details.frequency}`} />
-                </Row>
-              );
-            })}
-          </dl>
-        </>
-      )}
 
       <h2 className="nhsuk-heading-m"><T k="check.added" /></h2>
       <dl className="nhsuk-summary-list">

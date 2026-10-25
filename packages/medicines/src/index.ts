@@ -1,7 +1,9 @@
 export * from "./catalogue";
 export * from "./checker";
+export * from "./demo-prescriptions";
 export * from "./dose";
 export * from "./items";
+export * from "./legacy-catalogue";
 export * from "./proposal";
 export * from "./questionnaire";
 export * from "./record";
@@ -11,3 +13,4 @@ export * from "./scheduler";
 export * from "./time";
 export * from "./daily-plan";
 export * from "./daily-plan-checker";
+export * from './reading';
