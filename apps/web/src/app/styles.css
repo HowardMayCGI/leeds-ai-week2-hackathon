@@ -23,17 +23,17 @@ body {
 .showcase {
   display: flex;
   min-height: 100svh;
-  max-width: 1110px;
+  max-width: 1280px;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 72px;
+  gap: 64px;
   margin: 0 auto;
   padding: 24px 48px;
 }
 
 .showcase-intro {
   flex: 1;
-  max-width: 420px;
+  max-width: 580px;
 }
 
 .showcase-intro__eyebrow {
@@ -72,7 +72,7 @@ body {
 }
 
 .showcase-intro__detail {
-  max-width: 360px;
+  max-width: 540px;
   margin: 0;
   color: var(--app-muted);
   font-size: 16px;
@@ -80,7 +80,7 @@ body {
 }
 
 .showcase-notice {
-  max-width: 360px;
+  max-width: 540px;
   margin: 24px 0 0;
   padding: 12px 14px;
   border-left: 4px solid var(--app-blue);
@@ -91,7 +91,7 @@ body {
 }
 
 .showcase-status {
-  max-width: 360px;
+  max-width: 540px;
   margin: 12px 0 0;
   padding: 12px 14px;
   border-left: 4px solid #768692;
@@ -105,7 +105,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  max-width: 340px;
+  max-width: 540px;
   margin-top: 28px;
   padding: 20px;
   border: 1px solid var(--app-border);
