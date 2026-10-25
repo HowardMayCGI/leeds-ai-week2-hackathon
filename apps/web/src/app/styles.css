@@ -90,6 +90,17 @@ body {
   line-height: 1.5;
 }
 
+.showcase-status {
+  max-width: 360px;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 4px solid #768692;
+  background: #fff;
+  color: var(--app-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .showcase-controls {
   display: flex;
   flex-direction: column;
@@ -150,41 +161,6 @@ body {
   appearance: none;
 }
 
-.showcase-segmented__options {
-  display: flex;
-  padding: 3px;
-  border-radius: 8px;
-  background: var(--app-background);
-}
-
-.showcase-segmented__option {
-  position: relative;
-  flex: 1;
-}
-
-.showcase-segmented__option input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.showcase-segmented__option span {
-  display: block;
-  padding: 7px 10px;
-  border-radius: 6px;
-  color: var(--app-muted);
-  font-size: 15px;
-  text-align: center;
-}
-
-.showcase-segmented__option input:checked + span {
-  background: #fff;
-  box-shadow: 0 1px 3px #212b3233;
-  color: var(--app-ink);
-  font-weight: 700;
-}
-
 .showcase-button {
   width: 100%;
   min-height: 40px;
@@ -204,8 +180,7 @@ body {
 }
 
 .showcase-select:focus,
-.showcase-button:focus,
-.showcase-segmented__option input:focus-visible + span {
+.showcase-button:focus {
   outline: 4px solid #ffeb3b;
   outline-offset: 0;
   box-shadow: 0 0 0 2px #212b32 inset;
@@ -267,7 +242,7 @@ body {
   position: relative;
   display: flex;
   width: 393px;
-  min-height: 852px;
+  height: 852px;
   flex-direction: column;
   overflow: hidden;
   border-radius: 55px;
@@ -481,6 +456,18 @@ body {
   line-height: 1.5;
 }
 
+/* Device prompts cover the phone screen, including its status bar, and nothing outside it. */
+.phone-overlay {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  pointer-events: none;
+}
+
+.phone-overlay:empty {
+  display: none;
+}
+
 .phone-home-indicator {
   display: flex;
   background: #fff;
@@ -498,22 +485,15 @@ body {
   background: #000;
 }
 
-/* Fixed height: the phone screen stays one size and only the app content scrolls */
+/* The phone screen stays one size and only the app content scrolls */
 .app-root {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
 }
 
-.showcase--fixed .phone-screen {
-  height: 852px;
-}
-
-.showcase--fixed .app-root {
-  min-height: 0;
-}
-
-.showcase--fixed .app-main {
+.app-main {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -542,14 +522,10 @@ body {
 
   .showcase {
     display: flex;
-    min-height: 100svh;
+    height: 100svh;
     flex-direction: column;
     gap: 0;
     padding: 0;
-  }
-
-  .showcase--fixed {
-    height: 100svh;
   }
 
   .showcase-intro {
@@ -560,6 +536,7 @@ body {
   }
 
   .showcase-intro__text,
+  .showcase-status,
   .showcase-controls__title,
   .phone-status,
   .phone-home-indicator,
@@ -613,20 +590,6 @@ body {
     color: #fff;
   }
 
-  .showcase-segmented__options {
-    background: #ffffff26;
-  }
-
-  .showcase-segmented__option span {
-    padding: 6px 8px;
-    color: #fff;
-    font-size: 14px;
-  }
-
-  .showcase-segmented__option input:checked + span {
-    color: var(--app-ink);
-  }
-
   .phone-frame {
     display: flex;
     flex: 1;
@@ -641,8 +604,7 @@ body {
     position: static;
   }
 
-  .phone-screen,
-  .showcase--fixed .phone-screen {
+  .phone-screen {
     flex: 1;
     width: auto;
     height: auto;

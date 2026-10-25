@@ -1,78 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from '@playwright/test';
+import {
+  addMedicine, app, CARRI, continueButton, doseTimes, enterRoutine, enterTime, expectAccessible, GENE, heading, LILLIANA, openFor,
+  saveFirstSchedule, startJourney, timelineAt,
+} from './journey';
 
 // Walkthrough checks from the agreed meds-scheduler design (24 October 2026),
 // using the patient records served by the local API from test_data/.
-
-async function expectAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-  expect(results.violations).toEqual([]);
-}
-
-// Lilliana, Gene and Raylene have their usual day filled in; Carri does not.
-const LILLIANA = 'Lilliana Kimbra Lockman';
-const GENE = 'Gene Orval Witting';
-const CARRI = 'Carri Dianna Cartwright';
-
-const app = (page: Page) => page.locator('.app-root');
-const heading = (page: Page) => page.getByRole('heading', { level: 1 });
-const continueButton = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true });
-const doseTimes = (page: Page) => page.locator('.app-timeline__item--doses .app-time');
-const timelineAt = (page: Page, time: string) => page.locator('.nhsapp-timeline__item').filter({ has: page.locator('.app-timeline__time', { hasText: new RegExp(`^${time}`) }) });
-
-/** Enters a 12-hour time: hour, minutes and am or pm. */
-async function enterTime(page: Page, linkId: string, hour: string, minutes: string, period: 'am' | 'pm') {
-  await page.locator(`#${linkId}`).fill(hour);
-  await page.locator(`#${linkId}-minutes`).fill(minutes);
-  await page.locator(`#${linkId}-${period}`).check();
-}
-
-/** Opens the web page, chooses the patient and waits for their record to load. */
-async function openFor(page: Page, patient = LILLIANA) {
-  await page.goto('/');
-  await page.getByLabel('Patient').selectOption({ label: patient });
-  await expect(page.getByRole('link', { name: /Schedule my medicines/ })).toBeVisible();
-}
-
-async function startJourney(page: Page, patient = LILLIANA) {
-  await openFor(page, patient);
-  await page.getByRole('link', { name: /Schedule my medicines/ }).click();
-  await expect(heading(page)).toContainText('Organise your medicines around your day');
-  await page.getByRole('button', { name: 'Get started' }).click();
-}
-
-async function enterRoutine(page: Page, { skipLunch = false } = {}) {
-  await enterTime(page, 'wake-time', '7', '00', 'am');
-  await enterTime(page, 'sleep-time', '10', '30', 'pm');
-  await continueButton(page).click();
-  await enterTime(page, 'breakfast-time', '8', '00', 'am');
-  if (skipLunch) await page.locator('#lunch-skipped').check();
-  else await enterTime(page, 'lunch-time', '1', '00', 'pm');
-  await enterTime(page, 'dinner-time', '6', '30', 'pm');
-  await continueButton(page).click();
-}
-
-/** Adds a medicine found by search. Suggestions come from every patient's record. */
-async function addMedicine(page: Page, search: string, option: RegExp, timing: string, frequency = 'Once a day') {
-  await page.getByRole('button', { name: /^Add (another|a) medicine or supplement$/ }).click();
-  await page.getByRole('combobox', { name: 'Name of medicine or supplement' }).fill(search);
-  await page.getByRole('listbox').getByRole('option', { name: option }).click();
-  await page.getByLabel('Amount').fill('1');
-  await page.getByRole('radio', { name: frequency, exact: true }).check();
-  await page.getByRole('radio', { name: timing }).check();
-  await page.getByRole('button', { name: 'Add to my list' }).click();
-}
-
-async function saveFirstSchedule(page: Page, patient = LILLIANA) {
-  await startJourney(page, patient);
-  await enterRoutine(page);
-  for (const name of [/^Lisinopril/, /^Oxycodone/]) await page.getByRole('checkbox', { name }).check();
-  await continueButton(page).click();
-  await page.getByRole('button', { name: 'I have nothing to add' }).click();
-  await page.getByRole('button', { name: 'Create my schedule' }).click();
-  await page.getByRole('button', { name: 'Save my schedule' }).click();
-  await expect(page.getByRole('heading', { name: 'Your schedule has been saved' })).toBeVisible();
-}
 
 test('the web page chooses the patient whose record the app shows', async ({ page }) => {
   await page.goto('/');
@@ -268,8 +201,18 @@ test('completes the first-time journey with the usual day filled in, never askin
   await expect(reminderSwitch).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('.app-reminder-status')).toContainText('Waiting for permission');
   await page.getByRole('button', { name: 'Allow notifications' }).click();
-  const prompt = page.getByRole('dialog', { name: '“NHS App” would like to send you notifications' });
+  // The device prompt covers the phone screen only, never the web page around it.
+  const prompt = page.getByRole('alertdialog', { name: '“NHS App” would like to send you notifications' });
+  await expect(prompt).toBeFocused();
+  const phone = await page.locator('.phone-screen').boundingBox();
+  const box = await prompt.boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(phone!.x);
+  expect(box!.y).toBeGreaterThanOrEqual(phone!.y);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(phone!.x + phone!.width);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(phone!.y + phone!.height);
+  await expectAccessible(page);
   await prompt.getByRole('button', { name: 'Allow', exact: true }).click();
+  await expect(prompt).toBeHidden();
   await expect(page.locator('.app-reminder-status')).toContainText('Reminders are on');
   await page.getByRole('button', { name: 'View my schedule' }).click();
   await expect(heading(page)).toHaveText(/Your medicine schedule/);
@@ -423,12 +366,14 @@ test('the web page sets the app language, with right-to-left Urdu inside the app
   await expect(heading(page)).toHaveText('نسخے');
 });
 
-test('the app is a fixed-height phone screen with bottom navigation, or full length', async ({ page }) => {
+test('the app is a fixed-height phone screen with bottom navigation', async ({ page }) => {
   await openFor(page);
   const main = page.locator('.app-main');
   const nav = page.getByRole('navigation', { name: 'Main menu' });
   await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('radio', { name: 'Phone screen' })).toBeChecked();
+  // There is no full-length option: the app is always the phone screen.
+  await expect(page.getByRole('radio')).toHaveCount(0);
+  await expect(page.getByText('App height')).toHaveCount(0);
 
   await page.getByRole('link', { name: /Schedule my medicines/ }).click();
   const screen = await page.locator('.phone-screen').boundingBox();
@@ -437,11 +382,6 @@ test('the app is a fixed-height phone screen with bottom navigation, or full len
   expect(await main.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
   const navBox = await nav.boundingBox();
   expect(navBox!.y + navBox!.height).toBeLessThanOrEqual(screen!.y + screen!.height);
-
-  await page.getByRole('radio', { name: 'Full length' }).check();
-  expect(await main.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(false);
-  await page.reload();
-  await expect(page.getByRole('radio', { name: 'Full length' })).toBeChecked();
 
   await nav.getByRole('link', { name: 'Messages' }).click();
   await expect(heading(page)).toHaveText('Messages');

@@ -8,58 +8,40 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
  * left-to-right; the app sets its own language inside the phone.
  */
 
-export type HeightMode = 'fixed' | 'full';
-
-const HEIGHT_KEY = 'lai-app:view:height';
-
 // An iPhone 16 Pro screen in CSS points, and the frame around it.
 const SCREEN_HEIGHT = 852;
 const FRAME_HEIGHT = SCREEN_HEIGHT + 2 * 14;
 const PAGE_MARGIN = 48;
 
 /** Shrinks the whole phone, keeping its true proportions, when the window is shorter than the phone. */
-function usePhoneScale(height: HeightMode) {
+function usePhoneScale() {
   const [scale, setScale] = useState(1);
   useEffect(() => {
-    if (height === 'full') { setScale(1); return; }
     const update = () => setScale(Math.min(1, Math.max(0.5, (window.innerHeight - PAGE_MARGIN) / FRAME_HEIGHT)));
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [height]);
+  }, []);
   return scale;
 }
 
-function loadHeight(): HeightMode {
-  try {
-    return window.localStorage.getItem(HEIGHT_KEY) === 'full' ? 'full' : 'fixed';
-  } catch {
-    return 'fixed';
-  }
-}
+/** Where the app shows device prompts, so they cover the phone screen and nothing else. */
+export const PHONE_OVERLAY_ID = 'phone-overlay';
 
-function storeHeight(mode: HeightMode) {
-  try { window.localStorage.setItem(HEIGHT_KEY, mode); } catch { /* a per-visit preference is fine */ }
-}
-
-export function Showcase({ title, description, detail, controls, children }: {
+export function Showcase({ title, description, detail, status, controls, children }: {
   title: ReactNode;
   description: ReactNode;
   detail?: ReactNode;
-  /** Extra web page controls, shown with the height option. */
+  /** A note about how the app is running, such as whether AI help is on. */
+  status?: ReactNode;
+  /** Web page controls, such as the patient and language. */
   controls?: ReactNode;
   children: ReactNode;
 }) {
-  const [height, setHeight] = useState<HeightMode>('fixed');
-  useEffect(() => setHeight(loadHeight()), []);
-  const scale = usePhoneScale(height);
-  const changeHeight = (mode: HeightMode) => {
-    setHeight(mode);
-    storeHeight(mode);
-  };
+  const scale = usePhoneScale();
 
   return (
-    <div className={`showcase showcase--${height}`}>
+    <div className="showcase">
       <aside className="showcase-intro" aria-label="About this app">
         <div className="showcase-intro__text">
           <p className="showcase-intro__eyebrow">NHS App concept</p>
@@ -71,21 +53,13 @@ export function Showcase({ title, description, detail, controls, children }: {
         <p className="showcase-notice">
           <strong>Concept only.</strong> A proposed NHS App feature made for Leeds AI Week 2026. It is not a live NHS service and uses test patient records, not real people.
         </p>
-        <section className="showcase-controls" aria-labelledby="view-options-title">
-          <h2 className="showcase-controls__title" id="view-options-title">View options</h2>
-          {controls}
-          <fieldset className="showcase-control showcase-segmented">
-            <legend className="showcase-control__label">App height</legend>
-            <div className="showcase-segmented__options">
-              {([['fixed', 'Phone screen'], ['full', 'Full length']] as const).map(([mode, label]) => (
-                <label key={mode} className="showcase-segmented__option">
-                  <input type="radio" name="app-height" value={mode} checked={height === mode} onChange={() => changeHeight(mode)} />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        </section>
+        {status && <p className="showcase-status">{status}</p>}
+        {controls && (
+          <section className="showcase-controls" aria-labelledby="view-options-title">
+            <h2 className="showcase-controls__title" id="view-options-title">View options</h2>
+            {controls}
+          </section>
+        )}
       </aside>
 
       <div className="phone-frame" style={{ '--phone-scale': scale } as CSSProperties}>
@@ -102,6 +76,7 @@ export function Showcase({ title, description, detail, controls, children }: {
           </div>
           {children}
           <div className="phone-home-indicator" aria-hidden="true"><span /></div>
+          <div className="phone-overlay" id={PHONE_OVERLAY_ID} />
         </div>
       </div>
     </div>
