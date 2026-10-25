@@ -1,7 +1,7 @@
 import type { AskRequest, ExplainRequest, MedicineReadingRequest } from "@hackathon/api-contract";
 
 /**
- * What answers the AI tasks: Claude on Amazon Bedrock ("live"), or built-in
+ * What answers the AI tasks: OpenAI or Claude on Amazon Bedrock ("live"), or built-in
  * stand-ins that call no model ("test"). Both return raw output, which the
  * service checks before anything reaches the patient.
  */

@@ -79,10 +79,11 @@ const logging = new aws.iam.RolePolicy("api-logging", {
     }),
   ),
 });
-// AI help calls Claude in Amazon Bedrock (the bedrock-mantle endpoint) in this
-// stack's region. Inference only; the model must also be enabled in Bedrock
-// model access. `pulumi config set aiProvider off` turns AI help off.
-const aiProvider = config.get("aiProvider") ?? "bedrock";
+// AI help uses OpenAI when the stack has an openaiApiKey secret, and otherwise
+// Claude in Amazon Bedrock (the bedrock-mantle endpoint) in this stack's region,
+// which must also be enabled in Bedrock model access.
+// `pulumi config set aiProvider off` turns AI help off.
+const aiProvider = config.get("aiProvider") ?? (openAiApiKey ? "openai" : "bedrock");
 const aiModelId = config.get("aiModelId") ?? "anthropic.claude-haiku-5-5";
 const bedrock = new aws.iam.RolePolicy("api-bedrock", {
   role: role.id,

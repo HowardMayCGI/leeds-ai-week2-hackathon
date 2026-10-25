@@ -8,6 +8,7 @@ import type {
 import { bedrockCreateMessage, claudeEngine, DEFAULT_MODEL_ID } from "./claude";
 import { AiUnavailableError, type AiEngine } from "./engine";
 import { checkQuestion } from "./guards";
+import { DEFAULT_OPENAI_MODEL, openAiEngine } from "./openai";
 import { standInEngine } from "./stand-in";
 import {
   checkAskRequest, checkExplainRequest, checkMedicineRequest, checkRoutineRequest,
@@ -30,11 +31,17 @@ export interface AiService {
 const TIME_LIMIT_MS = 24_000;
 
 /**
- * Chooses the engine from the environment: AI_PROVIDER is "bedrock" (Claude
- * on Amazon Bedrock, in AWS_REGION), "test" (stand-ins, no model) or "off".
+ * Chooses the engine from the environment: AI_PROVIDER is "openai" (OpenAI's
+ * Responses API with OPENAI_API_KEY and OPENAI_MODEL), "bedrock" (Claude on
+ * Amazon Bedrock, in AWS_REGION), "test" (stand-ins, no model) or "off".
+ * Without AI_PROVIDER, an OPENAI_API_KEY turns on OpenAI.
  */
 export function createAiService(env: Record<string, string | undefined>, fallback: "off" | "test" = "off"): AiService {
-  const provider = env.AI_PROVIDER ?? fallback;
+  const openAiKey = env.OPENAI_API_KEY?.trim();
+  const provider = env.AI_PROVIDER || (openAiKey ? "openai" : fallback);
+  if (provider === "openai") {
+    return aiService(openAiKey ? openAiEngine(openAiKey, env.OPENAI_MODEL?.trim() || DEFAULT_OPENAI_MODEL) : undefined);
+  }
   if (provider === "bedrock") {
     const region = env.AWS_REGION ?? env.AWS_DEFAULT_REGION ?? "eu-west-2";
     return aiService(claudeEngine(bedrockCreateMessage(region), env.AI_MODEL_ID || DEFAULT_MODEL_ID));

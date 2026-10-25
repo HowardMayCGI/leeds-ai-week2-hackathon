@@ -5,6 +5,7 @@ import type { AskResponse, ExplainResponse, MedicineReadingResponse, RoutineRead
 import { claudeEngine, type CreateMessage } from "./ai/claude";
 import type { AiEngine } from "./ai/engine";
 import { allowedNumbers, checkQuestion, numbersIn, textProblems, unsupportedNumbers } from "./ai/guards";
+import { openAiEngine } from "./ai/openai";
 import { aiService, createAiService } from "./ai/service";
 import { standInEngine } from "./ai/stand-in";
 import { handleRequest, ORIGIN_HEADER } from "./handler";
@@ -66,6 +67,52 @@ test("AI is off unless configured, and test mode is the local default", async ()
   assert.equal(createAiService({ AI_PROVIDER: "bedrock", AI_MODEL_ID: "anthropic.claude-sonnet-5-5" }).status().model, "Claude Sonnet 5.5 on Amazon Bedrock");
   const off = await createAiService({}).run("routine", { text: "I wake at 7" });
   assert.equal(off.status, 503);
+  // An OpenAI key turns on OpenAI unless AI_PROVIDER says otherwise; OpenAI without a key is off.
+  assert.deepEqual(createAiService({ OPENAI_API_KEY: "k" }, "test").status(), { mode: "live", model: "OpenAI gpt-6-luna" });
+  assert.equal(createAiService({ OPENAI_API_KEY: "k", OPENAI_MODEL: "gpt-other" }).status().model, "OpenAI gpt-other");
+  assert.deepEqual(createAiService({ OPENAI_API_KEY: "k", AI_PROVIDER: "test" }).status(), { mode: "test", model: undefined });
+  assert.deepEqual(createAiService({ OPENAI_API_KEY: "k", AI_PROVIDER: "off" }, "test").status(), { mode: "off" });
+  assert.deepEqual(createAiService({ AI_PROVIDER: "openai", OPENAI_API_KEY: " " }).status(), { mode: "off" });
+});
+
+test("the OpenAI engine sends a strict structured request with the photo, and treats refusals and bad output as unavailable", async () => {
+  const calls: { url: string; init: RequestInit; body: Record<string, any> }[] = [];
+  let reply: { status: number; body: unknown } = {
+    status: 200,
+    body: { status: "completed", output: [{ type: "reasoning" }, { type: "message", content: [{ type: "output_text", text: '{"found":false}' }] }] },
+  };
+  const fetchStub = (async (url: string, init: RequestInit) => {
+    calls.push({ url: String(url), init, body: JSON.parse(String(init.body)) });
+    return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+  const live = aiService(openAiEngine("test-key", "gpt-6-luna", fetchStub));
+  const found = await run<MedicineReadingResponse>(live, "medicine", { description: "my iron tablets", image: { mediaType: "image/jpeg", data: "AAAA" } });
+  assert.equal(found.status, 200);
+  const sent = calls[0];
+  assert.equal(sent.url, "https://api.openai.com/v1/responses");
+  assert.equal(new Headers(sent.init.headers).get("authorization"), "Bearer test-key");
+  assert.ok(sent.init.signal instanceof AbortSignal);
+  assert.equal(sent.body.model, "gpt-6-luna");
+  assert.equal(sent.body.store, false);
+  assert.deepEqual(sent.body.text.format.strict, true);
+  assert.equal(sent.body.text.format.type, "json_schema");
+  assert.equal(sent.body.text.format.schema.additionalProperties, false);
+  assert.match(sent.body.instructions, /medicine packaging/);
+  const content = sent.body.input[0].content;
+  assert.deepEqual(content[0], { type: "input_image", image_url: "data:image/jpeg;base64,AAAA", detail: "auto" });
+  assert.match(content[1].text, /<description>my iron tablets<\/description>/);
+  await live.run("ask", { language: "pl", question: "When?", facts });
+  assert.match(calls[1].body.instructions, /in Polish/);
+
+  for (const bad of [
+    { status: 401, body: { error: { message: "Incorrect API key" } } },
+    { status: 200, body: { status: "incomplete", output: [] } },
+    { status: 200, body: { status: "completed", output: [{ type: "message", content: [{ type: "refusal", refusal: "No" }] }] } },
+    { status: 200, body: { status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: "not json" }] }] } },
+  ]) {
+    reply = bad;
+    assert.deepEqual(await live.run("routine", { text: "I wake at 7" }), { status: 503, body: { message: "AI is not available right now" } }, JSON.stringify(bad));
+  }
 });
 
 test("requests are checked before any model sees them", async () => {
