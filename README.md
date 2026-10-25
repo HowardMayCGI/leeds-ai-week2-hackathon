@@ -47,30 +47,46 @@ A working, deployed prototype of a new **Prescriptions → Schedule my medicines
 
 The app runs in **English, Polish and Urdu** (right to left), and automated WCAG 2.1 AA accessibility checks run in the browser tests.
 
-## How AI helps, and where we deliberately don't use it
+## How we used AI
 
-**AI where it helps, rules where it matters.**
+**AI where it helps, rules where it matters.** AI wrote every line of code in this repository and did much of the research and data preparation. The team set the direction, made the design and safety decisions, and reviewed and tested the results. Inside the product, the schedule itself comes from explainable rules rather than a language model.
 
-|                                        |                                                                                                                                                                                                                                                                                                                                      |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **AI showed the need**                 | A patient used ChatGPT to plan his medicines. That is real demand, but the answer was unchecked and depended on him knowing to ask.                                                                                                                                                                                                  |
-| **AI helped us build it**              | We used AI tools throughout the weekend. They helped us research NHS, SPS, NICE and MHRA guidance ([research notes](docs/medication-planner-research.md)), turn guidance into structured rules with sources, and design, code and test the app. Without them, a team of our size could not have built and deployed this in 24 hours. |
-| **Deterministic where safety matters** | Scheduling known constraints is an optimisation problem, not a guessing game. The schedule is produced by explainable rules and re-verified by an independent checker, so every time can be traced to a rule and a source. The same input always gives the same output.                                                              |
-| **AI next**                            | Explaining medicines and schedules in plain language; reading free-text prescription instructions into structured doses; answering "can I move this?" questions. Each would be confirmed by the patient or pharmacist before it affects the schedule.                                                                                |
+### AI built it
 
-This follows our research: published work such as [MEDIC (Nature Medicine, 2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11186789/) shows LLMs working well when they are bounded by domain rules and guardrails. Unchecked general models make medication errors.
+| What                         | How AI was used                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Researching the problem**  | AI researched and validated the problem: polypharmacy, NHS, SPS and NICE guidance on how to take medicines, existing products, published evidence and the UK regulatory position (MHRA, DCB0129/0160, DTAC). See the [research notes](docs/medication-planner-research.md).                                                                                                                                                                    |
+| **All of the code**          | AI wrote all the code: the NHS App-style web frontend (Next.js, NHS.UK and NHS App frontend components, English/Polish/Urdu), the Lambda API, the scheduler and independent checker, the Pulumi infrastructure that deploys it to AWS, and the tests (unit, infrastructure, browser and accessibility).                                                                                                                                        |
+| **Realistic UK patients**    | We generated patients with [NHS England's UK fork of Synthea](https://github.com/nhsengland/swpc_synthea), then used AI to convert the remaining US medicine names and doses to their UK equivalents (for example acetaminophen to paracetamol, albuterol to salbutamol), see [`scripts/ukify-medication-names.ts`](scripts/ukify-medication-names.ts).                                                                                        |
+| **Sample medicine datasets** | Full interaction and administration datasets (such as the BNF, Stockley's and FDB) are commercial and need a licence. AI compiled small sample datasets from public sources instead. Each rule links to its source, and every dataset is labelled as an incomplete demonstration ([interactions](apps/api/src/data/demo-interactions.json), [administration](apps/api/src/data/demo-administration.json), [model](docs/drug-interactions.md)). |
+| **Design**                   | Figma Make produced the [initial design concept](figma-make-concept/), which we then rebuilt with the NHS App design system.                                                                                                                                                                                                                                                                                                                   |
+
+### Deterministic where safety matters
+
+Scheduling known constraints is an optimisation problem, not a guessing game. When the app runs, no language model is involved. The schedule comes from explainable rules and is re-verified by an independent checker, so every time can be traced back to a rule and its source, and the same input always gives the same output. If the rules can't all be met, the app says so rather than guessing.
+
+This follows our research. General models make medication errors: in one 2026 study, GPT-4o identified the interacting drug pair only 54.7% of the time. Published work such as [MEDIC (Nature Medicine, 2024)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11186789/) shows language models working well when they are bounded by domain rules and guardrails.
+
+### AI next
+
+- Explaining medicines and schedules in plain language.
+- Reading free-text prescription instructions into structured doses.
+- Answering "can I move this dose?" questions.
+
+Each would be confirmed by the patient or a pharmacist before it affects the schedule.
 
 ## Responsible use of data
 
-- **No real patient data.** The demo patients are synthetic [Synthea](https://synthetichealth.github.io/synthea/) FHIR R4 records. They were chosen from 1,000 synthetic patients because they have long medicine lists and messy, realistic records (missing doses, as-needed and non-daily medicines). See [how they were selected](test_data/README.md).
-- **Bias we know about.** Synthea models a US population and US prescribing. We converted medicine names to UK names, but the medicine mix, demographics and conditions are not representative of NHS patients. A real service would need evaluation across age, ethnicity, language, disability and digital confidence.
+- **No real patient data.** The demo patients are synthetic FHIR R4 records from [NHS England's UK fork of Synthea](https://github.com/nhsengland/swpc_synthea). They were chosen from 1,000 synthetic patients because they have long medicine lists and messy, realistic records (missing doses, as-needed and non-daily medicines). See [how they were selected](test_data/README.md).
+- **Licensed data respected.** We did not copy commercial medicine databases. Our sample interaction and administration rules were compiled by AI from public sources, with each source cited.
+- **Bias and accuracy we know about.** The UK Synthea fork models an English population, but synthetic records are not a substitute for real-world diversity. The AI conversion of medicine names and doses and the AI-compiled sample rules have not been clinically validated. A real service would use dm+d and a licensed knowledge base, with pharmacist sign-off. It would also need evaluation across age, ethnicity, language, disability and digital confidence.
 - **Data minimisation.** The prototype only reads medicines and basic demographics. Saved schedules and preferences stay in the browser's local storage. There is no account, no tracking and no server-side store of patient answers.
 - **Never changes a prescription.** It only arranges the times of what was prescribed. It does not judge whether a prescription is appropriate (that is a clinician's medication review).
 - **Consent and governance in a real service.** Health data is special-category data. A live version would need a lawful basis, a DPIA, DCB0129/DCB0160 clinical safety assurance, DTAC, and an assessment of whether it is a medical device under MHRA guidance (influencing treatment timing may make it one). See [our research notes](docs/medication-planner-research.md).
 
 ## Limitations and what's next
 
-- **Limited rules coverage.** Our timing and interaction rules are a small, sourced demonstration set, not a complete clinical knowledge base. A real service would license one (such as dm+d with FDB or Stockley's) and have a pharmacist approve the rules.
+- **Limited, unvalidated rules coverage.** Our timing and interaction rules are small AI-compiled sample sets from public sources, not a complete or clinically validated knowledge base. A real service would license one (such as FDB or Stockley's, with dm+d for medicine identity) and have a pharmacist approve the rules.
 - **Not connected to the real NHS App or GP record.** NHS App integration has its own onboarding and standards process.
 - **Next steps:** pharmacist sign-off of schedules in the app; API persistence; plain-language AI explanations; usability testing with older patients and carers; evaluation against prescription fidelity, missed or extra doses and timing violations.
 
@@ -82,9 +98,13 @@ Team **Double Helix**:
 - Howard May
 - Devamm Patel
 
-## AI tools we used
+## AI and pre-existing work disclosure
 
-Declared as the hackathon rules require: AI coding assistants (including GitHub Copilot) for research, code, tests and documentation; Figma Make for the [initial design concept](figma-make-concept/). Pre-existing work: before the event (22–23 October) we set up this repository, the AWS hosting (CloudFront, S3, API Gateway and Lambda via Pulumi) and a placeholder random-number app to prove deployment. The Schedule my medicines idea, design and code were built during the hackathon. All patient data is synthetic.
+As the hackathon rules require:
+
+- **AI:** all code, infrastructure and tests were written by AI coding agents, including GitHub Copilot. AI was also used for research, the UK medicine name and dose conversion, the sample interaction and administration datasets, and documentation. Figma Make was used for the initial design concept. See [How we used AI](#how-we-used-ai).
+- **Pre-existing work:** before the event (22–23 October) we set up this repository, the AWS hosting (CloudFront, S3, API Gateway and Lambda via Pulumi) and a placeholder random-number app to prove deployment. The Schedule my medicines idea, design and code were built during the hackathon.
+- **Data:** all patient data is synthetic.
 
 ---
 

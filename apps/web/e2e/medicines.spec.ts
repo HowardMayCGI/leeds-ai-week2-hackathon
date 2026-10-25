@@ -115,6 +115,8 @@ test('the web page presents the pitch as slides beside the app', async ({ page }
   const pitch = page.getByRole('dialog');
   await expect(pitch.getByRole('heading', { level: 2 })).toHaveText('A conversation on a flight to Sicily');
   await expect(pitch.getByRole('button', { name: 'Previous' })).toBeHidden();
+  // Let the slide finish fading in, so colour contrast is measured at full opacity.
+  await pitch.evaluate(element => Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished)));
   await expectAccessible(page);
 
   await pitch.getByRole('button', { name: 'Next' }).click();

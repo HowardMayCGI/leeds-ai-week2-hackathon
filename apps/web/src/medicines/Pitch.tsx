@@ -142,30 +142,28 @@ const SLIDES: Slide[] = [
       <>
         <div className="pitch-columns">
           <div className="pitch-card">
-            <h3>It showed the need</h3>
-            <p>
-              Patients are already asking chatbots to plan their medicines, with no check that the
-              answer is right.
-            </p>
+            <h3>It researched the problem</h3>
+            <p>Validated against NHS, NICE and MHRA guidance and published evidence.</p>
           </div>
           <div className="pitch-card">
-            <h3>It built this in a weekend</h3>
-            <p>
-              AI helped us research NHS, SPS and MHRA guidance, turn it into sourced rules, and
-              design, code and test the app.
-            </p>
+            <h3>It wrote all the code</h3>
+            <p>The NHS App-style app, the API, the AWS deployment and every test.</p>
           </div>
           <div className="pitch-card">
-            <h3>It stays safe in the app</h3>
+            <h3>It made the data</h3>
             <p>
-              In one study a general LLM found the interacting pair only 54.7% of the time. Our
-              schedules come from explainable rules and an independent checker.
+              UK medicine names and doses for UK Synthea patients, and sample interaction data where
+              the real datasets need a licence.
             </p>
           </div>
         </div>
         <p className="pitch-lead">
-          Next: AI to explain medicines in plain language and read free-text instructions, always
-          confirmed by the patient or pharmacist.
+          But no AI decides your schedule. Explainable rules and an independent checker do: in one
+          study a general LLM found the interacting drug pair only 54.7% of the time.
+        </p>
+        <p className="pitch-source">
+          Next: AI to explain medicines in plain language, always confirmed by the patient or
+          pharmacist.
         </p>
       </>
     ),
@@ -177,7 +175,8 @@ const SLIDES: Slide[] = [
       <>
         <ul className="pitch-list">
           <li>
-            <strong>Synthetic patient records only</strong>: no real patient data.
+            <strong>Synthetic patients only</strong>: realistic UK records from Synthea, no real
+            patient data.
           </li>
           <li>
             <strong>Never changes a prescription</strong>: it only times what was prescribed.
