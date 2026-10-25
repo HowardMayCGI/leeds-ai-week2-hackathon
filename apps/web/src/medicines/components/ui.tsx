@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import type { Dose } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import { formatAmount, type MessageKey, type Params } from '../i18n';
@@ -45,6 +45,21 @@ export function TName({ k, name, params }: { k: MessageKey; name: ReactNode; par
   return actual === lang ? content : <span lang={actual} dir="ltr">{content}</span>;
 }
 
+/** Translated text with content such as names and times, each kept in its own direction, in place of placeholders. */
+export function TNodes({ k, nodes, params }: { k: MessageKey; nodes: Record<string, ReactNode>; params?: Params }) {
+  const { tr, lang } = useJourney();
+  const { text, lang: actual } = tr(k, params);
+  const content = (
+    <>
+      {text.split(/(\{\w+\})/).map((part, index) => {
+        const name = /^\{(\w+)\}$/.exec(part)?.[1];
+        return name && name in nodes ? <Fragment key={index}>{nodes[name]}</Fragment> : part;
+      })}
+    </>
+  );
+  return actual === lang ? content : <span lang={actual} dir="ltr">{content}</span>;
+}
+
 export function Time({ value }: { value: string }) {
   const { time } = useJourney();
   return <bdi className="app-time" dir="ltr"><time dateTime={value}>{time(value)}</time></bdi>;
@@ -86,6 +101,18 @@ export function NavLink({ to, children, className, onClick }: { to?: Screen; chi
 
 export function BackLink({ to, onClick }: { to?: Screen; onClick?: () => void }) {
   return <NavLink to={to} onClick={onClick} className="nhsuk-back-link"><T k="common.back" /></NavLink>;
+}
+
+/**
+ * Moves focus to an element by id once the next render is on screen, for
+ * focus after an await, when new content may not be rendered yet.
+ */
+export function useFocusLater(): (id: string) => void {
+  const [target, setTarget] = useState<{ id: string }>();
+  useEffect(() => {
+    if (target) document.getElementById(target.id)?.focus();
+  }, [target]);
+  return useCallback((id: string) => setTarget({ id }), []);
 }
 
 export interface ErrorItem {

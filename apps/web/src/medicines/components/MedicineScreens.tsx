@@ -3,10 +3,11 @@
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import {
   DOSE_UNITS, FOOD_TIMINGS, FREQUENCIES, parseQuantity, recommendedTiming, searchMedicines, timingConflict, unitForForm,
-  type DoseUnit, type FoodTiming, type Frequency, type MedicineOption, type PatientAddition, type RecordMedicine, type SearchResult,
+  type DoseUnit, type FoodTiming, type FormAnswers, type Frequency, type MedicineOption, type PatientAddition, type RecordMedicine, type SearchResult,
 } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { Language, MessageKey } from '../i18n';
+import { MedicineReader } from './Readers';
 import {
   BackLink, Button, Caption, DoseAmount, Entered, ErrorMessage, ErrorSummary, InsetText, Latin, LinkButton, NavLink, PageHeading,
   RecordText, T, Tag, TName, UntranslatedNote, WarningCallout,
@@ -278,6 +279,26 @@ export function AdditionForm() {
   const fieldError = (field: FormField) => (errors.includes(field) ? <ErrorMessage id={`${FIELD_IDS[field]}-error`}>{errorText(field)}</ErrorMessage> : null);
   const groupClass = (field: FormField) => `nhsuk-form-group${errors.includes(field) ? ' nhsuk-form-group--error' : ''}`;
 
+  // A reading fills in the whole form, so nothing from an earlier reading or medicine is left behind.
+  // Anything it could not read is left blank and listed for the patient to answer.
+  const fill = (answers: FormAnswers) => {
+    setForm({
+      query: answers.query ?? '',
+      medicine: answers.medicine,
+      manual: Boolean(answers.manual),
+      manualName: answers.manual?.name ?? '',
+      strength: answers.manual?.strength ?? '',
+      unit: answers.manual?.unit,
+      quantity: answers.quantity !== undefined ? numberText(answers.quantity, lang) : '',
+      frequency: answers.frequency,
+      timing: answers.timing,
+      instructions: answers.instructions ?? '',
+    });
+    setErrors([]);
+    setOpen(Boolean(answers.query));
+    setActive(-1);
+  };
+
   const choose = (result: SearchResult) => {
     change({ medicine: result.option, query: '', manual: false });
     setOpen(false);
@@ -345,6 +366,7 @@ export function AdditionForm() {
       <BackLink onClick={() => go(leave, { editingAdditionId: undefined })} />
       <ErrorSummary attempt={attempt} errors={errors.map(field => ({ href: `#${FIELD_IDS[field]}`, text: errorText(field) }))} />
       <PageHeading caption={<Caption />}><T k={editing ? 'addForm.titleEdit' : 'addForm.titleAdd'} /></PageHeading>
+      {!editing && <MedicineReader onFilled={fill} />}
 
       {medicine ? (
         <div className="nhsuk-form-group">

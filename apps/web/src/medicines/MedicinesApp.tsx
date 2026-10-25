@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { PatientSummary } from '@hackathon/api-contract';
+import type { AiStatusResponse, PatientSummary } from '@hackathon/api-contract';
 import { routinePages, type MedicineOption, type RecordMedicine } from '@hackathon/medicines';
 import { AppChrome } from '../app/app-chrome';
+import { AskScreen } from './components/AskScreen';
 import { CheckAnswers } from './components/CheckAnswers';
 import { AdditionForm, Additions, AdditionTiming, SelectMedicines } from './components/MedicineScreens';
 import { RoutineScreen } from './components/RoutineScreen';
@@ -21,15 +22,16 @@ const [wakingSleeping, mealTimes] = routinePages();
 function canShow(screen: Screen, state: State): boolean {
   if (screen === 'proposal') return Boolean(state.proposal);
   if (screen === 'addition-timing') return state.draft.additions.some(addition => addition.id === state.editingAdditionId);
-  if (['saved-confirmation', 'schedule', 'reminders', 'review-confirmation'].includes(screen)) return Boolean(state.saved);
+  if (['saved-confirmation', 'schedule', 'reminders', 'review-confirmation', 'ask'].includes(screen)) return Boolean(state.saved);
   return true;
 }
 
-export function MedicinesApp({ lang, patient, record, options }: {
+export function MedicinesApp({ lang, patient, record, options, ai }: {
   lang: Language;
   patient: PatientSummary;
   record: RecordMedicine[];
   options: MedicineOption[];
+  ai: AiStatusResponse;
 }) {
   // The app renders only in the browser, once the record has loaded, so the saved schedule can be read straight away.
   const [state, setStateRaw] = useState<State>(() => ({ ...initialState(usualDay(patient.nhsNumber)), saved: loadSaved(patient.nhsNumber) }));
@@ -87,6 +89,7 @@ export function MedicinesApp({ lang, patient, record, options }: {
       patient,
       record,
       options,
+      ai,
       t: (key, params) => translate(lang, key, params).text,
       tr: (key, params) => translate(lang, key, params),
       time: value => formatTime(value, lang),
@@ -101,7 +104,7 @@ export function MedicinesApp({ lang, patient, record, options }: {
       back: (from, previous) => (state.changeFlow?.start === from ? state.changeFlow.origin : previous),
       startChange: flow => go(flow.start, { changeFlow: flow }),
     };
-  }, [state, lang, patient, record, options, setState]);
+  }, [state, lang, patient, record, options, ai, setState]);
 
   const screens: Record<Screen, () => ReactNode> = {
     prescriptions: () => <Prescriptions />,
@@ -118,6 +121,7 @@ export function MedicinesApp({ lang, patient, record, options }: {
     schedule: () => <SavedScheduleScreen />,
     reminders: () => <RemindersScreen />,
     'review-confirmation': () => <ReviewConfirmation />,
+    ask: () => <AskScreen />,
     messages: () => <MessagesScreen />,
     profile: () => <ProfileScreen />,
   };

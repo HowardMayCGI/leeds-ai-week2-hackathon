@@ -680,11 +680,20 @@
   margin-bottom: 0;
 }
 
+/* A device alert, drawn over the phone screen only (see DevicePrompt). */
+.app-device-prompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0006;
+  pointer-events: auto;
+}
+
 .app-permission {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: min(270px, calc(100vw - 48px));
+  width: min(270px, 100%);
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -695,14 +704,7 @@
   color: #000;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   text-align: center;
-}
-
-.app-permission[open] {
-  transform: translate(-50%, -50%);
-}
-
-.app-permission::backdrop {
-  background: #0006;
+  outline: none;
 }
 
 .app-permission__body {
@@ -733,7 +735,8 @@
   padding: 10px 8px;
   border: 0;
   background: none;
-  color: #007aff;
+  /* Darker than the iOS system blue so the buttons meet WCAG AA contrast. */
+  color: #0062cc;
   cursor: pointer;
   font: inherit;
   font-size: 17px;
@@ -970,4 +973,350 @@
 .phone-status,
 .app-brand {
   direction: ltr;
+}
+
+/* AI help: filling in forms, explaining the schedule and answering questions */
+.app-ai-card {
+  border-color: var(--app-border);
+  border-top: 4px solid var(--app-blue);
+  border-radius: 12px;
+}
+
+.app-ai-card .nhsuk-card__content {
+  padding: 18px;
+}
+
+.app-ai-card .nhsuk-form-group {
+  margin-bottom: 16px;
+}
+
+.app-ai-card .nhsuk-textarea {
+  margin-bottom: 0;
+}
+
+.app-photo__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.app-screen .app-photo__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.app-photo__icon {
+  flex-shrink: 0;
+}
+
+.app-photo__input:focus + .app-photo__button,
+.app-photo__input:focus-visible + .app-photo__button {
+  outline: 4px solid transparent;
+  background-color: var(--app-focus);
+  box-shadow: 0 4px 0 #212b32;
+  color: #212b32;
+}
+
+.app-photo__chosen {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.app-photo__preview {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.app-photo__added {
+  margin-bottom: 2px !important;
+  font-weight: 700;
+}
+
+.app-ai-result:focus {
+  outline: none;
+}
+
+/* Kept on the page while empty, so a screen reader announces the result when it appears. */
+.app-ai-result:empty {
+  margin: 0;
+}
+
+.app-ai-result {
+  margin-top: 16px;
+}
+
+.app-ai-result__inset {
+  margin: 0;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.app-ai-result__inset > :last-child,
+.app-ai-result__message {
+  margin-bottom: 0 !important;
+}
+
+.app-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 10px;
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -2px;
+  animation: app-spin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-spinner { animation: none; }
+}
+
+.app-screen .nhsuk-button[aria-disabled='true'] {
+  cursor: progress;
+  opacity: .75;
+}
+
+/* Explanations of the schedule */
+.app-ai-panel {
+  margin-bottom: 20px;
+}
+
+.app-ai-panel:focus {
+  outline: none;
+}
+
+.app-ai-panel .nhsuk-button {
+  margin-bottom: 8px;
+}
+
+.app-ai-panel .nhsuk-hint {
+  margin-bottom: 0;
+}
+
+.app-ai-panel--shown {
+  padding: 14px 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.app-ai-panel--shown .nhsuk-body-s,
+.app-ai-panel--shown .nhsuk-body {
+  margin-bottom: 8px;
+}
+
+.app-ai-panel--shown .app-tags {
+  margin-bottom: 8px;
+}
+
+.app-ai-panel__error:empty {
+  margin: 0;
+}
+
+.app-ai-panel__error {
+  margin: 8px 0 0;
+  color: var(--app-red);
+  font-weight: 700;
+}
+
+.app-explanation {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-inline-start: 4px solid var(--app-blue);
+  border-radius: 4px;
+  background: #eef4fa;
+}
+
+.app-explanation__title {
+  margin-bottom: 2px !important;
+  color: #003087;
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
+.app-explanation__text {
+  margin-bottom: 0 !important;
+  font-size: 16px !important;
+}
+
+/* Interaction warnings */
+.app-interactions .nhsuk-card {
+  margin-bottom: 20px;
+}
+
+.app-interactions__list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-interactions__item {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.app-interactions__names {
+  margin-bottom: 4px !important;
+}
+
+.app-interactions__item .nhsuk-body {
+  margin-bottom: 8px;
+}
+
+.app-interactions__details {
+  margin-bottom: 0;
+}
+
+.app-interactions__details .nhsuk-details__summary-text {
+  font-size: 16px;
+}
+
+.app-interactions__details .nhsuk-details__text {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.app-interactions__details .nhsuk-details__text p {
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+/* Questions about the schedule */
+.app-conversation {
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-conversation__entry {
+  margin-bottom: 16px;
+}
+
+.app-conversation__question {
+  margin-inline-start: 32px;
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border-radius: 12px 12px 4px 12px;
+  background: #005eb8;
+  color: #fff;
+}
+
+[dir='rtl'] .app-conversation__question {
+  border-radius: 12px 12px 12px 4px;
+}
+
+.app-conversation__question .app-conversation__label {
+  color: #fff;
+}
+
+.app-conversation__answer {
+  margin-inline-end: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px 12px 12px 4px;
+  background: #fff;
+}
+
+[dir='rtl'] .app-conversation__answer {
+  border-radius: 12px 12px 4px 12px;
+}
+
+.app-conversation__answer:focus {
+  outline: 4px solid var(--app-focus);
+  outline-offset: 0;
+}
+
+.app-conversation__label {
+  margin-bottom: 2px !important;
+  color: var(--app-muted);
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
+.app-conversation__text {
+  margin-bottom: 8px !important;
+}
+
+.app-conversation__answer > :last-child,
+.app-conversation__question > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.app-conversation__answer .app-tags {
+  margin-bottom: 6px;
+}
+
+.app-conversation__sources {
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
+}
+
+.app-conversation__sources-title {
+  margin-bottom: 2px !important;
+  font-size: 15px !important;
+  font-weight: 700;
+}
+
+.app-conversation__sources .nhsuk-list {
+  margin-bottom: 0;
+  font-size: 15px;
+}
+
+.app-screen .app-conversation__emergency {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* AI text in English inside a right-to-left app still reads left to right. */
+[dir='rtl'] .app-screen p[dir='ltr'] {
+  text-align: left;
+}
+
+.app-suggestions__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.app-suggestion {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid var(--app-blue);
+  border-radius: 22px;
+  background: #fff;
+  color: var(--app-blue);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: start;
+}
+
+.app-suggestion:hover {
+  background: #e8f1fa;
+}
+
+.app-suggestion:focus {
+  outline: 4px solid transparent;
+  border-color: #212b32;
+  background: var(--app-focus);
+  box-shadow: 0 4px 0 #212b32;
+  color: #212b32;
 }

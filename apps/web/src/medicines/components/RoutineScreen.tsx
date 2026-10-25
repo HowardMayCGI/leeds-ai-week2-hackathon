@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import type { RoutineReading } from '@hackathon/api-contract';
 import {
-  flatten, hintFor, isEnabled, isInstructions, itemControl, itemText, setAnswer, validatePage,
+  flatten, hintFor, isEnabled, isInstructions, itemControl, itemText, MEALS, setAnswer, validatePage,
   type Answers, type FieldError, type QuestionnaireItem,
 } from '@hackathon/medicines';
 import { useJourney } from '../context';
 import type { MessageKey } from '../i18n';
 import type { Screen } from '../state';
+import { DayReader } from './Readers';
 import { BackLink, Button, Caption, ErrorMessage, ErrorSummary, PageHeading, T } from './ui';
 
 /** Questionnaire text, marked with its language if a translation is missing. */
@@ -153,6 +155,21 @@ export function RoutineScreen({ group, previous, nextScreen }: { group: Question
     clearError(linkId);
   };
 
+  // Times read from the patient's description of their day, for this page and the next. Anything not read is kept.
+  const fill = (routine: RoutineReading) => {
+    const read: Record<string, string | boolean> = {};
+    if (routine.wake) read['wake-time'] = routine.wake;
+    if (routine.sleep) read['sleep-time'] = routine.sleep;
+    for (const meal of MEALS) {
+      const value = routine[meal];
+      if (value === null) read[`${meal}-skipped`] = true;
+      else if (value) Object.assign(read, { [`${meal}-skipped`]: false, [`${meal}-time`]: value });
+    }
+    updateDraft(draft => ({ ...draft, answers: Object.entries(read).reduce((current, [linkId, value]) => setAnswer(current, linkId, value), draft.answers) }));
+    setParts(previous => ({ ...previous, ...Object.fromEntries(timeItems.filter(item => item.linkId in read).map(item => [item.linkId, partsFrom(read[item.linkId])])) }));
+    setErrors(current => current.filter(error => !(error.linkId in read)));
+  };
+
   const submit = () => {
     // Re-read every shown time, including one shown again after a meal was un-skipped.
     let current: Answers = answers;
@@ -206,8 +223,16 @@ export function RoutineScreen({ group, previous, nextScreen }: { group: Question
       <BackLink to={back(screen, previous)} />
       <ErrorSummary attempt={attempt} errors={errors.map(error => ({ href: `#${errorTarget(error)}`, text: t(errorKey(error)) }))} />
       <PageHeading caption={<Caption />}><QText item={group} /></PageHeading>
-      {(group.item ?? []).map(item => {
-        if (isInstructions(item)) return <p className="nhsuk-body" key={item.linkId}><QText item={item} /></p>;
+      {(group.item ?? []).map((item, index) => {
+        if (isInstructions(item)) {
+          return (
+            <div key={item.linkId}>
+              <p className="nhsuk-body"><QText item={item} /></p>
+              {/* The first routine page offers to fill in every time from the patient's own words. */}
+              {index === 0 && screen === 'waking-sleeping' && <DayReader onFilled={fill} />}
+            </div>
+          );
+        }
         if (item.type === 'time') return timeQuestion(item, 'm');
         if (item.type === 'group') return mealGroup(item);
         return null;

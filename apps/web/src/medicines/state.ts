@@ -1,12 +1,14 @@
+import type { AskAnswer } from '@hackathon/api-contract';
 import {
   createProposal, initialAnswers, toRoutine,
   type Answers, type PatientAddition, type Proposal, type QuestionnaireResponse, type RecordMedicine,
 } from '@hackathon/medicines';
+import type { FactSource } from './facts';
 import { isLanguage, type Language } from './i18n';
 
 export type Screen =
   | 'prescriptions' | 'intro' | 'waking-sleeping' | 'meal-times' | 'medicines' | 'additions' | 'addition-form' | 'addition-timing'
-  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation'
+  | 'check' | 'proposal' | 'saved-confirmation' | 'schedule' | 'reminders' | 'review-confirmation' | 'ask'
   | 'messages' | 'profile';
 
 /** Inputs to one proposal. Language independent, so switching language never changes them. */
@@ -37,6 +39,28 @@ export interface ChangeFlow {
   origin: Screen;
 }
 
+/** AI explanations of a schedule's times, kept for this visit only. */
+export interface Explanations {
+  /** The doses explained, so explanations are never shown against different times. */
+  signature: string;
+  /** The app language they were asked for, and the language they came back in. */
+  requested: Language;
+  language: Language;
+  /** Explanation text by dose, keyed by `${key}@${minute}`. */
+  texts: Record<string, string>;
+  doseCount: number;
+  hidden?: boolean;
+}
+
+/** A question about the saved schedule and its checked answer, kept for this visit only. */
+export interface AskEntry {
+  id: string;
+  question: string;
+  answer: AskAnswer;
+  language: Language;
+  sources: Record<string, FactSource>;
+}
+
 export interface State {
   screen: Screen;
   draft: Draft;
@@ -46,6 +70,8 @@ export interface State {
   changeFlow?: ChangeFlow;
   editingAdditionId?: string;
   saved?: SavedSchedule;
+  explanations?: Explanations;
+  asked: AskEntry[];
 }
 
 /** A new draft. Routine answers start from what the app already knows about the patient's day, if anything. */
@@ -54,7 +80,7 @@ export function emptyDraft(routine: Answers = {}): Draft {
 }
 
 export function initialState(routine?: Answers): State {
-  return { screen: 'prescriptions', draft: emptyDraft(routine), updating: false };
+  return { screen: 'prescriptions', draft: emptyDraft(routine), updating: false, asked: [] };
 }
 
 export function proposalFor(draft: Draft, record: RecordMedicine[]): Proposal | undefined {
