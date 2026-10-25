@@ -74,6 +74,16 @@ The UI uses the official [NHS.UK frontend library](https://service-manual.nhs.uk
 
 ### Build and check
 
+Run every check before pushing (there is no CI). It typechecks, builds and bundles every project, runs all unit tests, and runs the infrastructure tests against both stack configurations:
+
+```sh
+pnpm test
+```
+
+Browser tests are separate because they need free local ports `3000` and `3001`: `pnpm test:e2e`. Formatting can be checked with `pnpm format:check` (or applied with `pnpm format`); it is not yet part of `pnpm test` because existing code does not match `.oxfmtrc.json`.
+
+The individual Nx commands are:
+
 ```sh
 pnpm nx run-many -t build typecheck test
 pnpm nx run infra:test:prod

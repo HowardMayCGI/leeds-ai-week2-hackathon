@@ -6,6 +6,12 @@
     "node": ">=24.13.0 <25",
     "pnpm": "10.28.2"
   },
+  "scripts": {
+    "test": "nx run-many -t typecheck build test --outputStyle=static && nx run infra:test:prod --outputStyle=static",
+    "test:e2e": "nx run web:install-browser && nx run web:e2e",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check"
+  },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
