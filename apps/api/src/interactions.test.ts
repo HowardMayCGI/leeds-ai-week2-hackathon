@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import type { Medication } from "@hackathon/api-contract";
-import { checkInteractions, interactionDataset } from "./interactions";
+import { checkInteractions, checkSelection, interactionDataset } from "./interactions";
 import { createFilePatientRepository } from "./patient-data";
 
 function medicine(code: string, id = code): Medication {
@@ -144,4 +144,25 @@ test("all indexed patient products map, and every rule matches its ingredient pa
     );
     assert.ok(check(...pair).interactions.some((i) => i.ruleId === rule.id));
   }
+});
+
+test("a schedule's chosen medicines are checked by code, keeping the app's own keys", () => {
+  const clopidogrel = interactionDataset.products.find((product) => product.ingredientIds.includes("clopidogrel"))!;
+  const naproxenProduct = interactionDataset.products.find((product) => product.code === "1217387008")!;
+  const result = checkSelection([
+    { id: "record:a", name: clopidogrel.name, code: clopidogrel.code, system: clopidogrel.system },
+    { id: "patient:b", name: naproxenProduct.name, code: naproxenProduct.code, system: naproxenProduct.system },
+    { id: "patient:c", name: "Something I typed" },
+  ]);
+  assert.equal(result.interactions.length, 1);
+  assert.equal(result.interactions[0].ruleId, "clopidogrel--naproxen");
+  assert.equal(result.interactions[0].action, "prescriber_review");
+  assert.deepEqual(new Set(result.interactions[0].medicineIds), new Set(["record:a", "patient:b"]));
+  assert.deepEqual(result.uncheckedIds, ["patient:c"]);
+  assert.equal(result.clinicallyValidated, false);
+  assert.equal(result.sources[0].id, "naproxen-leaflet");
+  const spacing = checkSelection([levo(), iron()].map(({ id, name, code, system }) => ({ id, name, code, system })));
+  assert.equal(spacing.interactions[0].action, "separate_doses");
+  assert.equal(spacing.interactions[0].minimumGapMinutes, 240);
+  assert.deepEqual(checkSelection([]).interactions, []);
 });

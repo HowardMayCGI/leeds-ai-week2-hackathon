@@ -1,13 +1,19 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { NHS_NUMBER_PATTERN, type JokeResponse, type RandomNumberResponse } from "@hackathon/api-contract";
+import {
+  NHS_NUMBER_PATTERN,
+  type JokeResponse,
+  type RandomNumberResponse,
+  type SelectedMedicine,
+} from "@hackathon/api-contract";
 import { ChatGptConfigurationError, createChatGptClient } from "@hackathon/chatgpt";
+import { AI_TASKS, createAiService, type AiService, type AiTask } from "./ai/service";
 import {
   createFilePatientRepository,
   defaultDataDirectory,
   type PatientRepository,
 } from "./patient-data";
-import { checkInteractions } from "./interactions";
+import { checkInteractions, checkSelection } from "./interactions";
 import { buildScheduleInputs } from "./schedule-inputs";
 import { createSchedule } from "./schedule-service";
 import { MAX_SCHEDULE_BODY_BYTES, validateScheduleRequest } from "./schedule-validation";
@@ -26,7 +32,19 @@ interface HandlerOptions {
   generateNumber?: () => number;
   generateJoke?: () => Promise<string>;
   patients?: PatientRepository;
+  /** AI features; off unless configured. */
+  ai?: AiService;
 }
+
+/** The largest request any route accepts: a medicine photo. Each route sets its own limit. */
+export const MAX_REQUEST_BODY_BYTES = 4_500_000;
+const AI_BODY_BYTES: Record<AiTask, number> = {
+  medicine: MAX_REQUEST_BODY_BYTES,
+  routine: 16_384,
+  explain: 131_072,
+  ask: 131_072,
+};
+const INTERACTIONS_BODY_BYTES = 32_768;
 
 function json(statusCode: number, body: unknown): APIGatewayProxyStructuredResultV2 {
   return {
@@ -55,6 +73,56 @@ function methodNotAllowed(allow = "GET") {
 
 const PATIENT_ROUTE =
   /^\/api\/patients\/([^/]+)\/(demographics|medications|interactions|schedule-inputs)$/;
+const AI_ROUTE = /^\/api\/ai\/(medicine|routine|explain|ask)$/;
+
+/** A JSON request body within a size limit, or the error response to send instead. */
+function readJson(
+  request: ApiRequest,
+  limit: number,
+): { ok: true; value: unknown } | { ok: false; response: APIGatewayProxyStructuredResultV2 } {
+  if (Buffer.byteLength(request.body ?? "", "utf8") > limit)
+    return { ok: false, response: json(413, { message: `Request exceeds ${Math.round(limit / 1024)} KiB` }) };
+  if (request.headers["content-type"]?.split(";")[0].trim().toLowerCase() !== "application/json")
+    return { ok: false, response: json(415, { message: "Content-Type must be application/json" }) };
+  try {
+    return { ok: true, value: JSON.parse(request.body ?? "") };
+  } catch {
+    return { ok: false, response: json(400, { message: "Invalid JSON body" }) };
+  }
+}
+
+/** The medicines in a schedule, as the app sends them for an interaction check. */
+function readSelection(value: unknown): SelectedMedicine[] | undefined {
+  const medicines = (value as { medicines?: unknown } | null)?.medicines;
+  if (!Array.isArray(medicines) || medicines.length > 100) return undefined;
+  const text = (entry: unknown, max: number) => typeof entry === "string" && entry.length > 0 && entry.length <= max;
+  const optional = (entry: unknown, max: number) => entry === undefined || text(entry, max);
+  const valid = medicines.every(
+    (medicine) =>
+      typeof medicine === "object" &&
+      medicine !== null &&
+      text(medicine.id, 120) &&
+      text(medicine.name, 200) &&
+      optional(medicine.code, 40) &&
+      optional(medicine.system, 200),
+  );
+  return valid
+    ? medicines.map(({ id, name, code, system }) => ({ id, name, code, system }))
+    : undefined;
+}
+
+async function handleAi(request: ApiRequest, ai: AiService): Promise<APIGatewayProxyStructuredResultV2> {
+  if (request.path === "/api/ai/status") {
+    return request.method === "GET" ? json(200, ai.status()) : methodNotAllowed();
+  }
+  const task = AI_ROUTE.exec(request.path)?.[1] as AiTask | undefined;
+  if (!task || !AI_TASKS.includes(task)) return json(404, { message: "Not found" });
+  if (request.method !== "POST") return methodNotAllowed("POST");
+  const body = readJson(request, AI_BODY_BYTES[task]);
+  if (!body.ok) return body.response;
+  const result = await ai.run(task, body.value);
+  return json(result.status, result.body);
+}
 
 export async function handleRequest(
   request: ApiRequest,
@@ -103,6 +171,16 @@ export async function handleRequest(
       return json(500, { message: "Internal server error" });
     }
   }
+  if (request.path === "/api/interactions") {
+    if (request.method !== "POST") return methodNotAllowed("POST");
+    const body = readJson(request, INTERACTIONS_BODY_BYTES);
+    if (!body.ok) return body.response;
+    const medicines = readSelection(body.value);
+    if (!medicines)
+      return json(400, { message: "medicines must list up to 100 medicines, each with an id and name" });
+    return json(200, checkSelection(medicines));
+  }
+  if (request.path.startsWith("/api/ai/")) return handleAi(request, options.ai ?? defaultAi());
   const route = PATIENT_ROUTE.exec(request.path);
   const known =
     request.path === "/api/random" ||
@@ -151,6 +229,10 @@ function generateJoke(): Promise<string> {
   );
 }
 
+let lambdaAi: AiService | undefined;
+function defaultAi(): AiService {
+  return (lambdaAi ??= createAiService(process.env));
+}
 function defaultRepository(): PatientRepository {
   return (repository ??= createFilePatientRepository(defaultDataDirectory()));
 }

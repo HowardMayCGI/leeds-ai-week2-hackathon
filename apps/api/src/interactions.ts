@@ -3,6 +3,8 @@ import type {
   InteractionsResponse,
   Medication,
   MedicationsResponse,
+  SelectedMedicine,
+  SelectionInteractionsResponse,
 } from "@hackathon/api-contract";
 import data from "./data/demo-interactions.json";
 
@@ -80,4 +82,44 @@ export function checkInteractions(
   const sourceIds = new Set(response.interactions.flatMap((interaction) => interaction.sourceIds));
   response.sources = interactionDataset.sources.filter((source) => sourceIds.has(source.id));
   return response;
+}
+
+/**
+ * Checks the medicines a patient chose for their schedule, including ones they
+ * added that are not on their record. Uses the same exact-code rules as the
+ * record check; medicines without a known code are reported as unchecked.
+ */
+export function checkSelection(medicines: SelectedMedicine[]): SelectionInteractionsResponse {
+  const result = checkInteractions({
+    nhsNumber: "",
+    medications: medicines.map((medicine) => ({
+      id: medicine.id,
+      name: medicine.name,
+      code: medicine.code,
+      system: medicine.system,
+      asNeeded: false,
+      instructions: [],
+    })),
+  });
+  return {
+    datasetVersion: result.datasetVersion,
+    clinicallyValidated: false,
+    coverage: result.coverage,
+    interactions: result.interactions.map((interaction) => ({
+      id: interaction.id,
+      ruleId: interaction.ruleId,
+      severity: interaction.severity,
+      action: interaction.management.action,
+      minimumGapMinutes:
+        interaction.management.action === "separate_doses"
+          ? interaction.management.minimumGapMinutes
+          : undefined,
+      effect: interaction.effect,
+      patientGuidance: interaction.patientGuidance,
+      medicineIds: [interaction.medications[0].id, interaction.medications[1].id],
+      sourceIds: interaction.sourceIds,
+    })),
+    uncheckedIds: result.uncheckedMedications.map((entry) => entry.medication.id),
+    sources: result.sources,
+  };
 }
