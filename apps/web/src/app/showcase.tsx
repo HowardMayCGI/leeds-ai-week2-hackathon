@@ -24,12 +24,13 @@ function storeHeight(mode: HeightMode) {
   try { window.localStorage.setItem(HEIGHT_KEY, mode); } catch { /* a per-visit preference is fine */ }
 }
 
-export function Showcase({ title, description, detail, controls, children }: {
+export function Showcase({ title, description, detail, controls, demo, children }: {
   title: ReactNode;
   description: ReactNode;
   detail?: ReactNode;
   /** Extra web page controls, shown with the height option. */
   controls?: ReactNode;
+  demo?: ReactNode;
   children: ReactNode;
 }) {
   const [height, setHeight] = useState<HeightMode>('fixed');
@@ -64,6 +65,7 @@ export function Showcase({ title, description, detail, controls, children }: {
             </div>
           </fieldset>
         </section>
+        {demo}
       </aside>
 
       <div className="phone-frame">

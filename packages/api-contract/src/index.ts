@@ -2,6 +2,15 @@ export interface RandomNumberResponse {
   number: number;
 }
 
+export interface JokeResponse {
+  joke: string;
+}
+
+export function isJokeResponse(value: unknown): value is JokeResponse {
+  return typeof value === "object" && value !== null && "joke" in value &&
+    typeof value.joke === "string" && value.joke.trim().length > 0;
+}
+
 export function isRandomNumberResponse(value: unknown): value is RandomNumberResponse {
   if (typeof value !== "object" || value === null || !("number" in value)) return false;
   return (

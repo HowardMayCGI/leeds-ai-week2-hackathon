@@ -57,6 +57,7 @@ Each environment has its own resources and CloudFront URL. Both use AWS account 
 | `apps/web`              | Next.js App Router UI and browser tests                                     |
 | `apps/api`              | Lambda handler, local HTTP adapter and API tests                            |
 | `packages/api-contract` | Shared response type and runtime response validation                        |
+| `packages/chatgpt`      | Backend OpenAI SDK wrapper with configurable model and bounded requests     |
 | `infra`                 | TypeScript Pulumi project, `staging` and `prod` stacks, deployment commands |
 
 ### Install and run locally
@@ -69,6 +70,43 @@ pnpm nx run-many -t dev -p web api
 ```
 
 Open **http://127.0.0.1:3000**. The API listens on loopback port `3001`; Next.js proxies `/api/*` to it. Both servers watch for changes. Stop them together with Ctrl+C. Everyday development requires no AWS credentials or deployed resources.
+
+### OpenAI joke demo
+
+The home page has a **Have a laugh** section. Select **Tell me a joke** to request a short, family-friendly joke. It calls `POST /api/joke` on the existing API, which uses the backend-only `@hackathon/chatgpt` package and official `openai` SDK's Responses API. Nothing is requested until the button is selected. The browser shows progress, announces the result and offers a retry if the request fails.
+
+Add these variables to the root `.env` file (see [.env.example](.env.example)); preserve any existing values in that file:
+
+```dotenv
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-6-luna
+```
+
+Restart the development servers after changing `.env`, then open **http://127.0.0.1:3000**. A billed OpenAI API project/key with access to the selected model is required. Alternatively, export these variables in your shell. Keep the key out of Git, browser code and `NEXT_PUBLIC_*` variables. The static UI never imports the SDK or receives the key.
+
+`OPENAI_MODEL` is optional and defaults to `gpt-6-luna`, a small, low-cost model for focused tasks. Model overrides must support the Responses API and `reasoning.effort: none`. Each request has a 256-token output cap, a 20-second timeout, no automatic retries and `store: false`. The demo sends only a fixed joke prompt; no patient data or request-body content is sent to OpenAI. The package's reusable `createChatGptClient().generateText(input, instructions)` method is available to other backend features.
+
+To check the local endpoint while both servers are running:
+
+```sh
+curl --fail-with-body -X POST http://127.0.0.1:3000/api/joke
+```
+
+Without a key the joke endpoint returns `503`; other API features keep working. Upstream failures return a generic `502` without exposing SDK error details. Unit and browser tests use mocked OpenAI responses and require no key or paid API calls.
+
+For AWS, configure the key once per stack using Pulumi's encrypted configuration. With the stack's `PULUMI_CONFIG_PASSPHRASE` available in your shell, run this from the repository root and enter the key at the hidden prompt:
+
+```sh
+pulumi -C infra config set openaiApiKey --secret --stack staging
+# Optional model override (otherwise the backend uses gpt-6-luna):
+pulumi -C infra config set openaiModel gpt-6-luna --stack staging
+```
+
+The key is saved as `leeds-ai-week2-hackathon:openaiApiKey` with a `secure:` encrypted value in `infra/Pulumi.staging.yaml`. Keep that encrypted entry and the existing encryption metadata in version control; keep the passphrase and plaintext key out of Git. Infrastructure reads it using `new pulumi.Config().getSecret("openaiApiKey")` and sets `OPENAI_API_KEY` on the existing Lambda. Previews redact it, and state also stores it encrypted. Future deployments read the saved stack configuration and do not need `OPENAI_API_KEY` in the deployment shell. The root `.env` is used for local API development only; editing it does not rotate the AWS key. Use `pulumi config set ... --secret` and deploy the intended stack to rotate it. The same pattern applies to `prod` when it is configured separately. Without a stack key, the hosted joke endpoint returns `503`.
+
+The Lambda timeout is 25 seconds to allow the SDK's 20-second timeout to return an error. No AWS resources or IAM permissions are added. Run the usual preview and deploy for each intended stack when ready. No deployment is performed by setup or tests.
+
+References: [official OpenAI JavaScript quickstart](https://developers.openai.com/api/docs/quickstart), [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [NHS App buttons](https://design-system.nhsapp.service.nhs.uk/components/buttons/).
 
 The UI uses the official [NHS.UK frontend library](https://service-manual.nhs.uk/design-system/production) with an [NHS App-inspired](https://design-system.nhsapp.service.nhs.uk/) layout and custom **LAI App** branding for Leeds Artificial Intelligence. On desktop, the generator sits inside a decorative phone frame beside a short project introduction on a neutral background. At viewport widths of 700px and below, and on touch devices up to 1000px wide (including landscape phones), the frame, simulated status bar and introduction disappear so the app fills the mobile browser, including safe-area spacing. It uses Arial, NHS colours and a rounded primary button. Results and progress are announced to assistive technology, and errors allow a keyboard retry.
 

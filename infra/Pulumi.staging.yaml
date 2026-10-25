@@ -3,4 +3,6 @@ config:
   aws:profile: st-prod
   aws:allowedAccountIds:
     - '322517362875'
+  leeds-ai-week2-hackathon:openaiApiKey:
+    secure: v1:snRNIK+WM9tOzmdo:UkWWHHHl7Jyj2wfnE9n0fYetpTmRB/EwR2K9DOBwtNJNRuh/wbY9dIQK0aGGUrHwknaNQhQxOf4bGaQF7x/JUZfyJImjH6WO7G0Yo5xmVb1/sCck1z5GlCl78b9QvL2bPllwTl4LA8Np/hJIapluPklNcASKJFVNl4+Oe3GycvQX4Qz1u2QJ53EjzEvvzvpKQueMxJVIQYoey8r9ZxhQ/bAYs6gX97MRsRBkRU3BdaB0zmQq
 encryptionsalt: v1:znqPZ+LVhkQ=:v1:vH3L7tZIhrvONB9d:KDF8hRbxNDTETLfFAAw0WxroMuU4tA==

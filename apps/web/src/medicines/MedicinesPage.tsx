@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { PatientSummary } from '@hackathon/api-contract';
 import { AppChrome } from '../app/app-chrome';
 import { Showcase } from '../app/showcase';
+import { JokeDemo } from '../app/joke-demo';
 import { DEFAULT_LANGUAGE, isLanguage, languageInfo, LANGUAGES, translate, type Language } from './i18n';
 import { MedicinesApp } from './MedicinesApp';
 import { displayName, fetchPatientData, fetchPatients, type PatientData } from './patient-data';
@@ -75,6 +76,7 @@ export function MedicinesPage() {
   return (
     <Showcase
       title="Schedule my medicines"
+      demo={<JokeDemo />}
       description={<>Fitted around your day.</>}
       detail="Tell the app when you usually wake up, eat and go to sleep. It suggests a daily schedule for your medicines that follows the instructions for each one, and can remind you when it is time to take them."
       controls={(
