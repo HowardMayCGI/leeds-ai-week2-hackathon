@@ -36,6 +36,9 @@ export interface ItemSnapshot {
   form?: Form;
   /** The product description in the record, for a record medicine or a matched addition. */
   recordName?: string;
+  /** The product's code (SNOMED CT or dm+d), used to check for interactions. */
+  code?: string;
+  system?: string;
   dose?: Dose;
   frequency?: Frequency;
   /** For a record medicine taken every few days. */
@@ -87,6 +90,7 @@ export function recordSnapshot(medicine: RecordMedicine): ItemSnapshot {
   return {
     key: `record:${medicine.id}`, source: 'record', name: medicine.medicine.name, strength: medicine.medicine.strength,
     form: medicine.medicine.form, recordName: medicine.medicine.recordName,
+    code: medicine.medicine.code, system: medicine.medicine.system,
     dose: medicine.dose,
     frequency: frequency.kind === 'daily' ? FREQUENCY_FOR[frequency.timesPerDay] : frequency.kind === 'as-needed' ? 'as-needed' : frequency.kind === 'every-days' ? 'not-daily' : undefined,
     everyDays: frequency.kind === 'every-days' ? frequency.days : undefined,
@@ -101,7 +105,7 @@ export function additionSnapshot(addition: PatientAddition): ItemSnapshot {
   return {
     key: `patient:${addition.id}`, source: 'patient', name: medicine?.name ?? addition.name,
     strength: medicine ? medicine.strength : addition.strength || undefined,
-    form: medicine?.form, recordName: medicine?.recordName,
+    form: medicine?.form, recordName: medicine?.recordName, code: medicine?.code, system: medicine?.system,
     dose: addition.dose, frequency: addition.frequency, instructions: addition.instructions ? [addition.instructions] : [],
     ingredients: medicine?.ingredients ?? [], matched: Boolean(medicine), timing: addition.timing, timingFlag: conflict,
   };

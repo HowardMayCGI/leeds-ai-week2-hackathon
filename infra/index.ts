@@ -79,6 +79,18 @@ const logging = new aws.iam.RolePolicy("api-logging", {
     }),
   ),
 });
+// AI help calls Claude in Amazon Bedrock (the bedrock-mantle endpoint) in this
+// stack's region. Inference only; the model must also be enabled in Bedrock
+// model access. `pulumi config set aiProvider off` turns AI help off.
+const aiProvider = config.get("aiProvider") ?? "bedrock";
+const aiModelId = config.get("aiModelId") ?? "anthropic.claude-haiku-5-5";
+const bedrock = new aws.iam.RolePolicy("api-bedrock", {
+  role: role.id,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: ["bedrock-mantle:CreateInference"], Resource: "*" }],
+  }),
+});
 const lambda = new aws.lambda.Function(
   "api",
   {
@@ -87,20 +99,23 @@ const lambda = new aws.lambda.Function(
     handler: "index.handler",
     role: role.arn,
     code: new pulumi.asset.FileArchive(apiDirectory),
-    memorySize: 128,
-    timeout: 25,
+    // AI answers take a few seconds and photos are read in memory. API Gateway waits up to 30 seconds.
+    memorySize: 512,
+    timeout: 29,
     environment: {
       variables: {
         ORIGIN_SECRET: originSecret.result,
         NODE_OPTIONS: "--enable-source-maps",
         ...(openAiApiKey ? { OPENAI_API_KEY: openAiApiKey } : {}),
         ...(openAiModel ? { OPENAI_MODEL: openAiModel } : {}),
+        AI_PROVIDER: aiProvider,
+        AI_MODEL_ID: aiModelId,
       },
     },
     loggingConfig: { logFormat: "JSON", logGroup: logs.name },
     tags,
   },
-  { dependsOn: [logging] },
+  { dependsOn: [logging, bedrock] },
 );
 
 const api = new aws.apigatewayv2.Api("api", { protocolType: "HTTP", tags });

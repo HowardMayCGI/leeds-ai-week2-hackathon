@@ -106,11 +106,18 @@ test(
     assert.equal(executionRole.name, `leeds-random-${stack}-api`);
     assert.equal(executionRole.path, runtimeRolePath);
     assert.equal(executionRole.permissionsBoundary, runtimeRoleBoundaryArn);
-    const runtimePolicy = JSON.parse(find("aws:iam/rolePolicy:RolePolicy").policy);
-    assert.deepEqual(runtimePolicy.Statement[0].Action, [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
+    // Logging, and Claude inference for AI help. Nothing else.
+    const runtimeActions = resources
+      .filter((resource) => resource.type === "aws:iam/rolePolicy:RolePolicy")
+      .flatMap((resource) => JSON.parse(resource.inputs.policy).Statement.map((statement: any) => statement.Action.join(" ")))
+      .sort();
+    assert.deepEqual(runtimeActions, [
+      "bedrock-mantle:CreateInference",
+      "logs:CreateLogStream logs:PutLogEvents",
     ]);
+    assert.equal(lambda.timeout, 29);
+    assert.equal(lambda.environment.variables.AI_PROVIDER, "bedrock");
+    assert.equal(lambda.environment.variables.AI_MODEL_ID, "anthropic.claude-haiku-5-5");
     assert.equal(find("aws:lambda/permission:Permission").sourceAccount, "322517362875");
     assert.equal(
       find("aws:cloudfront/originAccessControl:OriginAccessControl").signingBehavior,

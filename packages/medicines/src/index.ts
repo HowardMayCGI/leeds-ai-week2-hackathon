@@ -13,3 +13,4 @@ export * from "./scheduler";
 export * from "./time";
 export * from "./daily-plan";
 export * from "./daily-plan-checker";
+export * from './reading';
